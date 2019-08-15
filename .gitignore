@@ -1,0 +1,4 @@
+/vendor
+/tests/coverage
+/tests/phpunit.xml
+/tests/tmp
