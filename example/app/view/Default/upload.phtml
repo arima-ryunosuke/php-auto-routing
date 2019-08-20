@@ -1,0 +1,8 @@
+<?php ob_start(); ?>
+ファイルアップロードフォームです。
+<form method="post" enctype="multipart/form-data">
+    <input type="file" name="file">
+    <input type="submit" name="submit" value="submit">
+</form>
+<?php $contents = ob_get_clean(); ?>
+<?php include __DIR__ . '/../layout.phtml'; ?>

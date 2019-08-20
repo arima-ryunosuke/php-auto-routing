@@ -1,0 +1,5 @@
+<?php ob_start(); ?>
+これはいわゆるエラーページです。
+<pre><?php echo $exception; ?></pre>
+<?php $contents = ob_get_clean(); ?>
+<?php include __DIR__ . '/../layout.phtml'; ?>

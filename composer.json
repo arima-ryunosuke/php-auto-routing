@@ -35,6 +35,9 @@
     }
   },
   "scripts": {
+    "example": [
+      "@php -S 0.0.0.0:8000 -t example/public example/public/router.php"
+    ],
     "build": [
       "@test"
     ],

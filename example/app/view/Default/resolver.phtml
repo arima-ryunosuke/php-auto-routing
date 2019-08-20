@@ -1,0 +1,62 @@
+<?php
+
+use ryunosuke\microute\example\controller\DefaultController;
+
+ob_start(); ?>
+Resolver のサンプルです。結果しか表示していないので「何がどうなるのか？」は phtml を見て確認してください。
+<table class="table table-responsive table-borderless table-sm">
+    <tr>
+        <th>URL 生成（名前付きルート）</th>
+        <td><code><?php echo $resolver->route('default-index') ?></code></td>
+    </tr>
+    <tr>
+        <th>URL 生成（デフォルトルート名）</th>
+        <td><code><?php echo $resolver->route('Default::context.json', ['id' => 123]) ?></code></td>
+    </tr>
+    <tr>
+        <th>URL 生成（通常の action [クエリパラメータ]）</th>
+        <td><code><?php echo $resolver->action(DefaultController::class, 'argument', ['id' => 123, 'name' => 'hoge']) ?></code></td>
+    </tr>
+    <tr>
+        <th>URL 生成（通常の action [クエリマップ]）</th>
+        <td><code><?php echo $resolver->action(DefaultController::class, 'pathful', ['id' => 123, 'name' => 'hoge']) ?></code></td>
+    </tr>
+    <tr>
+        <th>URL 生成（短縮コントローラ名）</th>
+        <td><code><?php echo $resolver->action('Default', 'argument', ['id' => 123, 'name' => 'hoge']) ?></code></td>
+    </tr>
+    <tr>
+        <th>URL 生成（各種省略）</th>
+        <td>
+            <code><?php echo $resolver->action('resolver', ['id' => 123]) ?></code>（コントローラ省略）<br>
+            <code><?php echo $resolver->action(['id' => 123]) ?></code>（アクション省略）<br>
+            <code><?php echo $resolver->action() ?></code>（すべて省略）<br>
+        </td>
+    </tr>
+    <tr>
+        <th>URL 生成（静的ファイル）</th>
+        <td>
+            <code><?php echo $resolver->path("/jquery-3.0.0.min.js", true) ?></code>（更新日時付与あり）<br>
+            <code><?php echo $resolver->path("/jquery-3.0.0.min.js", false) ?></code>（更新日時付与なし）<br>
+        </td>
+    </tr>
+    <tr>
+        <th>URL 生成（完全URL）</th>
+        <td>
+            <code><?php echo $resolver->path("https://example.com/jquery-3.0.0.min.js") ?></code>（同じパスで管理下にあれば更新日時付与）<br>
+            <code><?php echo $resolver->path("https://example.com/jquery-3.1.0.min.js") ?></code>（管理下になければ付与なし）<br>
+        </td>
+    </tr>
+    <tr>
+        <th>DATA URI（画像ファイル）</th>
+        <td><img src="<?php echo $resolver->data(__DIR__ . '/../../resource/image.png') ?>" alt=""></td>
+    </tr>
+    <tr>
+        <th>DATA URI（テキストファイル）</th>
+        <td>
+            <iframe src="<?php echo $resolver->data(__DIR__ . '/../../resource/iframe.html') ?>">
+        </td>
+    </tr>
+</table>
+<?php $contents = ob_get_clean(); ?>
+<?php include __DIR__ . '/../layout.phtml'; ?>

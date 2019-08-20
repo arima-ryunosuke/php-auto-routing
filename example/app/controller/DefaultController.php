@@ -1,0 +1,154 @@
+<?php
+namespace ryunosuke\microute\example\controller;
+
+use Symfony\Component\HttpFoundation\Response;
+
+/**
+ * @alias /alias
+ */
+class DefaultController extends AbstractController
+{
+    protected function error(\Exception $ex)
+    {
+        if ($ex instanceof \DomainException) {
+            throw $ex;
+        }
+        return Response::create('これはコントローラ単位のエラーハンドリングでハンドリングされた例外メッセージです：' . $ex->getMessage());
+    }
+
+    public function errorAction(\Exception $ex)
+    {
+        $this->view->exception = $ex;
+    }
+
+    /**
+     * @action GET
+     * @route default-index
+     */
+    public function defaultAction()
+    {
+        $this->view->url = $this->request->getRequestUri();
+    }
+
+    public function urlsAction()
+    {
+        return '存在する URL の一覧です<pre>' . var_export($this->service->router->urls(), true);
+    }
+
+    /**
+     * @param int $id
+     * @param string $name
+     * @param string $default
+     * @return string
+     */
+    public function argumentAction($id, $name, $default = 'default')
+    {
+        return 'クエリストリングがアクションメソッドの引数に渡ってきます<pre>' . var_export([
+                'url'       => $this->request->getRequestUri(),
+                'parameter' => compact('id', 'name', 'default'),
+            ], true);
+    }
+
+    /**
+     * @queryable false
+     * @context ,json
+     * @param int $id
+     * @return string
+     */
+    public function pathfulAction($id)
+    {
+        return '/ 区切りでアクションメソッドの引数に渡ってきます<pre>' . var_export([
+                'url'       => $this->request->getRequestUri(),
+                'parameter' => ['id' => $id, 'context' => $this->request->attributes->get('context')],
+            ], true);
+    }
+
+    /**
+     * @argument file
+     * @param \Symfony\Component\HttpFoundation\File\UploadedFile $file
+     * @return string
+     */
+    public function uploadAction($file = null)
+    {
+        if ($this->request->isMethod('POST')) {
+            return '/ 区切りでアクションメソッドの引数に渡ってきます<pre>' . var_export([
+                    'url'  => $this->request->getRequestUri(),
+                    'file' => $file,
+                ], true);
+        }
+    }
+
+    /**
+     * @redirect /hoge 302
+     * @redirect /fuga 303
+     * @rewrite /piyo
+     */
+    public function originalAction()
+    {
+        return 'このページは /hoge でも /fuga でも /piyo でもアクセスできます。/hoge は 302 リダイレクト、 /fuga は 303 リダイレクト、 /piyo は URL そのままです<pre>' . var_export([
+                'url' => $this->request->getRequestUri(),
+            ], true);
+    }
+
+    /**
+     * @regex /regex/(?<id>\d+)-([a-z]+)
+     * @param int $id
+     * @param string $name
+     * @return string
+     */
+    public function regexAction($id, $name)
+    {
+        return '$id は名前付きキャプチャ、$name は2番目マッチで2番目の引数に渡ってきます<pre>' . var_export([
+                'url'       => $this->request->getRequestUri(),
+                'parameter' => compact('id', 'name'),
+            ], true);
+    }
+
+    /**
+     * @context json,xml
+     * @queryable false
+     * @param int $id
+     * @return string
+     */
+    public function contextAction($id)
+    {
+        return '@context するとパスの最後に拡張子をつけてもこのアクションに到達します<pre>' . var_export([
+                'url'       => $this->request->getRequestUri(),
+                'parameter' => ['id' => $id, 'context' => $this->request->attributes->get('context')],
+            ], true);
+    }
+
+    public function contentAction()
+    {
+        return $this->content(__FILE__);
+    }
+
+    public function downloadAction()
+    {
+        return $this->download(new \SplFileObject(__FILE__));
+    }
+
+    /**
+     * @action get
+     * @event:cache 10
+     */
+    public function cacheAction()
+    {
+        sleep(3);
+        return date('Y/m/d H:i:s') . '：ものすごく重い処理のキャッシュレスポンスです。大体3秒かかりますが10秒間キャッシュされています';
+    }
+
+    public function resolverAction()
+    {
+    }
+
+    public function throwRuntimeAction()
+    {
+        throw new \RuntimeException(__FUNCTION__);
+    }
+
+    public function throwDomainAction()
+    {
+        throw new \DomainException(__FUNCTION__);
+    }
+}

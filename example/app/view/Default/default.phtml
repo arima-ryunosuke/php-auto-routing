@@ -1,0 +1,83 @@
+<?php ob_start(); ?>
+/ アクセスは <code>DefaultController</code> の <code>defaultAction</code> が呼び出されます。<br>
+現在のアクセス URL は <code><?php echo $url ?></code> です。
+<table class="table table-responsive table-borderless table-sm">
+    <tr>
+        <th>このページです</th>
+        <td><a href="<?php echo $resolver->path() ?>">/</a></td>
+    </tr>
+    <tr>
+        <th>コントローラ単位の alias ページです</th>
+        <td><a href="<?php echo $resolver->path() ?>alias">alias</a></td>
+    </tr>
+    <tr>
+        <th>URL の一覧ページです</th>
+        <td><a href="<?php echo $resolver->path() ?>urls">urls</a></td>
+    </tr>
+    <tr>
+        <th>クエリストリングとアクションパラメータのマップです</th>
+        <td><a href="<?php echo $resolver->path() ?>argument?id=1&amp;name=hoge">argument?id=1&amp;name=hoge</a></td>
+    </tr>
+    <tr>
+        <th>特殊パラメータ区切りとアクションパラメータのマップです</th>
+        <td>
+            <a href="<?php echo $resolver->path() ?>pathful/1">pathful/1</a>（素のアクセス）<br>
+            <a href="<?php echo $resolver->path() ?>pathful/1.json">pathful/1.json</a>（jsonで RESTful アクセス）<br>
+        </td>
+    </tr>
+    <tr>
+        <th>ファイルアップロードフォームです</th>
+        <td><a href="<?php echo $resolver->path() ?>upload">upload</a></td>
+    </tr>
+    <tr>
+        <th>リダイレクトルーティングで外部サイトに飛びます</th>
+        <td><a href="<?php echo $resolver->path() ?>external">external</a></td>
+    </tr>
+    <tr>
+        <th>rewrite, redirect ルーティングです</th>
+        <td>
+            <a href="<?php echo $resolver->path() ?>hoge">hoge</a>（redirect 302）<br>
+            <a href="<?php echo $resolver->path() ?>fuga">fuga</a>（redirect 303）<br>
+            <a href="<?php echo $resolver->path() ?>piyo">piyo</a>（rewrite）<br>
+        </td>
+    </tr>
+    <tr>
+        <th>正規表現ルーティングです</th>
+        <td><a href="<?php echo $resolver->path() ?>regex/123-hoge">regex/123-hoge</a></td>
+    </tr>
+    <tr>
+        <th>コンテキスト（拡張子）付きアクセスです。json,xml 以外だと 404 になります</th>
+        <td>
+            <a href="<?php echo $resolver->path() ?>context.json?id=1">context.json?id=1</a>（json）<br>
+            <a href="<?php echo $resolver->path() ?>context.xml?id=1">context.xml?id=1</a>（xml）<br>
+            <a href="<?php echo $resolver->path() ?>context.html?id=1">context.html?id=1</a>（htmlは404）<br>
+            <a href="<?php echo $resolver->path() ?>context?id=1">context?id=1</a>（拡張子なしは 404）<br>
+        </td>
+    </tr>
+    <tr>
+        <th>ファイルをそのまま返します。 304 キャッシュされます</th>
+        <td><a href="<?php echo $resolver->path() ?>content">content</a></td>
+    </tr>
+    <tr>
+        <th>ファイルをダウンロードします</th>
+        <td><a href="<?php echo $resolver->path() ?>download">download</a></td>
+    </tr>
+    <tr>
+        <th>重いページです。10秒間 304 キャッシュされます</th>
+        <td><a href="<?php echo $resolver->path() ?>cache">cache</a></td>
+    </tr>
+    <tr>
+        <th>resolver のサンプルページです</th>
+        <td><a href="<?php echo $resolver->path() ?>resolver">resolver</a></td>
+    </tr>
+    <tr>
+        <th>例外を投げます。コントローラレベルで補足されます</th>
+        <td><a href="<?php echo $resolver->path() ?>throw-runtime">throw-runtime</a></td>
+    </tr>
+    <tr>
+        <th>例外を投げます。エラーアクションで補足されます</th>
+        <td><a href="<?php echo $resolver->path() ?>throw-domain">throw-domain</a></td>
+    </tr>
+</table>
+<?php $contents = ob_get_clean(); ?>
+<?php include __DIR__ . '/../layout.phtml'; ?>
