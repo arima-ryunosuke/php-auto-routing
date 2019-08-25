@@ -98,45 +98,8 @@ class Service implements HttpKernelInterface
             $this->values['controllerDirectory'] = dirname($ref->getFileName()) . DIRECTORY_SEPARATOR;
         }
 
-        // debug 中は setonly な SimpleCache でラップする
         if ($this->debug) {
-            $this->values['cacher'] = new class($this->values['cacher']) implements CacheInterface
-            {
-                /** @var CacheInterface */
-                private $cacher;
-
-                public function __construct($cacher)
-                {
-                    $this->cacher = $cacher;
-                }
-
-                public function has($key)
-                {
-                    return false;
-                }
-
-                public function get($key, $default = null)
-                {
-                    return $default;
-                }
-
-                public function getMultiple($keys, $default = null)
-                {
-                    $array = [];
-                    array_push($array, ...$keys);
-                    return array_fill_keys($array, $default);
-                }
-
-                public function set($key, $value, $ttl = null) { $this->cacher->{__FUNCTION__}(...func_get_args()); }
-
-                public function setMultiple($values, $ttl = null) { $this->cacher->{__FUNCTION__}(...func_get_args()); }
-
-                public function delete($key) { $this->cacher->{__FUNCTION__}(...func_get_args()); }
-
-                public function deleteMultiple($keys) { $this->cacher->{__FUNCTION__}(...func_get_args()); }
-
-                public function clear() { $this->cacher->{__FUNCTION__}(...func_get_args()); }
-            };
+            $this->cacher->clear();
         }
     }
 

@@ -51,30 +51,6 @@ class ServiceTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertIsCallable($this->service->logger);
     }
 
-    function test_debug_cacher()
-    {
-        $service = $this->provideService([
-            'debug' => true,
-        ]);
-        $cacher = $service->cacher;
-        $cacher->set('foo', 'foo');
-        $cacher->setMultiple([
-            'hoge' => 'hoge',
-            'fuga' => 'fuga',
-        ]);
-
-        $this->assertFalse($cacher->has('foo'));
-        $this->assertFalse($cacher->has('hoge'));
-        $this->assertFalse($cacher->has('hoge'));
-
-        $this->assertEquals('default', $cacher->get('foo', 'default'));
-
-        $this->assertEquals([
-            'hoge' => 'default',
-            'fuga' => 'default',
-        ], $cacher->getMultiple(['hoge', 'fuga'], 'default'));
-    }
-
     function test_handle()
     {
         $service = $this->service;
