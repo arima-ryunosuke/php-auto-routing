@@ -20,6 +20,11 @@
 
 - psr15(middleware) に対応する？
 
+## 1.0.1
+
+- [fixbug][Router] キャッシュがない状態だと notice が出ていた不具合を修正
+- [refactor][Service] debug 時のキャッシュ無効は clear で十分
+
 ## 1.0.0
 
 - 公開
