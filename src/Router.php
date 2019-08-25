@@ -24,13 +24,7 @@ class Router
     private $service;
 
     /** @var array ルーティング一覧 */
-    private $routings = [
-        self::ROUTE_ROUTE    => [/* [name, controller, action] */],
-        self::ROUTE_ALIAS    => [/* [prefix, controller] */],
-        self::ROUTE_REWRITE  => [/* [from_url, to_url, action] */],
-        self::ROUTE_REDIRECT => [/* [from_url, to_url, action, status] */],
-        self::ROUTE_REGEX    => [/* [regex, controller, action] */],
-    ];
+    private $routings;
 
     public function __construct(Service $service)
     {
@@ -38,6 +32,13 @@ class Router
 
         $cachekey = self::CACHE_KEY . '.routings';
         if (!$this->routings = $this->service->cacher->get($cachekey, [])) {
+            $this->routings = [
+                self::ROUTE_ROUTE    => [/* [name, controller, action] */],
+                self::ROUTE_ALIAS    => [/* [prefix, controller] */],
+                self::ROUTE_REWRITE  => [/* [from_url, to_url, action] */],
+                self::ROUTE_REDIRECT => [/* [from_url, to_url, action, status] */],
+                self::ROUTE_REGEX    => [/* [regex, controller, action] */],
+            ];
             foreach ($this->getControllers() as $controller) {
                 $metadata = $controller::metadata($this->service->cacher);
                 foreach ($metadata['@alias'] as $prefix => $option) {
