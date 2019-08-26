@@ -16,6 +16,16 @@ class CacherTest extends \ryunosuke\Test\AbstractTestCase
         $this->cacher->clear();
     }
 
+    function test_save()
+    {
+        $cacher = new Cacher(__DIR__ . '/../../tmp');
+        $cacher->set('hoge', 'actual');
+        $cacher->clear();
+        $this->assertFileNotExists(__DIR__ . '/../../tmp/all.cache');
+        unset($cacher);
+        $this->assertFileExists(__DIR__ . '/../../tmp/all.cache');
+    }
+
     function test_has_get_set_delete()
     {
         $this->assertEquals(false, $this->cacher->has('hoge'));
@@ -31,26 +41,6 @@ class CacherTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals('default', $this->cacher->get('hoge', 'default'));
 
         $this->assertEquals(false, $this->cacher->delete('fuga'));
-    }
-
-    function test_get_other_instance()
-    {
-        $cacher2 = new Cacher(__DIR__ . '/../../tmp');
-        $this->assertEquals(false, $cacher2->has('hoge'));
-        $this->assertEquals('default', $cacher2->get('hoge', 'default'));
-
-        $this->cacher->set('hoge', 'actual');
-        $this->assertEquals(true, $cacher2->has('hoge'));
-        $this->assertEquals('actual', $cacher2->get('hoge', 'default'));
-    }
-
-    function test_set_false()
-    {
-        if (DIRECTORY_SEPARATOR === '/') {
-            $this->markTestSkipped('this test is windows only.');
-        }
-
-        $this->assertEquals(false, @$this->cacher->set('?', 'actual'));
     }
 
     function test_set_ttl()
@@ -103,16 +93,10 @@ class CacherTest extends \ryunosuke\Test\AbstractTestCase
             $this->markTestSkipped('this test is windows only.');
         }
 
-        $this->assertEquals(false, @$this->cacher->setMultiple([
-            'hoge' => 'HOGE',
-            '?'    => 'FUGA',
-            'piyo' => 'PIYO',
-        ]));
-
         $this->assertEquals([
             'hoge' => 'HOGE',
             'fuga' => 'default',
-            'piyo' => 'PIYO',
+            'piyo' => 'default',
         ], $this->cacher->getMultiple(['hoge', 'fuga', 'piyo'], 'default'));
 
         $this->assertEquals(false, $this->cacher->deleteMultiple(['fuga', 'piyo']));
@@ -129,6 +113,5 @@ class CacherTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals(true, $this->cacher->set('hoge', 'HOGE'));
         $this->assertEquals(true, $this->cacher->set('fuga', 'FUGA'));
         $this->assertEquals(true, $this->cacher->clear());
-        $this->assertEmpty(glob(__DIR__ . '/../../tmp/microute/*'));
     }
 }

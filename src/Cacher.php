@@ -10,23 +10,37 @@ use Psr\SimpleCache\CacheInterface;
  */
 class Cacher implements CacheInterface
 {
-    const EXTENSION = 'cache';
+    /** @var array キャッシュエントリ */
+    private $entries = [];
 
-    /** @var string 保存ディレクトリ */
-    private $dirname;
+    /** @var string 保存ファイル名 */
+    private $filename;
+
+    /** @var bool 変更フラグ */
+    private $changed = false;
 
     public function __construct(string $dirname = null)
     {
-        $this->dirname = $dirname ?? (sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'microute');
-        is_dir($this->dirname) or mkdir($this->dirname, 0777, true);
+        $dirname = $dirname ?? (sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'microute');
+        is_dir($dirname) or mkdir($dirname, 0777, true);
+
+        $this->filename = $dirname . DIRECTORY_SEPARATOR . 'all.cache';
+        if (is_file($this->filename)) {
+            $this->entries = require $this->filename;
+        }
     }
 
-    protected function filename($key)
+    public function __destruct()
     {
-        assert(strlen($key) > 0);
-        assert(strpbrk($key, '{}()/\@:') === false);
-
-        return $this->dirname . DIRECTORY_SEPARATOR . $key . '.' . self::EXTENSION;
+        if ($this->changed) {
+            $contents = '<?php return ' . var_export($this->entries, true) . ';';
+            $tempnam = tempnam(sys_get_temp_dir(), 'tmp');
+            if (file_put_contents($tempnam, $contents) !== false) {
+                if (rename($tempnam, $this->filename)) {
+                    @chmod($this->filename, 0666 & ~umask());
+                }
+            }
+        }
     }
 
     public function has($key)
@@ -37,15 +51,14 @@ class Cacher implements CacheInterface
 
     public function get($key, $default = null)
     {
-        $filename = $this->filename($key);
-
-        if (!is_file($filename)) {
+        if (!isset($this->entries[$key])) {
             return $default;
         }
 
-        list($expire, $value) = require $filename;
+        list($expire, $value) = $this->entries[$key];
         if ($expire !== null && $expire <= time()) {
-            unlink($filename);
+            $this->changed = true;
+            unset($this->entries[$key]);
             return $default;
         }
         return $value;
@@ -62,7 +75,8 @@ class Cacher implements CacheInterface
 
     public function set($key, $value, $ttl = null)
     {
-        $filename = $this->filename($key);
+        assert(strlen($key) > 0);
+        assert(strpbrk($key, '{}()/\@:') === false);
 
         if ($ttl instanceof \DateInterval) {
             $expire = (new \DateTime())->add($ttl)->getTimestamp();
@@ -74,17 +88,11 @@ class Cacher implements CacheInterface
             $expire = null;
         }
 
-        $value = '<?php return ' . var_export([$expire, $value], true) . ';';
+        $entry = [$expire, $value];
 
-        $tempnam = tempnam($this->dirname, 'tmp');
-        if (file_put_contents($tempnam, $value) !== false) {
-            if (rename($tempnam, $filename)) {
-                @chmod($filename, 0666 & ~umask());
-                return true;
-            }
-            unlink($tempnam);
-        }
-        return false;
+        $this->changed = $this->changed || ($this->entries[$key] ?? null) !== $entry;
+        $this->entries[$key] = $entry;
+        return true;
     }
 
     public function setMultiple($values, $ttl = null)
@@ -98,12 +106,12 @@ class Cacher implements CacheInterface
 
     public function delete($key)
     {
-        $filename = $this->filename($key);
-
-        if (!is_file($filename)) {
-            return false;
+        if (isset($this->entries[$key])) {
+            $this->changed = true;
+            unset($this->entries[$key]);
+            return true;
         }
-        return unlink($filename);
+        return false;
     }
 
     public function deleteMultiple($keys)
@@ -117,13 +125,12 @@ class Cacher implements CacheInterface
 
     public function clear()
     {
-        $result = true;
-        foreach (new \FilesystemIterator($this->dirname, \FilesystemIterator::SKIP_DOTS) as $file) {
-            /** @var \SplFileInfo $file */
-            if ($file->isFile() && $file->getExtension() === self::EXTENSION) {
-                $result = unlink($file) && $result;
-            }
+        $this->changed = true;
+        $this->entries = [];
+
+        if (is_file($this->filename)) {
+            return unlink($this->filename);
         }
-        return $result;
+        return true;
     }
 }
