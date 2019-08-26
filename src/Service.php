@@ -4,7 +4,6 @@ namespace ryunosuke\microute;
 use Psr\SimpleCache\CacheInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Session\Session;
-use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\HttpFoundation\Session\Storage\NativeSessionStorage;
 use Symfony\Component\HttpFoundation\Session\Storage\SessionStorageInterface;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
@@ -17,9 +16,6 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
  * @property-read CacheInterface          $cacher
  * @property-read \Closure                $logger
  *
- * @property-read string                  $basepath
- * @property-read string                  $public
- *
  * @property-read Router                  $router
  * @property-read Dispatcher              $dispatcher
  * @property-read Resolver                $resolver
@@ -28,7 +24,6 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
  * @property-read string                  $controllerDirectory
  *
  * @property-read Request                 $request
- * @property-read SessionInterface        $session
  * @property-read SessionStorageInterface $sessionStorage
  * @property-read string                  $parameterDelimiter
  * @property-read string                  $parameterSeparator
@@ -54,16 +49,16 @@ class Service implements HttpKernelInterface
         $this->values['cacher'] = $values['cacher'] ?? new Cacher();
         $this->values['logger'] = $values['logger'] ?? function () { return function ($ex, $request) { }; };
 
-        $this->values['basepath'] = $values['basepath'] ?? function () { return $this->request->getBasePath(); };
-        $this->values['public'] = $values['public'] ?? $_SERVER['DOCUMENT_ROOT'] ?? '/';
-
         $this->values['router'] = $values['router'] ?? function () { return new Router($this); };
         $this->values['dispatcher'] = $values['dispatcher'] ?? function () { return new Dispatcher($this); };
         $this->values['resolver'] = $values['resolver'] ?? function () { return new Resolver($this); };
         $this->values['controllerClass'] = $values['controllerClass'] ?? Controller::class;
 
-        $this->values['request'] = $values['request'] ?? function () { return Request::createFromGlobals(); };
-        $this->values['session'] = $values['session'] ?? function () { return new Session($this->sessionStorage); };
+        $this->values['request'] = $values['request'] ?? function () {
+                $request = Request::createFromGlobals();
+                $request->setSessionFactory(function () { return new Session($this->sessionStorage); });
+                return $request;
+            };
         $this->values['sessionStorage'] = $values['sessionStorage'] ?? function () { return new NativeSessionStorage(); };
         $this->values['parameterDelimiter'] = $values['parameterDelimiter'] ?? '?';
         $this->values['parameterSeparator'] = $values['parameterSeparator'] ?? '&';

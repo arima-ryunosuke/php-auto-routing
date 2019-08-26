@@ -8,7 +8,7 @@ class AccessableTest extends \ryunosuke\Test\AbstractTestCase
 {
     function test___isset()
     {
-        $object = new AccessableClass($this->service);
+        $object = new AccessableClass();
         $this->assertFalse(isset($object->privateNull));
         $this->assertTrue(isset($object->privateInt));
         $this->assertFalse(isset($object->hoge));
@@ -16,10 +16,9 @@ class AccessableTest extends \ryunosuke\Test\AbstractTestCase
 
     function test___get()
     {
-        $object = new AccessableClass($this->service);
+        $object = new AccessableClass();
         $this->assertNull($object->privateNull);
         $this->assertIsInt($object->privateInt);
-        $this->assertIsBool($object->debug);
 
         $this->assertException('hoge is undefined', function () use ($object) {
             $object->hoge;
@@ -28,7 +27,7 @@ class AccessableTest extends \ryunosuke\Test\AbstractTestCase
 
     function test___set()
     {
-        $object = new AccessableClass($this->service);
+        $object = new AccessableClass();
         $this->assertException('hoge is undefined', function () use ($object) {
             $object->hoge = 123;
         });
@@ -43,14 +42,6 @@ class AccessableClass
 {
     use Accessable;
 
-    /** @var Service */
-    private $service;
-
     private $privateNull = null;
     private $privateInt  = 123;
-
-    public function __construct(Service $service)
-    {
-        $this->service = $service;
-    }
 }

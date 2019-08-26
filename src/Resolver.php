@@ -76,10 +76,10 @@ class Resolver
             $base = '/' . $class_name;
         }
         elseif ($base === null) {
-            $base = $this->service->basepath . '/' . $class_name;
+            $base = $this->service->request->getBasePath() . '/' . $class_name;
         }
         else {
-            $base = $this->service->basepath . $base;
+            $base = $this->service->request->getBasePath() . $base;
         }
 
         if (strlen($maction)) {
@@ -203,8 +203,8 @@ class Resolver
      */
     public function path($filename = null, $appendmtime = true)
     {
-        $docroot = rtrim($this->service->public, '/');
-        $basepath = rtrim($this->service->basepath, '/');
+        $docroot = rtrim($this->service->request->server->get('DOCUMENT_ROOT'), '/');
+        $basepath = rtrim($this->service->request->getBasePath(), '/');
         $urlparts = parse_url($filename);
 
         // スキーム付き URL ならそのまま返す

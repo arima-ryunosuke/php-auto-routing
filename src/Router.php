@@ -307,7 +307,7 @@ class Router
                     }
                 }
                 $querystring = $params ? '?' . http_build_query($params) : '';
-                return $this->service->basepath . $url . $querystring;
+                return $this->service->request->getBasePath() . $url . $querystring;
             }
         }
 
@@ -385,13 +385,13 @@ class Router
         /** @var Controller $controller */
         $result = [];
         foreach ($this->routings[self::ROUTE_REDIRECT] as $from => $routing) {
-            $gather($result, self::ROUTE_REDIRECT, $this->service->basepath . $from, ...$routing);
+            $gather($result, self::ROUTE_REDIRECT, $this->service->request->getBasePath() . $from, ...$routing);
         }
         foreach ($this->routings[self::ROUTE_REWRITE] as $from => $routing) {
-            $gather($result, self::ROUTE_REWRITE, $this->service->basepath . $from, ...$routing);
+            $gather($result, self::ROUTE_REWRITE, $this->service->request->getBasePath() . $from, ...$routing);
         }
         foreach ($this->routings[self::ROUTE_REGEX] as $from => $routing) {
-            $gather($result, self::ROUTE_REGEX, $this->service->basepath . $from, ...$routing);
+            $gather($result, self::ROUTE_REGEX, $this->service->request->getBasePath() . $from, ...$routing);
         }
         foreach ($this->routings[self::ROUTE_ALIAS] as $alias => $controller) {
             $metadata = $controller::metadata($this->service->cacher);

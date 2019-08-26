@@ -54,7 +54,12 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals('/hoge/action', $resolver->url(HogeController::class, 'action'));
         $this->assertEquals('/hoge/action-id?123&name=hoge', $resolver->url(HogeController::class, 'actionId', ['id' => 123, 'name' => 'hoge']));
 
-        $service = $this->provideService(['basepath' => '/base/path']);
+        $service = $this->provideService([
+            'request' => new class extends Request
+            {
+                public function getBaseUrl() { return '/base/path'; }
+            }
+        ]);
         $resolver = $service->resolver;
         $this->assertEquals('/base/path/hoge', $resolver->url(HogeController::class));
     }
@@ -86,7 +91,12 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
 
     function test_url_alias()
     {
-        $service = $this->provideService(['basepath' => '/base/path']);
+        $service = $this->provideService([
+            'request' => new class extends Request
+            {
+                public function getBaseUrl() { return '/base/path'; }
+            }
+        ]);
         $resolver = $service->resolver;
         $this->assertEquals('/base/path/aliaspath/action', $resolver->url(HogeController::class, 'action', [], '/aliaspath'));
         $this->assertEquals('/base/path/hoge/action', $resolver->url(HogeController::class, 'action', [], null));
@@ -130,9 +140,10 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
 
     function test_path()
     {
+        $request = Request::create('controller/action');
+        $request->server->set('DOCUMENT_ROOT', realpath(__DIR__ . '/../../stub/public'));
         $service = $this->provideService([
-            'request' => Request::create('controller/action'),
-            'public'  => realpath(__DIR__ . '/../../stub/public'),
+            'request' => $request,
         ]);
         $resolver = $service->resolver;
 
@@ -156,11 +167,9 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
         $url = $resolver->path();
         $this->assertEquals('/', $url);
 
-        $service = $this->provideService([
-            'request'  => Request::create('controller/action'),
-            'basepath' => '/foobar',
-            'public'   => realpath(__DIR__ . '/../../stub/public'),
-        ]);
+        $ref = new \ReflectionProperty($request, 'basePath');
+        $ref->setAccessible(true);
+        $ref->setValue($request, '/foobar');
         $resolver = $service->resolver;
 
         $url = $resolver->path();

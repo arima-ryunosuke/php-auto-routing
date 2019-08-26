@@ -347,8 +347,12 @@ class RouterTest extends \ryunosuke\Test\AbstractTestCase
 
     function test_reverseRoute_relative()
     {
+        $request = Request::createFromGlobals();
+        $ref = new \ReflectionProperty($request, 'basePath');
+        $ref->setAccessible(true);
+        $ref->setValue($request, '/basepath');
         $service = $this->provideService([
-            'basepath' => '/basepath',
+            'request' => $request,
         ]);
         $service->router->route('routeName', HogeController::class, 'default');
         $service->router->regex('(?<name>.+)', HogeController::class, 'default');
@@ -358,9 +362,13 @@ class RouterTest extends \ryunosuke\Test\AbstractTestCase
 
     function test_urls()
     {
+        $request = Request::createFromGlobals();
+        $ref = new \ReflectionProperty($request, 'basePath');
+        $ref->setAccessible(true);
+        $ref->setValue($request, '/basepath');
         $service = $this->provideService([
             'debug'              => true,
-            'basepath'           => '/basepath',
+            'request'            => $request,
             'parameterDelimiter' => '?',
             'parameterSeparator' => '&',
         ]);
@@ -553,9 +561,13 @@ class RouterTest extends \ryunosuke\Test\AbstractTestCase
 
     function test_urls_slash()
     {
+        $request = Request::createFromGlobals();
+        $ref = new \ReflectionProperty($request, 'basePath');
+        $ref->setAccessible(true);
+        $ref->setValue($request, '/basepath');
         $service = $this->provideService([
             'debug'              => true,
-            'basepath'           => '/basepath',
+            'request'            => $request,
             'parameterDelimiter' => '/',
             'parameterSeparator' => '/',
         ]);

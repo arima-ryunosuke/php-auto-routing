@@ -8,7 +8,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\Session\Session;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
@@ -18,14 +18,16 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  * このクラスを継承してルーティングを行う。
  *
  * @property-read Service $service
- * @property-read Session $session
+ * @property-read SessionInterface $session
  * @property-read Request $request
  * @property-read Response $response
  * @property-read string $action
  */
 class Controller
 {
-    use mixin\Accessable;
+    use mixin\Accessable {
+        mixin\Accessable::__get as Accessable__get;
+    }
     use mixin\Annotatable;
 
     const CACHE_KEY = 'Controller' . Service::CACHE_VERSION;
@@ -165,6 +167,14 @@ class Controller
         $this->response = Response::create();
 
         $this->construct();
+    }
+
+    public function __get($name)
+    {
+        if ($name === 'session') {
+            return $this->request->getSession();
+        }
+        return $this->Accessable__get($name);
     }
 
     /**
