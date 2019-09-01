@@ -390,7 +390,7 @@ class Controller
             }
 
             // コンテキストに応じて ContentType を設定（未設定時のみ）
-            if ($this->response->headers->get('Content-Type') === null) {
+            if (!strlen($this->response->headers->get('Content-Type'))) {
                 $contexts = $this->service->parameterContexts;
                 $context = $this->request->attributes->get('context');
                 if (is_callable($contexts) && ($cx = $contexts($context))) {
