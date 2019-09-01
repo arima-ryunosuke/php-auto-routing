@@ -20,6 +20,12 @@
 
 - psr15(middleware) に対応する？
 
+## 1.1.0
+
+- [*change][Service] 不要なエントリを削除
+- [fixbug][Controller] http-foundation 4.3.4 にしたらテストがコケたので修正
+- [refactor][Cacher] キャッシュファイルをシンプルに1ファイルに変更
+
 ## 1.0.1
 
 - [fixbug][Router] キャッシュがない状態だと notice が出ていた不具合を修正
