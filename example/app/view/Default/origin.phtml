@@ -1,0 +1,34 @@
+<?php
+ob_start(); ?>
+このページは GET リクエストなら何も問題なく表示されますが、 GET 以外だと Origin: localhost しか許可されません。<br>
+現在のメソッドは <code>`<?php echo $request->getMethod() ?>`</code> で、Origin は <code>`<?php echo $request->headers->get('origin') ?>`</code> です。
+
+<table class="table table-responsive table-borderless table-sm">
+    <tr>
+        <th>GET リンク</th>
+        <td><a href="<?php echo $resolver->path() ?>origin">origin</a></td>
+    </tr>
+    <tr>
+        <th>GET fetch</th>
+        <td>
+            <input type="button" value="request" onclick="fetch('', {method: 'GET'}).then(function(r){alert(r.status + ' ' + r.statusText)})">
+        </td>
+    </tr>
+    <tr>
+        <th>POST fetch</th>
+        <td>
+            <input type="button" value="request" onclick="fetch('', {method: 'POST'}).then(function(r){alert(r.status + ' ' + r.statusText)})">
+        </td>
+    </tr>
+    <tr>
+        <th>POST form</th>
+        <td>
+            <form method="post">
+                <input type="submit" value="submit">
+            </form>
+        </td>
+    </tr>
+</table>
+
+<?php $contents = ob_get_clean(); ?>
+<?php include __DIR__ . '/../layout.phtml'; ?>

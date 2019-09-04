@@ -36,6 +36,14 @@ class DefaultController extends AbstractController
     }
 
     /**
+     * @origin http://localhost
+     * @origin http://localhost:8000, http://localhost:3000
+     */
+    public function originAction()
+    {
+    }
+
+    /**
      * @param int $id
      * @param string $name
      * @param string $default

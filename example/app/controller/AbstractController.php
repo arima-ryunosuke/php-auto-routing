@@ -14,6 +14,7 @@ abstract class AbstractController extends \ryunosuke\microute\Controller
     public function render($action_value)
     {
         $vars = (array) $this->view + $this->request->attributes->get('parameter', []);
+        $vars['request'] = $this->request;
         $vars['resolver'] = $this->service->resolver;
         $vars['controller'] = $this;
         $vars['action'] = $this->action;
