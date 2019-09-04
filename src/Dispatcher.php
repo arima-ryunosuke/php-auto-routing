@@ -213,6 +213,20 @@ class Dispatcher
         $action_data = $controller_class::metadata($this->service->cacher)['actions'][$action_name];
 
         if (!$this->service->debug) {
+            if ($action_data['@origin'] && !$request->isMethodSafe(false)) {
+                if (strlen($origin = $request->headers->get('origin'))) {
+                    foreach ($action_data['@origin'] as $allowed) {
+                        if (fnmatch($allowed, $origin)) {
+                            goto OK;
+                        }
+                    }
+                    throw new HttpException(403, "$origin is not allowed Origin.");
+                    OK:
+                }
+            }
+        }
+
+        if (!$this->service->debug) {
             $ajaxable = $action_data['@ajaxable'];
             if ($ajaxable !== null && !$request->isXmlHttpRequest()) {
                 throw new HttpException($ajaxable ?: 400, "$action_name only accepts XmlHttpRequest.");

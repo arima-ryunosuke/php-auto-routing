@@ -24,6 +24,12 @@ class HogeController extends AbstractController
     public function nopostAction() { }
 
     /**
+     * @origin http://allowed1.host, http://allowed2.host:1234
+     * @origin http://*.allowed.host
+     */
+    public function action_originAction() { return 'origin'; }
+
+    /**
      * @action get
      * @ajaxable
      */

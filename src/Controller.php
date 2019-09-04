@@ -90,6 +90,7 @@ class Controller
                     '@argument'       => array_map('strtoupper', static::getAnnotationAsList('argument', ',', $aname, [])),
                     // メタデータ系
                     '@authentication' => static::getAnnotationAsString('authentication', $aname, null),
+                    '@origin'         => static::getAnnotationAsList('origin', ',', $aname, []),
                     '@ajaxable'       => static::getAnnotationAsInt('ajaxable', $aname, null),
                     '@queryable'      => static::getAnnotationAsBool('queryable', $aname, true),
                     // パラメータ系

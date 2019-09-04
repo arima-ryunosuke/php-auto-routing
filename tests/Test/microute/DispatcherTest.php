@@ -207,6 +207,13 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
     {
         $service = $this->service;
 
+        $request = Request::create('', 'POST');
+        $this->assertInstanceOf(HogeController::class, $service->dispatcher->loadController(HogeController::class, 'action_origin', $request));
+        $request->headers->set('origin', 'http://allowed2.host:1234');
+        $this->assertInstanceOf(HogeController::class, $service->dispatcher->loadController(HogeController::class, 'action_origin', $request));
+        $request->headers->set('origin', 'http://hogera.allowed.host');
+        $this->assertInstanceOf(HogeController::class, $service->dispatcher->loadController(HogeController::class, 'action_origin', $request));
+
         $request = Request::create('', 'GET');
         $request->headers->set('X-Requested-With', 'XMLHttpRequest');
         $this->assertInstanceOf(HogeController::class, $service->dispatcher->loadController(HogeController::class, 'action_ajax', $request));
@@ -228,6 +235,12 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
     function test_loadController_notallowed()
     {
         $service = $this->service;
+
+        $this->assertException("is not allowed Origin", function () use ($service) {
+            $request = Request::create('', 'POST');
+            $request->headers->set('origin', 'http://unknown.host');
+            $service->dispatcher->loadController(HogeController::class, 'action_origin', $request);
+        });
 
         $this->assertException("only accepts XmlHttpRequest", function () use ($service) {
             $request = Request::create('', 'GET');
