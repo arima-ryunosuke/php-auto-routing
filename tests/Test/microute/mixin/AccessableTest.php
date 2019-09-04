@@ -2,7 +2,6 @@
 namespace ryunosuke\Test\microute\mixin;
 
 use ryunosuke\microute\mixin\Accessable;
-use ryunosuke\microute\Service;
 
 class AccessableTest extends \ryunosuke\Test\AbstractTestCase
 {
