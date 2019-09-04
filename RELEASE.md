@@ -20,6 +20,11 @@
 
 - psr15(middleware) に対応する？
 
+## 1.1.1
+
+- [feature][Dispatcher] origin ヘッダによる拒否機能
+- [fixbug][Dispatcher] リクエスト制限が error アクションにまで及んでいた不具合を修正
+
 ## 1.1.0
 
 - [*change][Service] 不要なエントリを削除
