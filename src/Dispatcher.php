@@ -211,8 +211,9 @@ class Dispatcher
     public function loadController($controller_class, $action_name, $request)
     {
         $action_data = $controller_class::metadata($this->service->cacher)['actions'][$action_name];
+        $is_error = $action_name === 'error';
 
-        if (!$this->service->debug) {
+        if (!$this->service->debug && !$is_error) {
             if ($action_data['@origin'] && !$request->isMethodSafe(false)) {
                 if (strlen($origin = $request->headers->get('origin'))) {
                     foreach ($action_data['@origin'] as $allowed) {
@@ -226,23 +227,27 @@ class Dispatcher
             }
         }
 
-        if (!$this->service->debug) {
+        if (!$this->service->debug && !$is_error) {
             $ajaxable = $action_data['@ajaxable'];
             if ($ajaxable !== null && !$request->isXmlHttpRequest()) {
                 throw new HttpException($ajaxable ?: 400, "$action_name only accepts XmlHttpRequest.");
             }
         }
 
-        $method = $request->getMethod();
-        $allows = $action_data['@action'];
-        if ($allows && !preg_grep('#^' . $method . '$#i', $allows)) {
-            throw new HttpException(405, "$action_name doesn't allow $method method.");
+        if (!$is_error) {
+            $method = $request->getMethod();
+            $allows = $action_data['@action'];
+            if ($allows && !preg_grep('#^' . $method . '$#i', $allows)) {
+                throw new HttpException(405, "$action_name doesn't allow $method method.");
+            }
         }
 
-        $context = $request->attributes->get('context');
-        $contexts = $action_data['@context'];
-        if (!in_array('*', $contexts, true) && !preg_grep('#^' . $context . '$#i', $contexts)) {
-            throw new HttpException(404, "$action_name doesn't allow '$context' context.");
+        if (!$is_error) {
+            $context = $request->attributes->get('context');
+            $contexts = $action_data['@context'];
+            if (!in_array('*', $contexts, true) && !preg_grep('#^' . $context . '$#i', $contexts)) {
+                throw new HttpException(404, "$action_name doesn't allow '$context' context.");
+            }
         }
 
         return new $controller_class($this->service, $action_name, $request);
