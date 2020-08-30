@@ -138,7 +138,9 @@ class Service implements HttpKernelInterface
 
     public function run()
     {
-        $this->handle($this->request)->send();
+        $response = $this->handle($this->request);
+        session_write_close();
+        $response->send();
         return $this;
     }
 }
