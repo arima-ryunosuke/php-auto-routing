@@ -43,6 +43,23 @@ class DefaultController extends AbstractController
     {
     }
 
+    public function sessionAction()
+    {
+        $times = $this->session->get('times', []);
+        $times[] = time();
+        $this->session->set('times', $times);
+        return 'セッションデータです<pre>' . var_export($this->session->all(), true);
+    }
+
+    public function jsonAction()
+    {
+        if ($this->request->getContentType() === 'json') {
+            $json = $this->request->request->all();
+            $json['microtime'] = microtime(true);
+            return $this->json($json, JSON_PRETTY_PRINT);
+        }
+    }
+
     /**
      * @param int $id
      * @param string $name

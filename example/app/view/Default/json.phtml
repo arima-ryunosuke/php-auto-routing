@@ -1,0 +1,37 @@
+<?php
+ob_start(); ?>
+このページは JSON リクエストを送りつけるとキーを付け足して返します。<br>
+壊れた JSON を投げると 400 を返します。
+
+<div>
+    <textarea id="json" style="height:180px;">
+    {
+        "a": {
+            "b": {
+                "c": "Z"
+            }
+        }
+    }</textarea>
+    <br>
+    <input type="button" value="send" onclick="send()">
+    <script>
+        function send() {
+            fetch('', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: document.querySelector('#json').value
+            })
+                .then((r) => r.text())
+                .then(function(r){
+                    document.querySelector('#json').value = r;
+                })
+                .catch(console.error);
+        }
+    </script>
+</div>
+
+<?php $contents = ob_get_clean(); ?>
+<?php include __DIR__ . '/../layout.phtml'; ?>
