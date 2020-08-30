@@ -20,6 +20,12 @@
 
 - psr15(middleware) に対応する？
 
+## 1.1.2
+- [feature][Service] requestTypes オプションを実装
+- [fixbug][Router] reverseRoute で正規表現が残ってしまう不具合を修正
+- [fixbug][Router] 仮想ルートに Action が紛れていた不具合を修正
+- [feature][http] CookieSessionHandler を実装
+
 ## 1.1.1
 
 - [feature][Dispatcher] origin ヘッダによる拒否機能

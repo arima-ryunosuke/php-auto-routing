@@ -106,6 +106,9 @@ $service->run();
     - リクエストオブジェクトを指定します
     - デフォルトは `\Symfony\Component\HttpFoundation\Request` です
     - よほど抜き差しならない状況じゃない限り指定する意味はありません
+- requestTypes: `callable[]`
+    - コンテントタイプに基づいてリクエストボディをどのようにパースするかを指定します
+    - デフォルトは json の時に json_decode です
 - sessionStorage: `\Symfony\Component\HttpFoundation\Session\Storage\SessionStorageInterface`
     - セッションストレージを指定します
     - デフォルトは `\Symfony\Component\HttpFoundation\Session\Storage\NativeSessionStorage` です
