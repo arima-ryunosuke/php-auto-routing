@@ -270,7 +270,7 @@ class Router
         $controller = $this->service->dispatcher->dispatchedController;
         list($controller, $action) = [get_class($controller), $controller->action];
         $rname = array_search([$controller, $action], $this->routings[self::ROUTE_ROUTE]);
-        return $rname ?: "$controller::$action" . $controller::ACTION_SUFFIX;
+        return $rname ?: "$controller::$action";
     }
 
     /**
@@ -346,7 +346,7 @@ class Router
             }
             /** @var Controller|string $controller */
             $action_data = $controller::metadata($this->service->cacher)['actions'][$action];
-            $target = "$controller::$action" . $controller::ACTION_SUFFIX;
+            $target = "$controller::$action";
             $rname = array_search([$controller, $action], $this->routings[self::ROUTE_ROUTE]);
             $queryable = $action_data['@queryable'];
 
@@ -387,7 +387,7 @@ class Router
                 $receiver[$contexturl] = [
                     'route'  => $route,
                     'name'   => $rname ?: $target,
-                    'target' => $target,
+                    'target' => $target . $controller::ACTION_SUFFIX,
                     'method' => $action_data['@action'],
                 ];
             }
