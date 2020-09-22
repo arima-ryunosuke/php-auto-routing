@@ -284,6 +284,12 @@ class Router
      */
     public function reverseRoute($name, array $params = [])
     {
+        $cachekey = self::CACHE_KEY . '.reverse.' . sha1($name . '?' . json_encode($params));
+        $cache = $this->service->cacher->get($cachekey);
+        if ($cache !== null) {
+            return $cache;
+        }
+
         if (isset($this->routings[self::ROUTE_ROUTE][$name])) {
             $controller_action = $this->routings[self::ROUTE_ROUTE][$name];
         }
@@ -307,13 +313,18 @@ class Router
                     }
                 }
                 $querystring = $params ? '?' . http_build_query($params) : '';
-                return $this->service->request->getBasePath() . $url . $querystring;
+                $cache = $this->service->request->getBasePath() . $url . $querystring;
+                $this->service->cacher->set($cachekey, $cache);
+                return $cache;
             }
         }
 
-        list($controller, $action) = $controller_action;
+        [$controller, $action] = $controller_action;
         $controller = $this->service->dispatcher->resolveController($controller);
-        return $this->service->resolver->url($controller, $action, $params);
+
+        $cache = $this->service->resolver->url($controller, $action, $params);
+        $this->service->cacher->set($cachekey, $cache);
+        return $cache;
     }
 
     /**
