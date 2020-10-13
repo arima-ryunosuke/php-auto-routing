@@ -55,7 +55,7 @@ class Cacher implements CacheInterface
             return $default;
         }
 
-        list($expire, $value) = $this->entries[$key];
+        [$expire, $value] = $this->entries[$key];
         if ($expire !== null && $expire <= time()) {
             $this->changed = true;
             unset($this->entries[$key]);

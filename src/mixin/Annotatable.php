@@ -13,7 +13,7 @@ trait Annotatable
      * - $member でプロパティ
      * - member でメソッド
      *
-     * @param string $member メンバー名
+     * @param string|null $member メンバー名
      * @return \ReflectionClass|\ReflectionProperty|\ReflectionMethod
      */
     public static function reflect($member = null)
@@ -38,7 +38,7 @@ trait Annotatable
      * のような場合に `[[value1, value2], [value3]]` を返す。
      *
      * @param string $name アノテーション名
-     * @param string $member メンバー名
+     * @param string|null $member メンバー名
      * @param mixed $default デフォルト値
      * @return mixed アノテーションがないなら $default
      */
@@ -86,7 +86,7 @@ trait Annotatable
      * のような場合に `true` を返す。
      *
      * @param string $name アノテーション名
-     * @param string $member メンバー名
+     * @param string|null $member メンバー名
      * @param mixed $default デフォルト値
      * @return mixed アノテーションがないなら $default
      */
@@ -112,7 +112,7 @@ trait Annotatable
      * のような場合に `12` を返す。
      *
      * @param string $name アノテーション名
-     * @param string $member メンバー名
+     * @param string|null $member メンバー名
      * @param mixed $default デフォルト値
      * @return mixed アノテーションがないなら $default
      */
@@ -135,7 +135,7 @@ trait Annotatable
      * のような場合に `"value1 value2"` を返す。
      *
      * @param string $name アノテーション名
-     * @param string $member メンバー名
+     * @param string|null $member メンバー名
      * @param mixed $default デフォルト値
      * @return mixed アノテーションがないなら $default
      */
@@ -159,7 +159,7 @@ trait Annotatable
      *
      * @param string $name アノテーション名
      * @param string $delimiter デリミタ
-     * @param string $member メンバー名
+     * @param string|null $member メンバー名
      * @param mixed $default デフォルト値
      * @return mixed アノテーションがないなら $default
      */
@@ -187,7 +187,7 @@ trait Annotatable
      *
      * @param string $name アノテーション名
      * @param array $keymap 読み替えマップ。 null はキーを表す
-     * @param string $member メンバー名
+     * @param string|null $member メンバー名
      * @param mixed $default デフォルト値
      * @return mixed アノテーションがないなら $default
      */

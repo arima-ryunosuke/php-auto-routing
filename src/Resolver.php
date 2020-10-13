@@ -50,7 +50,7 @@ class Resolver
      * @param string $controller コントローラ名
      * @param string $action アクション名
      * @param array $params パラメーター
-     * @param string $base エイリアス名
+     * @param string|null $base エイリアス名
      * @return string URL
      */
     public function url($controller, $action = '', $params = [], $base = null)
@@ -139,8 +139,8 @@ class Resolver
      *
      * url メソッドの引数簡易版として機能する。
      *
-     * @param string $eitherControllerOrAction コントローラ名 or アクション名
-     * @param string $eitherActionOrParams アクション名 or クエリパラメータ
+     * @param string|null $eitherControllerOrAction コントローラ名 or アクション名
+     * @param string|null $eitherActionOrParams アクション名 or クエリパラメータ
      * @param array $params クエリパラメータ
      * @return string URL
      */

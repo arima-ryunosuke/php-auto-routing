@@ -55,8 +55,7 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals('/hoge/action-id?123&name=hoge', $resolver->url(HogeController::class, 'actionId', ['id' => 123, 'name' => 'hoge']));
 
         $service = $this->provideService([
-            'request' => new class extends Request
-            {
+            'request' => new class extends Request {
                 public function getBaseUrl() { return '/base/path'; }
             }
         ]);
@@ -92,8 +91,7 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
     function test_url_alias()
     {
         $service = $this->provideService([
-            'request' => new class extends Request
-            {
+            'request' => new class extends Request {
                 public function getBaseUrl() { return '/base/path'; }
             }
         ]);

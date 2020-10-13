@@ -71,7 +71,7 @@ class Router
 
         foreach ($this->routings[self::ROUTE_REWRITE] as $from => $routing) {
             if (preg_match("#$from#", $path)) {
-                list($controller, $action) = $routing;
+                [$controller, $action] = $routing;
                 if ($action !== null) {
                     $controller = $this->service->resolver->url($controller, $action, [], '');
                 }
@@ -87,7 +87,7 @@ class Router
 
         foreach ($this->routings[self::ROUTE_REDIRECT] as $from => $routing) {
             if ($from === $path) {
-                list($controller, $action, $status) = $routing;
+                [$controller, $action, $status] = $routing;
                 if ($action !== null) {
                     $action = $action . (strlen($parsed['context']) ? '.' . $parsed['context'] : '');
                     $controller = $this->service->resolver->url($controller, $action, $parsed['parameters']);
@@ -109,7 +109,7 @@ class Router
 
         foreach ($this->routings[self::ROUTE_REGEX] as $regex => $routing) {
             if (preg_match("#^$regex$#u", $path, $matches)) {
-                list($controller, $action) = $routing;
+                [$controller, $action] = $routing;
                 $parsed['controller'] = $this->service->dispatcher->shortenController($controller);
                 $parsed['action'] = $action;
                 // 正規表現ルートは parameters を完全上書き（どうせ渡ってこない）
@@ -127,7 +127,7 @@ class Router
      * url を controller, action, context, parameters に分解
      *
      * @param string $path URL のパス部分
-     * @param string $query URL のクエリ部分
+     * @param string|null $query URL のクエリ部分
      * @return array controller/action/context/parameters を含む配列
      */
     public function parse($path, $query = null)
@@ -152,7 +152,7 @@ class Router
                 // コントローラ/アクションが見つからない時、パラメータ指定とみなして左にずらして再検索
                 while (true) {
                     if (is_string(($ca = $dispatcher->findController($controller_name, $action_name))[0])) {
-                        list($controller_name, $action_name) = $ca;
+                        [$controller_name, $action_name] = $ca;
                         $controller_name = $dispatcher->shortenController($controller_name);
                         break;
                     }
@@ -268,7 +268,7 @@ class Router
     public function currentRoute()
     {
         $controller = $this->service->dispatcher->dispatchedController;
-        list($controller, $action) = [get_class($controller), $controller->action];
+        [$controller, $action] = [get_class($controller), $controller->action];
         $rname = array_search([$controller, $action], $this->routings[self::ROUTE_ROUTE]);
         return $rname ?: "$controller::$action";
     }
@@ -306,7 +306,8 @@ class Router
                 $url = $regex;
                 foreach ($params as $key => $val) {
                     $qkey = preg_quote($key);
-                    if (preg_match("#(\( (\?P?<$qkey>)? (?:[^()]+ | (?1) )* \))#x", $url, $m)) {
+                    $regex = "(\( (\?P?<$qkey>)? (?:[^()]+ | (?1) )* \))";
+                    if (preg_match("#$regex#x", $url, $m)) {
                         // スラッシュは regex ルーティングで使うこともあるので encode しない
                         $val = strtr(rawurlencode($val), ['%2F' => '/']);
                         $url = str_replace($m[1], $val, $url);

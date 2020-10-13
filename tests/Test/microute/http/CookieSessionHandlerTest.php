@@ -1,9 +1,7 @@
 <?php
 namespace ryunosuke\Test\microute\http;
 
-use ryunosuke\microute\Controller;
 use ryunosuke\microute\http\CookieSessionHandler;
-use ryunosuke\Test\stub\Controller\HogeController;
 
 class CookieSessionHandlerTest extends \ryunosuke\Test\AbstractTestCase
 {

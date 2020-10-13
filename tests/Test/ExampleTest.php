@@ -23,7 +23,7 @@ class ExampleTest extends AbstractTestCase
         $crawler = $client->request('GET', '/');
 
         $this->assertEquals(200, $client->getResponse()->getStatusCode());
-        $this->assertContains('DefaultController', $crawler->html());
+        $this->assertStringContainsString('DefaultController', $crawler->html());
         $this->assertEquals('microute Example', $crawler->filter('title')->text());
     }
 
@@ -33,7 +33,7 @@ class ExampleTest extends AbstractTestCase
         $crawler = $client->request('GET', '/alias');
 
         $this->assertEquals(200, $client->getResponse()->getStatusCode());
-        $this->assertContains('DefaultController', $crawler->html());
+        $this->assertStringContainsString('DefaultController', $crawler->html());
     }
 
     function test_urls()
@@ -42,7 +42,7 @@ class ExampleTest extends AbstractTestCase
         $crawler = $client->request('GET', '/urls');
 
         $this->assertEquals(200, $client->getResponse()->getStatusCode());
-        $this->assertContains('/urls', $crawler->html());
+        $this->assertStringContainsString('/urls', $crawler->html());
     }
 
     function test_argument()
@@ -51,7 +51,7 @@ class ExampleTest extends AbstractTestCase
         $crawler = $client->request('GET', '/argument?id=1&name=hoge');
 
         $this->assertEquals(200, $client->getResponse()->getStatusCode());
-        $this->assertContains('/argument?id=1&amp;name=hoge', $crawler->html());
+        $this->assertStringContainsString('/argument?id=1&amp;name=hoge', $crawler->html());
     }
 
     function test_pathful()
@@ -60,7 +60,7 @@ class ExampleTest extends AbstractTestCase
         $crawler = $client->request('GET', '/pathful/1.json');
 
         $this->assertEquals(200, $client->getResponse()->getStatusCode());
-        $this->assertContains('/pathful/1.json', $crawler->html());
+        $this->assertStringContainsString('/pathful/1.json', $crawler->html());
     }
 
     function test_upload()
@@ -73,7 +73,7 @@ class ExampleTest extends AbstractTestCase
         ]);
 
         $this->assertEquals(200, $client->getResponse()->getStatusCode());
-        $this->assertContains(UploadedFile::class, $crawler->html());
+        $this->assertStringContainsString(UploadedFile::class, $crawler->html());
     }
 
     function test_original_hoge()
@@ -82,8 +82,8 @@ class ExampleTest extends AbstractTestCase
         $crawler = $client->request('GET', '/hoge');
 
         $this->assertEquals(302, $client->getResponse()->getStatusCode());
-        $this->assertContains('Redirecting to', $crawler->html());
-        $this->assertContains('/original', $client->followRedirect()->html());
+        $this->assertStringContainsString('Redirecting to', $crawler->html());
+        $this->assertStringContainsString('/original', $client->followRedirect()->html());
     }
 
     function test_original_fuga()
@@ -92,8 +92,8 @@ class ExampleTest extends AbstractTestCase
         $crawler = $client->request('GET', '/fuga');
 
         $this->assertEquals(303, $client->getResponse()->getStatusCode());
-        $this->assertContains('Redirecting to', $crawler->html());
-        $this->assertContains('/original', $client->followRedirect()->html());
+        $this->assertStringContainsString('Redirecting to', $crawler->html());
+        $this->assertStringContainsString('/original', $client->followRedirect()->html());
     }
 
     function test_original_piyo()
@@ -102,7 +102,7 @@ class ExampleTest extends AbstractTestCase
         $crawler = $client->request('GET', '/piyo');
 
         $this->assertEquals(200, $client->getResponse()->getStatusCode());
-        $this->assertContains('/piyo', $crawler->html());
+        $this->assertStringContainsString('/piyo', $crawler->html());
     }
 
     function test_regex()
@@ -111,7 +111,7 @@ class ExampleTest extends AbstractTestCase
         $crawler = $client->request('GET', '/regex/123-hoge');
 
         $this->assertEquals(200, $client->getResponse()->getStatusCode());
-        $this->assertContains('/regex/123-hoge', $crawler->html());
+        $this->assertStringContainsString('/regex/123-hoge', $crawler->html());
     }
 
     function test_context()
@@ -120,7 +120,7 @@ class ExampleTest extends AbstractTestCase
         $crawler = $client->request('GET', '/context.json?id=1');
 
         $this->assertEquals(200, $client->getResponse()->getStatusCode());
-        $this->assertContains('/context.json?id=1', $crawler->html());
+        $this->assertStringContainsString('/context.json?id=1', $crawler->html());
     }
 
     function test_resolver()
@@ -138,7 +138,7 @@ class ExampleTest extends AbstractTestCase
         $crawler = $client->request('GET', '/throw-runtime');
 
         $this->assertEquals(200, $client->getResponse()->getStatusCode());
-        $this->assertContains('throwRuntimeAction', $crawler->html());
+        $this->assertStringContainsString('throwRuntimeAction', $crawler->html());
     }
 
     function test_throw_domain()
@@ -149,7 +149,7 @@ class ExampleTest extends AbstractTestCase
         $this->assertContains('throwDomainAction', ob_get_clean());
 
         $this->assertEquals(500, $client->getResponse()->getStatusCode());
-        $this->assertContains('Stack trace', $crawler->html());
+        $this->assertStringContainsString('Stack trace', $crawler->html());
     }
 
     function test_404()
@@ -158,6 +158,6 @@ class ExampleTest extends AbstractTestCase
         $crawler = $client->request('GET', '/notfound');
 
         $this->assertEquals(404, $client->getResponse()->getStatusCode());
-        $this->assertContains('Stack trace', $crawler->html());
+        $this->assertStringContainsString('Stack trace', $crawler->html());
     }
 }

@@ -118,7 +118,8 @@ class Controller
                         }
                         // タイプヒントから
                         if ($parameter->hasType()) {
-                            $tname = $parameter->getType()->getName();
+                            $type = $parameter->getType();
+                            $tname = $type instanceof \ReflectionNamedType ? $type->getName() : (string) $type;
                             $types[$typemap[strtolower($tname)] ?? $tname] = 'typehint';
                             if ($parameter->allowsNull()) {
                                 $types['null'] = 'typehint';
@@ -198,10 +199,10 @@ class Controller
      * 引数で作成したい場合は普通に new Cookie すればいい。
      *
      * @param array $default 引数配列
-     * @param string $name The name of the cookie
+     * @param string|null $name The name of the cookie
      * @param string|null $value The value of the cookie
      * @param int|string|\DateTimeInterface $expire The time the cookie expires
-     * @param string $path The path on the server in which the cookie will be available on
+     * @param string|null $path The path on the server in which the cookie will be available on
      * @param string|null $domain The domain that the cookie is available to
      * @param bool|null $secure Whether the client should send back the cookie only over HTTPS or null to auto-enable this when the request is already using HTTPS
      * @param bool $httpOnly Whether the cookie will be made accessible only through the HTTP protocol
@@ -261,9 +262,9 @@ class Controller
     /**
      * 指定 Controller/Action へリダイレクト
      *
-     * @param array|string $eitherParamsOrAction パラメータあるいはアクション名
-     * @param string $action アクション名
-     * @param string $controller コントローラ名
+     * @param array|string|null $eitherParamsOrAction パラメータあるいはアクション名
+     * @param string|null $action アクション名
+     * @param string|null $controller コントローラ名
      * @param int $status ステータスコード
      * @return RedirectResponse
      */
@@ -369,7 +370,7 @@ class Controller
         // 認証
         if (($authentication = $metadata['actions'][$this->action]['@authentication'])) {
             $this->request->attributes->remove('authname');
-            list($authmethod, $realm) = explode(' ', $authentication, 2) + [1 => 'Enter username and password'];
+            [$authmethod, $realm] = explode(' ', $authentication, 2) + [1 => 'Enter username and password'];
             $authname = $this->authenticate(strtolower(trim($authmethod)), trim($realm));
             if (!strlen($authname)) {
                 return $this->response;
@@ -569,7 +570,7 @@ class Controller
      * のような場合に使用できる。
      *
      * @param Response $response レスポンスオブジェクト
-     * @param \DateTime|int $lastModified 最終更新時刻
+     * @param \DateTime|int|null $lastModified 最終更新時刻
      * @return bool キャッシュの設定に成功したら(304を返すはずなら) true
      */
     protected function cache(Response $response, $lastModified = null)
@@ -646,11 +647,12 @@ class Controller
         }
         // 拡張子が .json ならビュー変数を json で返すとか
         if ($this->request->attributes->get('context') === 'json') {
-            return $this->json((array) $this->view);
+            return $this->json((array) $this);
         }
         // アクションメソッドが何も返さなかったらレンダリングして返すとか
         if ($action_value === null) {
-            return $this->response->setContent((static function () {
+            return $this->response->setContent((static function (...$dummy) {
+                unset($dummy);
                 ob_start();
                 extract(func_get_arg(1));
                 include func_get_arg(0);

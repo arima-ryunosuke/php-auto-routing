@@ -112,7 +112,7 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
             $authheader = explode(' ', $authheader, 2)[1];
             $auth = [];
             foreach (array_map('trim', str_getcsv($authheader)) as $token) {
-                list($key, $value) = explode('=', $token, 2);
+                [$key, $value] = explode('=', $token, 2);
                 $auth[$key] = trim($value, '"');
             }
             $response = $md5implode(

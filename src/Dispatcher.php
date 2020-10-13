@@ -45,7 +45,7 @@ class Dispatcher
         $controller_action = $this->findController($matched['controller'], $matched['action']);
 
         if (is_string($controller_action[0])) {
-            list($controller_class, $action_name) = $controller_action;
+            [$controller_class, $action_name] = $controller_action;
             $this->dispatchedController = $controller = $this->loadController($controller_class, $action_name, $request);
             $metadata = $controller::metadata($this->service->cacher);
 
