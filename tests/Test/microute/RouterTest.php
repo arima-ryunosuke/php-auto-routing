@@ -312,13 +312,22 @@ class RouterTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals('/hoge/detail/789', $url);
     }
 
+    function test_reverseRoute_name_and_index()
+    {
+        $service = $this->service;
+        $service->router->route('routeName', HogeController::class, 'default');
+        $service->router->regex('/hoge/fuga/(?<piyo>(a|b)\\\\[a-z]+(\\d))-(\d+)', HogeController::class, 'default');
+        $url = $service->router->reverseRoute('routeName', ['piyo' => 'a\\foo1', 'dummy' => 0]);
+        $this->assertEquals('/hoge/fuga/a%5Cfoo1-0', $url);
+    }
+
     function test_reverseRoute_encode()
     {
         $service = $this->service;
         $service->router->route('routeName', HogeController::class, 'default');
         $service->router->regex('/(?<name>.+)', HogeController::class, 'default');
         $url = $service->router->reverseRoute('routeName', ['name' => '#?/']);
-        $this->assertEquals('/%23%3F%2F', $url);
+        $this->assertEquals('/%23%3F/', $url);
     }
 
     function test_reverseRoute_misc()
@@ -358,7 +367,7 @@ class RouterTest extends \ryunosuke\Test\AbstractTestCase
         $service->router->route('routeName', HogeController::class, 'default');
         $service->router->regex('(?<name>.+)', HogeController::class, 'default');
         $url = $service->router->reverseRoute('routeName', ['name' => '#?/']);
-        $this->assertEquals('/basepath/hoge/%23%3F%2F', $url);
+        $this->assertEquals('/basepath/hoge/%23%3F/', $url);
     }
 
     function test_urls()

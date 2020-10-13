@@ -305,10 +305,11 @@ class Router
             if ($rca === $controller_action) {
                 $url = $regex;
                 foreach ($params as $key => $val) {
-                    $named = '\?P?<' . preg_quote($key) . '>';
-                    $ident = '\( (?:[^()]+ | (?1) )* \)';
-                    if (preg_match("#($named|$ident)#x", $url, $m)) {
-                        $url = str_replace($m[1], rawurlencode($val), $url);
+                    $qkey = preg_quote($key);
+                    if (preg_match("#(\( (\?P?<$qkey>)? (?:[^()]+ | (?1) )* \))#x", $url, $m)) {
+                        // スラッシュは regex ルーティングで使うこともあるので encode しない
+                        $val = strtr(rawurlencode($val), ['%2F' => '/']);
+                        $url = str_replace($m[1], $val, $url);
                         unset($params[$key]);
                     }
                 }
