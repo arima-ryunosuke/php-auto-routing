@@ -22,6 +22,12 @@ class ServiceTest extends \ryunosuke\Test\AbstractTestCase
 
     function test___construct()
     {
+        Request::setFactory(function ($query, $request, $attributes, $cookies, $files, $server, $content) {
+            $server['CONTENT_TYPE'] = 'application/json';
+            $content = json_encode(['A' => ['B' => ['C' => 'Z']]]);
+            return new Request($query, $request, $attributes, $cookies, $files, $server, $content);
+        });
+
         spl_autoload_register(function ($class) {
             $localname = str_replace('ryunosuke\\Test\\stub\\Controller\\', '', $class);
             $localpath = str_replace('\\', DIRECTORY_SEPARATOR, $localname);
@@ -37,6 +43,9 @@ class ServiceTest extends \ryunosuke\Test\AbstractTestCase
 
         $this->assertEquals('ryunosuke\\Test\\stub\\Controller\\', $service->controllerNamespace);
         $this->assertEquals(realpath(__DIR__ . '/../../stub/Controller') . DIRECTORY_SEPARATOR, $service->controllerDirectory);
+        $this->assertEquals(['A' => ['B' => ['C' => 'Z']]], $service->request->request->all());
+
+        Request::setFactory(null);
     }
 
     function test___isset()
@@ -99,7 +108,5 @@ class ServiceTest extends \ryunosuke\Test\AbstractTestCase
         ]);
         $service->run();
         $this->assertInstanceOf(\Throwable::class, $logs[0]);
-
-        Request::setFactory(null);
     }
 }

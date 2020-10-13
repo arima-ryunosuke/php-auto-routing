@@ -25,6 +25,7 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
  * @property-read string                  $controllerDirectory
  *
  * @property-read Request                 $request
+ * @property-read callable[]              $requestTypes
  * @property-read SessionStorageInterface $sessionStorage
  * @property-read string                  $parameterDelimiter
  * @property-read string                  $parameterSeparator
@@ -57,9 +58,20 @@ class Service implements HttpKernelInterface
 
         $this->values['request'] = $values['request'] ?? function () {
                 $request = Request::createFromGlobals();
+
+                $conv = $this->requestTypes[$request->getContentType()] ?? null;
+                if ($conv !== null) {
+                    $request->request->replace($conv($request->getContent()));
+                }
+
                 $request->setSessionFactory(function () { return new Session($this->sessionStorage); });
                 return $request;
             };
+        $this->values['requestTypes'] = $values['requestTypes'] ?? [
+                'json' => function ($content) {
+                    return json_decode($content, true);
+                },
+            ];
         $this->values['sessionStorage'] = $values['sessionStorage'] ?? function () { return new NativeSessionStorage(); };
         $this->values['parameterDelimiter'] = $values['parameterDelimiter'] ?? '?';
         $this->values['parameterSeparator'] = $values['parameterSeparator'] ?? '&';
