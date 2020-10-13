@@ -214,7 +214,7 @@ class Dispatcher
         $is_error = $action_name === 'error';
 
         if (!$this->service->debug && !$is_error) {
-            if ($action_data['@origin'] && !$request->isMethodSafe(false)) {
+            if ($action_data['@origin'] && !$request->isMethodSafe()) {
                 if (strlen($origin = $request->headers->get('origin'))) {
                     foreach ($action_data['@origin'] as $allowed) {
                         if (fnmatch($allowed, $origin)) {
