@@ -3,6 +3,7 @@ namespace ryunosuke\microute;
 
 use Psr\SimpleCache\CacheInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpFoundation\Session\Storage\NativeSessionStorage;
 use Symfony\Component\HttpFoundation\Session\Storage\SessionStorageInterface;
@@ -138,7 +139,13 @@ class Service implements HttpKernelInterface
 
     public function run()
     {
-        $response = $this->handle($this->request);
+        try {
+            $response = $this->handle($this->request);
+        }
+        catch (\Throwable $t) {
+            ($this->logger)($t);
+            $response = new Response('', 400);
+        }
         session_write_close();
         $response->send();
         return $this;

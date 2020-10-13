@@ -85,11 +85,21 @@ class ServiceTest extends \ryunosuke\Test\AbstractTestCase
 
     function test_run_error()
     {
+        Request::setFactory(function ($query, $request, $attributes, $cookies, $files, $server, $content) {
+            throw new \TypeError();
+        });
+
+        $logs = [];
         $service = $this->provideService([
-            'request' => Request::create('none'),
+            'logger' => function () use (&$logs) {
+                return function ($t) use (&$logs) {
+                    $logs[] = $t;
+                };
+            },
         ]);
-        ob_start();
         $service->run();
-        $this->assertEquals('Symfony\\Component\\HttpKernel\\Exception\\HttpException', ob_get_clean());
+        $this->assertInstanceOf(\Throwable::class, $logs[0]);
+
+        Request::setFactory(null);
     }
 }
