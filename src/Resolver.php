@@ -243,6 +243,57 @@ class Resolver
     }
 
     /**
+     * クエリビルダー
+     *
+     * 現在のクエリに付与・除去した新しいクエリストリングを返す。
+     * 連想配列は再帰する。
+     * クロージャを与えると元の値を引数としてコールバックされる（ない場合は null）。
+     * null を与えるとパラメータから除去される。
+     *
+     * @param array $params 付与・除去するパラメータ
+     * @param array $current 元となるクエリパラメータ（デバッグ・テスト用）
+     * @return string クエリ文字列
+     */
+    public function query($params, $current = [])
+    {
+        $is_hasharray = function ($array) {
+            if (!is_array($array)) {
+                return false;
+            }
+            foreach ($array as $k => $dummy) {
+                if (!is_int($k)) {
+                    return true;
+                }
+            }
+            return false;
+        };
+        $main = function ($array, $newarray) use (&$main, $is_hasharray) {
+            foreach ($newarray as $k => $v) {
+                // 連想配列は再帰する
+                if (array_key_exists($k, $array) && $is_hasharray($array[$k]) && $is_hasharray($v)) {
+                    $array[$k] = $main($array[$k], $v);
+                }
+                // クロージャはコールバック
+                elseif ($v instanceof \Closure) {
+                    $array[$k] = $v($array[$k] ?? null);
+                }
+                // それ以外は単純上書き
+                else {
+                    $array[$k] = $v;
+                }
+            }
+            return $array;
+        };
+
+        $current = $main($current ?: $this->service->request->query->all(), $params);
+        $query = preg_replace('#%5B\d+%5D=#', '%5B%5D=', http_build_query($current));
+        if (!strlen($query)) {
+            return '';
+        }
+        return '?' . $query;
+    }
+
+    /**
      * data URI 化する
      *
      * いろいろ引数は用意しているが原則として指定しなくても特に問題はない。

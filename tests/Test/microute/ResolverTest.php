@@ -189,6 +189,73 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals("/css/style.css?$style_css_mtime", $url);
     }
 
+    function test_query()
+    {
+        $service = $this->service;
+        $resolver = $service->resolver;
+        $current = [
+            'flat' => 123,
+            'list' => [1, 2, 3],
+            'hash' => [
+                'a' => 1,
+                'b' => 2,
+                'c' => 3,
+            ],
+            'nest' => [
+                'x' => [
+                    'y' => [
+                        'z' => 'xyz',
+                    ],
+                ],
+            ],
+            'recu' => [[['z']]],
+        ];
+        $null = [
+            'flat' => null,
+            'list' => null,
+            'hash' => null,
+            'nest' => null,
+            'recu' => null,
+        ];
+        $this->assertEquals('', $resolver->query([], []));
+        $this->assertEquals('', $resolver->query($null, []));
+        $this->assertEquals('?new=789', $resolver->query([
+                'new' => 789,
+            ] + $null, $current));
+        $this->assertEquals('?list%5B%5D=1&list%5B%5D=2&list%5B%5D=3&list%5B%5D=4&new=1', $resolver->query([
+                'new'  => function ($current) {
+                    return intval(is_null($current));
+                },
+                'list' => function ($current) {
+                    $current[] = 4;
+                    return $current;
+                },
+            ] + $null, $current));
+        $this->assertEquals('?list%5B%5D=123', $resolver->query([
+                'list' => [123],
+            ] + $null, $current));
+        $this->assertEquals('?hash%5Ba%5D=1&hash%5Bb%5D=7&hash%5Bd%5D=10', $resolver->query([
+                'hash' => [
+                    'b' => 7,
+                    'c' => null,
+                    'd' => 10,
+                ],
+            ] + $null, $current));
+        $this->assertEquals('?nest%5Bx%5D%5By%5D%5Bz%5D=XYZ&nest%5Bx%5D%5By%5D%5BZ%5D%5B%5D=z&nest%5Bx%5D%5BY%5D%5B%5D=y&nest%5BX%5D%5B%5D=x', $resolver->query([
+                'nest' => [
+                    'x' => [
+                        'y' => [
+                            'z' => 'XYZ',
+                            'Z' => ['z'],
+                        ],
+                        'Y' => ['y'],
+                    ],
+                    'X' => ['x'],
+                ],
+            ] + $null, $current));
+        $this->assertEquals('?flat=123&list%5B%5D=1&list%5B%5D=2&list%5B%5D=3&hash%5Ba%5D=1&hash%5Bb%5D=2&hash%5Bc%5D=3&nest%5Bx%5D%5By%5D%5Bz%5D=xyz&recu%5B0%5D%5B0%5D%5B%5D=z', $resolver->query([], $current));
+    }
+
     function test_data()
     {
         $service = $this->service;
