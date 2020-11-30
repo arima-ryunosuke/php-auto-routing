@@ -24,6 +24,7 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
  * @property-read string                  $controllerNamespace
  * @property-read string                  $controllerDirectory
  *
+ * @property-read Request                 $requestClass
  * @property-read Request                 $request
  * @property-read callable[]              $requestTypes
  * @property-read SessionStorageInterface $sessionStorage
@@ -56,8 +57,10 @@ class Service implements HttpKernelInterface
         $this->values['resolver'] = $values['resolver'] ?? function () { return new Resolver($this); };
         $this->values['controllerClass'] = $values['controllerClass'] ?? Controller::class;
 
+        $this->values['requestClass'] = $values['requestClass'] ?? Request::class;
         $this->values['request'] = $values['request'] ?? function () {
-                $request = Request::createFromGlobals();
+                $requestClass = $this->requestClass;
+                $request = $requestClass::createFromGlobals();
 
                 $conv = $this->requestTypes[$request->getContentType()] ?? null;
                 if ($conv !== null) {
