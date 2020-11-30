@@ -3,6 +3,8 @@ namespace ryunosuke\Test\microute;
 
 use ryunosuke\microute\Router;
 use ryunosuke\Test\stub\Controller\HogeController;
+use ryunosuke\Test\stub\Controller\PriorityController;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 
 class RouterTest extends \ryunosuke\Test\AbstractTestCase
@@ -289,6 +291,64 @@ class RouterTest extends \ryunosuke\Test\AbstractTestCase
             ],
             'route'      => 'regex',
         ], $route);
+    }
+
+    function test_priority()
+    {
+        $service = $this->service;
+        $service->router->rewrite('/hoge/action-simple', '/rewrite');
+        $service->router->redirect('/hoge/action-simple', '/redirect');
+        $service->router->alias('/hoge', 'alias');
+        $service->router->regex('/hoge/action-simple', HogeController::class, 'default');
+
+        $priority = function ($priority) use ($service) {
+            $frozen = new \ReflectionProperty($service, 'frozen');
+            $frozen->setAccessible(true);
+            $current = $frozen->getValue($service);
+            $current['priority'] = $priority;
+            $frozen->setValue($service, $current);
+        };
+
+        $priority(['rewrite', 'redirect', 'alias', 'regex', 'default']);
+        $route = $service->router->match(Request::create('/hoge/action-simple'));
+        $this->assertArraySubset([
+            'controller' => "",
+            'action'     => "rewrite",
+            'route'      => "rewrite",
+        ], $route);
+
+        $priority(['redirect', 'alias', 'regex', 'default', 'rewrite']);
+        $route = $service->router->match(Request::create('/hoge/action-simple'));
+        $this->assertInstanceOf(RedirectResponse::class, $route);
+
+        $priority(['alias', 'regex', 'default', 'rewrite', 'redirect']);
+        $route = $service->router->match(Request::create('/hoge/action-simple'));
+        $this->assertArraySubset([
+            'controller' => "alias",
+            'action'     => "actionSimple",
+            'route'      => "alias",
+        ], $route);
+
+        $priority(['regex', 'default', 'rewrite', 'redirect', 'alias']);
+        $route = $service->router->match(Request::create('/hoge/action-simple'));
+        $this->assertArraySubset([
+            'controller' => "Hoge",
+            'action'     => "default",
+            'route'      => "regex",
+        ], $route);
+
+        $priority(['default', 'rewrite', 'redirect', 'alias', 'regex']);
+        $route = $service->router->match(Request::create('/hoge/action-simple'));
+        $this->assertArraySubset([
+            'controller' => "Hoge",
+            'action'     => "actionSimple",
+            'route'      => "default",
+        ], $route);
+
+        $priority(['undefined']);
+        $this->assertException('is not defined route method', function () use ($service) {
+            $service->router->match(Request::create('/'));
+        });
     }
 
     function test_currentRoute()

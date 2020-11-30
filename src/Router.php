@@ -67,56 +67,75 @@ class Router
     {
         $path = $request->getPathInfo();
         $query = $request->server->get('QUERY_STRING'); // getQueryString は正規化されてるので使ってはならない
-        $route = self::ROUTE_DEFAULT;
-
-        foreach ($this->routings[self::ROUTE_REWRITE] as $from => $routing) {
-            if (preg_match("#$from#", $path)) {
-                [$controller, $action] = $routing;
-                if ($action !== null) {
-                    $controller = $this->service->resolver->url($controller, $action, [], '');
-                }
-                $path = preg_replace("#$from#", $controller, $path);
-                $route = self::ROUTE_REWRITE;
-                break;
-            }
-        }
 
         $parentpath = rtrim(preg_replace('#((.+)/)+(.*)#', '$1', preg_replace('#\\.[^/.]*$#', '', $path)), '/');
         $parsed = $this->parse($path, $query);
-        $parsed['route'] = $route;
+        $parsed['route'] = null;
 
-        foreach ($this->routings[self::ROUTE_REDIRECT] as $from => $routing) {
-            if ($from === $path) {
-                [$controller, $action, $status] = $routing;
-                if ($action !== null) {
-                    $action = $action . (strlen($parsed['context']) ? '.' . $parsed['context'] : '');
-                    $controller = $this->service->resolver->url($controller, $action, $parsed['parameters']);
-                }
-                return new RedirectResponse($controller, $status);
-            }
-        }
-
-        foreach ($this->routings[self::ROUTE_ALIAS] as $from => $to) {
-            if ($from === $parentpath) {
-                if ($parsed['controller'] === '' || $parentpath === $path) {
-                    $parsed['action'] = 'default';
-                }
-                $parsed['controller'] = $this->service->dispatcher->shortenController($to);
-                $parsed['route'] = self::ROUTE_ALIAS;
-                return $parsed;
-            }
-        }
-
-        foreach ($this->routings[self::ROUTE_REGEX] as $regex => $routing) {
-            if (preg_match("#^$regex$#u", $path, $matches)) {
-                [$controller, $action] = $routing;
-                $parsed['controller'] = $this->service->dispatcher->shortenController($controller);
-                $parsed['action'] = $action;
-                // 正規表現ルートは parameters を完全上書き（どうせ渡ってこない）
-                array_shift($matches);
-                $parsed['parameters'] = $matches;
-                $parsed['route'] = self::ROUTE_REGEX;
-                return $parsed;
+        $priority = $this->service->priority;
+        foreach ($priority as $prefer) {
+            switch ($prefer) {
+                default:
+                    throw new \UnexpectedValueException("$prefer is not defined route method");
+                case 'default':
+                    if (is_string($this->service->dispatcher->findController($parsed['controller'], $parsed['action'])[0])) {
+                        $parsed['route'] = $parsed['route'] ?? self::ROUTE_DEFAULT;
+                        return $parsed;
+                    }
+                    break;
+                case 'rewrite':
+                    foreach ($this->routings[self::ROUTE_REWRITE] as $from => $routing) {
+                        if (preg_match("#$from#", $path)) {
+                            [$controller, $action] = $routing;
+                            if ($action !== null) {
+                                $controller = $this->service->resolver->url($controller, $action, [], '');
+                            }
+                            $path = preg_replace("#$from#", $controller, $path);
+                            $parentpath = rtrim(preg_replace('#((.+)/)+(.*)#', '$1', preg_replace('#\\.[^/.]*$#', '', $path)), '/');
+                            $parsed = $this->parse($path, $query);
+                            $parsed['route'] = self::ROUTE_REWRITE;
+                            break;
+                        }
+                    }
+                    break;
+                case 'redirect':
+                    foreach ($this->routings[self::ROUTE_REDIRECT] as $from => $routing) {
+                        if ($from === $path) {
+                            [$controller, $action, $status] = $routing;
+                            if ($action !== null) {
+                                $action = $action . (strlen($parsed['context']) ? '.' . $parsed['context'] : '');
+                                $controller = $this->service->resolver->url($controller, $action, $parsed['parameters']);
+                            }
+                            return new RedirectResponse($controller, $status);
+                        }
+                    }
+                    break;
+                case 'alias':
+                    foreach ($this->routings[self::ROUTE_ALIAS] as $from => $to) {
+                        if ($from === $parentpath) {
+                            if ($parsed['controller'] === '' || $parentpath === $path) {
+                                $parsed['action'] = 'default';
+                            }
+                            $parsed['controller'] = $this->service->dispatcher->shortenController($to);
+                            $parsed['route'] = self::ROUTE_ALIAS;
+                            return $parsed;
+                        }
+                    }
+                    break;
+                case 'regex':
+                    foreach ($this->routings[self::ROUTE_REGEX] as $regex => $routing) {
+                        if (preg_match("#^$regex$#u", $path, $matches)) {
+                            [$controller, $action] = $routing;
+                            $parsed['controller'] = $this->service->dispatcher->shortenController($controller);
+                            $parsed['action'] = $action;
+                            // 正規表現ルートは parameters を完全上書き（どうせ渡ってこない）
+                            array_shift($matches);
+                            $parsed['parameters'] = $matches;
+                            $parsed['route'] = self::ROUTE_REGEX;
+                            return $parsed;
+                        }
+                    }
+                    break;
             }
         }
 
