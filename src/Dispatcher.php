@@ -214,9 +214,14 @@ class Dispatcher
         $is_error = $action_name === 'error';
 
         if (!$this->service->debug && !$is_error) {
-            if ($action_data['@origin'] && !$request->isMethodSafe()) {
+            $origins = $this->service->origin;
+            if ($origins instanceof \Closure) {
+                $origins = $origins($this->service);
+            }
+            $origins = array_merge($origins, $action_data['@origin']);
+            if ($origins && !$request->isMethodSafe()) {
                 if (strlen($origin = $request->headers->get('origin'))) {
-                    foreach ($action_data['@origin'] as $allowed) {
+                    foreach ($origins as $allowed) {
                         if (fnmatch($allowed, $origin)) {
                             goto OK;
                         }

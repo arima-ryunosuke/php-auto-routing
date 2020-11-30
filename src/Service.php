@@ -16,6 +16,7 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
  * @property-read bool                    $debug
  * @property-read CacheInterface          $cacher
  * @property-read \Closure                $logger
+ * @property-read string[]|\Closure       $origin
  *
  * @property-read Router                  $router
  * @property-read Dispatcher              $dispatcher
@@ -51,6 +52,7 @@ class Service implements HttpKernelInterface
         $this->values['debug'] = $values['debug'] ?? false;
         $this->values['cacher'] = $values['cacher'] ?? new Cacher();
         $this->values['logger'] = $values['logger'] ?? function () { return function ($ex, $request) { }; };
+        $this->values['origin'] = $values['origin'] ?? [];
 
         $this->values['router'] = $values['router'] ?? function () { return new Router($this); };
         $this->values['dispatcher'] = $values['dispatcher'] ?? function () { return new Dispatcher($this); };
