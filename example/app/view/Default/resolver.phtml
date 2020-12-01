@@ -48,6 +48,17 @@ Resolver のサンプルです。結果しか表示していないので「何�
         </td>
     </tr>
     <tr>
+        <th>クエリ生成</th>
+        <td>
+            <code><?php echo '?' . htmlspecialchars($request->getQueryString()) ?></code>（現在のクエリストリング）<br>
+            <code><?php echo htmlspecialchars($resolver->query([
+                    'param1' => 789,
+                    'param2' => null,
+                    'param3' => ['X']
+                ])) ?></code>（param1 を書き換えて param2 を削除して param3 を追加したクエリストリング）<br>
+        </td>
+    </tr>
+    <tr>
         <th>DATA URI（画像ファイル）</th>
         <td><img src="<?php echo $resolver->data(__DIR__ . '/../../resource/image.png') ?>" alt=""></td>
     </tr>

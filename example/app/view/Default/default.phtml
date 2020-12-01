@@ -55,7 +55,10 @@
     </tr>
     <tr>
         <th>正規表現ルーティングです</th>
-        <td><a href="<?php echo $resolver->path() ?>regex/123-hoge">regex/123-hoge</a></td>
+        <td>
+            <a href="<?php echo $resolver->path() ?>regex/123-hoge">regex/123-hoge</a><br>
+            <a href="<?php echo $resolver->path() ?>aplhanum">aplhanum</a><br>
+        </td>
     </tr>
     <tr>
         <th>コンテキスト（拡張子）付きアクセスです。json,xml 以外だと 404 になります</th>
@@ -80,7 +83,7 @@
     </tr>
     <tr>
         <th>resolver のサンプルページです</th>
-        <td><a href="<?php echo $resolver->path() ?>resolver">resolver</a></td>
+        <td><a href="<?php echo $resolver->path() ?>resolver?param1=123&amp;param2=456">resolver?param1=123&amp;param2=456</a></td>
     </tr>
     <tr>
         <th>例外を投げます。コントローラレベルで補足されます</th>

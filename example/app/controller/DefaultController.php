@@ -121,12 +121,21 @@ class DefaultController extends AbstractController
      * @param string $name
      * @return string
      */
-    public function regexAction($id, $name)
+    public function articleAction($id, $name)
     {
         return '$id は名前付きキャプチャ、$name は2番目マッチで2番目の引数に渡ってきます<pre>' . var_export([
                 'url'       => $this->request->getRequestUri(),
                 'parameter' => compact('id', 'name'),
             ], true);
+    }
+
+    /**
+     * @regex /[_a-zA-Z0-9]+
+     * @return string
+     */
+    public function anyregexAction()
+    {
+        return '本来なら [_\-a-zA-Z0-9]+ にマッチするあらゆるリクエストがここに到達しますが、正規表現ルーティングの優先順位を下げているので、他のルーティングで到達しなかった場合のみ到達します';
     }
 
     /**

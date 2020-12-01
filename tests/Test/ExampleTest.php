@@ -155,7 +155,7 @@ class ExampleTest extends AbstractTestCase
     function test_404()
     {
         $client = new HttpKernelBrowser($this->service);
-        $crawler = $client->request('GET', '/notfound');
+        $crawler = $client->request('GET', '/not-found');
 
         $this->assertEquals(404, $client->getResponse()->getStatusCode());
         $this->assertStringContainsString('Stack trace', $crawler->html());
