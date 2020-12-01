@@ -20,7 +20,15 @@
 
 - psr15(middleware) に対応する？
 
+## 1.1.3
+
+- [feature][Resolver] クエリパラメータの生成を行う query メソッドを追加
+- [feature][Router] ルーティングの優先順位を指定可能にした
+- [feature][Dispatcher] origin ヘッダの検証をコントローラレベルではなくグローバルレベルに拡張
+- [feature][Service] requestClass 名を注入できるように修正
+
 ## 1.1.2
+
 - [feature][Service] requestTypes オプションを実装
 - [fixbug][Router] reverseRoute で正規表現が残ってしまう不具合を修正
 - [fixbug][Router] 仮想ルートに Action が紛れていた不具合を修正

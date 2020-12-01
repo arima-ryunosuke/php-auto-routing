@@ -89,6 +89,14 @@ $service->run();
 - **logger**: `callable`
     - 未キャッチ例外をログる callable を渡します
     - デフォルトは何もしません
+- origin: `array|Closure`
+    - 許容する origin ヘッダを指定します
+    - Controller のアノテーションでも指定できますが、ここで設定するとシステムワイドに適用されます
+    - クロージャを渡すとその都度状況に応じて配列を返すことができます
+    - デフォルトは `[]` です
+- priority: `array`
+    - ルーティングの優先順位を指定します
+    - デフォルトは `['rewrite', 'redirect', 'alias', 'regex', 'default']` です
 - router: `\ryunosuke\microute\Router`
     - Router インスタンスを指定します
     - よほど抜き差しならない状況じゃない限り指定する意味はありません
@@ -101,6 +109,10 @@ $service->run();
 - controllerClass: string
     - Controller の基底クラス名を指定します
     - デフォルトは `\ryunosuke\microute\Controller::class` です
+    - よほど抜き差しならない状況じゃない限り指定する意味はありません
+- requestClass: string
+    - リクエストオブジェクトのクラス名を指定します
+    - デフォルトは `\Symfony\Component\HttpFoundation\Request::class` です
     - よほど抜き差しならない状況じゃない限り指定する意味はありません
 - request: `\Symfony\Component\HttpFoundation\Request`
     - リクエストオブジェクトを指定します
@@ -296,6 +308,7 @@ $service->run();
     - ヘッダには `fnmatch` によるワイルドカードが使えます。複数指定するといずれかにマッチすれば許可されます
     - 未指定時は Origin ヘッダの検証を行いません
     - 値省略時は Origin ヘッダの検証を行いません
+    - グローバルの origin 設定を上書きするものではありません
 - [S] @ajaxable
     - Ajax リクエスト以外受け付けません
     - `@ajaxable 403` とすると普通にアクセスしても 403 になります。ただし、デバッグ時はアクセス可能です
