@@ -1,9 +1,11 @@
 <?php
 namespace ryunosuke\Test\microute;
 
+use ryunosuke\microute\Controller;
 use ryunosuke\microute\Service;
 use ryunosuke\Test\stub\Controller\DefaultController;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class ServiceTest extends \ryunosuke\Test\AbstractTestCase
@@ -80,6 +82,77 @@ class ServiceTest extends \ryunosuke\Test\AbstractTestCase
         $service = $this->service;
         $response = $service->handle(Request::create('sub-sub/foo-bar/notfound'));
         $this->assertEquals('ryunosuke\\Test\\stub\\Controller\\SubSub\\DefaultController::errorAction', $response->getContent());
+    }
+
+    function test_event()
+    {
+        $logs = [];
+        $self = $this;
+        $service = $this->provideService([
+            'logger' => function () use (&$logs) {
+                return function (\Throwable $t) use (&$logs) {
+                    $logs[] = $t->getMessage();
+                };
+            },
+            'events' => [
+                'request'  => [
+                    function (Request $request) use ($self) {
+                        $self->assertInstanceOf(Service::class, $this);
+                        $request->attributes->set('a', 'A');
+                        return false;
+                    },
+                    function (Request $request) use ($self) {
+                        $self->fail();
+                    },
+                ],
+                'dispatch' => [
+                    function (Controller $controller) use ($self) {
+                        $self->assertInstanceOf(Service::class, $this);
+                        throw new \Exception('on dispatch');
+                    },
+                    function (Controller $controller) use ($self) {
+                        $self->fail();
+                    },
+                ],
+                'error'    => function (\Throwable $t) use ($self) {
+                    $self->assertInstanceOf(Service::class, $this);
+                },
+                'response' => [
+                    function (Response $response) use ($self) {
+                        $self->assertInstanceOf(Service::class, $this);
+                        $response->setContent('X');
+                    },
+                    function (Response $response) use ($self) {
+                        $self->assertInstanceOf(Service::class, $this);
+                        return new Response($response->getContent() . 'Y');
+                    },
+                ],
+            ],
+        ]);
+        $response = $service->handle($service->request);
+        $this->assertEquals('XY', $response->getContent());
+        $this->assertEquals('A', $service->request->attributes->get('a'));
+        $this->assertEquals('on dispatch', $logs[0]);
+
+        $service = $this->provideService([
+            'events' => [
+                'request'  => function (Request $request) {
+                    return new Response('on request');
+                },
+                'dispatch' => function () use ($self) {
+                    $self->fail();
+                },
+                'error'    => function () use ($self) {
+                    $self->fail();
+                },
+                'response' => function (Response $response) {
+                    $response->setStatusCode(201);
+                },
+            ],
+        ]);
+        $response = $service->handle($service->request);
+        $this->assertEquals(201, $response->getStatusCode());
+        $this->assertEquals('on request', $response->getContent());
     }
 
     function test_run()

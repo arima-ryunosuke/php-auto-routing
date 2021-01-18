@@ -16,6 +16,7 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
  * @property-read bool                    $debug
  * @property-read CacheInterface          $cacher
  * @property-read \Closure                $logger
+ * @property-read callable[][]            $events
  * @property-read string[]|\Closure       $origin
  * @property-read string[]                $priority
  *
@@ -55,6 +56,7 @@ class Service implements HttpKernelInterface
         $this->values['logger'] = $values['logger'] ?? function () { return function ($ex, $request) { }; };
         $this->values['origin'] = $values['origin'] ?? [];
         $this->values['priority'] = $values['priority'] ?? ['rewrite', 'redirect', 'alias', 'regex', 'default'];
+        $this->values['events'] = $values['events'] ?? [];
 
         $this->values['router'] = $values['router'] ?? function () { return new Router($this); };
         $this->values['dispatcher'] = $values['dispatcher'] ?? function () { return new Dispatcher($this); };
@@ -134,6 +136,24 @@ class Service implements HttpKernelInterface
         return $this->frozen[$name];
     }
 
+    public function trigger($name, ...$args)
+    {
+        $events = $this->events[$name] ?? [];
+        if (is_callable($events)) {
+            $events = [$events];
+        }
+
+        foreach ($events as $listener) {
+            $return = \Closure::fromCallable($listener)->call($this, ...$args);
+            if ($return === false) {
+                break;
+            }
+            if ($return instanceof Response) {
+                return $return;
+            }
+        }
+    }
+
     /**
      * @inheritDoc
      */
@@ -142,14 +162,15 @@ class Service implements HttpKernelInterface
         $dispacher = $this->dispatcher;
 
         try {
-            $response = $dispacher->dispatch($request);
+            $response = $this->trigger('request', $request) ?? $dispacher->dispatch($request);
         }
         catch (\Exception $ex) {
             if (!$catch) {
                 throw $ex;
             }
-            $response = $dispacher->error($ex, $request);
+            $response = $this->trigger('error', $ex) ?? $dispacher->error($ex, $request);
         }
+        $response = $this->trigger('response', $response) ?? $dispacher->finish($response, $request);
 
         $response->prepare($request);
 

@@ -52,7 +52,7 @@ class Dispatcher
                 throw new HttpException(404, "$controller_class::$action_name is not allowed default routhing.");
             }
 
-            return $controller->dispatch($this->detectArgument($controller, $matched['parameters']));
+            return $this->service->trigger('dispatch', $controller) ?? $controller->dispatch($this->detectArgument($controller, $matched['parameters']));
         }
 
         throw new HttpException(...$controller_action);
