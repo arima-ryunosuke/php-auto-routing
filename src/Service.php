@@ -68,7 +68,7 @@ class Service implements HttpKernelInterface
 
                 $conv = $this->requestTypes[$request->getContentType()] ?? null;
                 if ($conv !== null) {
-                    $request->request->replace($conv($request->getContent()));
+                    $request->request->replace($conv($request->getContent()) ?? []);
                 }
 
                 $request->setSessionFactory(function () { return new Session($this->sessionStorage); });

@@ -39,7 +39,6 @@ class Dispatcher
         if ($matched instanceof Response) {
             return $matched;
         }
-        $request->attributes->set('context', $matched['context']);
 
         $this->dispatchedController = $matched['controller'];
         $controller_action = $this->findController($matched['controller'], $matched['action']);
@@ -53,7 +52,7 @@ class Dispatcher
                 throw new HttpException(404, "$controller_class::$action_name is not allowed default routhing.");
             }
 
-            return $controller->dispatch($this->detectArgument($controller, $action_name, $request, $matched['parameters']));
+            return $controller->dispatch($this->detectArgument($controller, $matched['parameters']));
         }
 
         throw new HttpException(...$controller_action);
@@ -97,6 +96,21 @@ class Dispatcher
         catch (\Exception $e) {
             throw new \Exception('DefaultController throws Exception.', 0, $e);
         }
+    }
+
+    public function finish(Response $response, Request $request)
+    {
+        if (!strlen($response->headers->get('Content-Type'))) {
+            $contexts = $this->service->parameterContexts;
+            $context = $request->attributes->get('context');
+            if (is_callable($contexts) && ($cx = $contexts($context))) {
+                $response->headers->set('Content-Type', $cx);
+            }
+            elseif (is_array($contexts) && isset($contexts[$context])) {
+                $response->headers->set('Content-Type', $contexts[$context]);
+            }
+        }
+        return $response;
     }
 
     /**
@@ -258,10 +272,12 @@ class Dispatcher
         return new $controller_class($this->service, $action_name, $request);
     }
 
-    public function detectArgument($controller, $action_name, $request, $args)
+    public function detectArgument($controller, $args)
     {
         /** @var Controller $controller */
         $metadata = $controller::metadata($this->service->cacher);
+        $request = $controller->request;
+        $action_name = $controller->action;
 
         $datasources = [];
 

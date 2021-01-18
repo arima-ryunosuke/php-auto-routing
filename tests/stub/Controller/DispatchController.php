@@ -46,17 +46,6 @@ class DispatchController extends AbstractController
     }
 
     /**
-     * @context ,csv
-     */
-    public function contextAction()
-    {
-        if ($this->request->attributes->has('ctype')) {
-            $this->response->headers->set('Content-Type', $this->request->attributes->get('ctype'));
-        }
-        return 'context';
-    }
-
-    /**
      * @action get
      */
     public function thrown1Action()

@@ -401,18 +401,6 @@ class Controller
                 return $this->response = $response;
             }
 
-            // コンテキストに応じて ContentType を設定（未設定時のみ）
-            if (!strlen($this->response->headers->get('Content-Type'))) {
-                $contexts = $this->service->parameterContexts;
-                $context = $this->request->attributes->get('context');
-                if (is_callable($contexts) && ($cx = $contexts($context))) {
-                    $this->response->headers->set('Content-Type', $cx);
-                }
-                elseif (is_array($contexts) && isset($contexts[$context])) {
-                    $this->response->headers->set('Content-Type', $contexts[$context]);
-                }
-            }
-
             return $this->response;
         }
         catch (\Exception $ex) {

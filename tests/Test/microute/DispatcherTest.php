@@ -5,6 +5,7 @@ use ryunosuke\Test\stub\Controller\DefaultController;
 use ryunosuke\Test\stub\Controller\HogeController;
 use ryunosuke\Test\stub\Controller\SubSub;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
 {
@@ -144,6 +145,70 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertException(new \Exception('uncatch'), function () {
             $this->service->dispatcher->dispatch(Request::create('dispatch/thrown2'));
         });
+    }
+
+    function test_finish_content_type_array()
+    {
+        $service = $this->provideService([
+            'parameterContexts' => [
+                'csv' => 'text/csv',
+            ],
+        ]);
+
+        $ctype_null = ['', 200, ['Content-Type' => null]];
+        $ctype_hoge = ['', 200, ['Content-Type' => 'hoge/fuga; piyo']];
+        $context_null = [[], [], ['context' => null]];
+        $context_csv = [[], [], ['context' => 'csv']];
+
+        // 何もしてなければ null（未設定のはず）
+        $response = $service->dispatcher->finish(Response::create(...$ctype_null), new Request(...$context_null));
+        $this->assertEquals(null, $response->headers->get('Content-Type'));
+
+        // 明示的に指定されていれば当然それが返るはず
+        $response = $service->dispatcher->finish(Response::create(...$ctype_hoge), new Request(...$context_null));
+        $this->assertEquals('hoge/fuga; piyo', $response->headers->get('Content-Type'));
+
+        // 自動で text/csv が設定されるはず
+        $response = $service->dispatcher->finish(Response::create(...$ctype_null), new Request(...$context_csv));
+        $this->assertEquals('text/csv', $response->headers->get('Content-Type'));
+
+        // 明示的に指定されていれば自動設定されずそれが返るはず
+        $response = $service->dispatcher->finish(Response::create(...$ctype_hoge), new Request(...$context_csv));
+        $this->assertEquals('hoge/fuga; piyo', $response->headers->get('Content-Type'));
+    }
+
+    function test_finish_content_type_callback()
+    {
+        $service = $this->provideService([
+            'parameterContexts' => function () {
+                return function ($context) {
+                    if ($context === 'csv') {
+                        return 'text/csv';
+                    }
+                };
+            },
+        ]);
+
+        $ctype_null = ['', 200, ['Content-Type' => null]];
+        $ctype_hoge = ['', 200, ['Content-Type' => 'hoge/fuga; piyo']];
+        $context_null = [[], [], ['context' => null]];
+        $context_csv = [[], [], ['context' => 'csv']];
+
+        // 何もしてなければ null（未設定のはず）
+        $response = $service->dispatcher->finish(Response::create(...$ctype_null), new Request(...$context_null));
+        $this->assertEquals(null, $response->headers->get('Content-Type'));
+
+        // 明示的に指定されていれば当然それが返るはず
+        $response = $service->dispatcher->finish(Response::create(...$ctype_hoge), new Request(...$context_null));
+        $this->assertEquals('hoge/fuga; piyo', $response->headers->get('Content-Type'));
+
+        // 自動で text/csv が設定されるはず
+        $response = $service->dispatcher->finish(Response::create(...$ctype_null), new Request(...$context_csv));
+        $this->assertEquals('text/csv', $response->headers->get('Content-Type'));
+
+        // 明示的に指定されていれば自動設定されずそれが返るはず
+        $response = $service->dispatcher->finish(Response::create(...$ctype_hoge), new Request(...$context_csv));
+        $this->assertEquals('hoge/fuga; piyo', $response->headers->get('Content-Type'));
     }
 
     function test_dispatchedController()
@@ -302,18 +367,18 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
             'specifyval',
             'defval',
             null,
-        ], $this->service->dispatcher->detectArgument(HogeController::class, 'parameter', $request, [7 => 'specifyval']));
+        ], $this->service->dispatcher->detectArgument(new HogeController($this->service, 'parameter', $request), [7 => 'specifyval']));
 
         $request->query->remove('arg3');
         $this->assertStatusCode(404, function () use ($request) {
-            $this->service->dispatcher->detectArgument(HogeController::class, 'parameter', $request, []);
+            $this->service->dispatcher->detectArgument(new HogeController($this->service, 'parameter', $request), []);
         });
 
         $request = Request::createFromGlobals();
         $this->assertSame([
             'hoge',
             'fuga',
-        ], $this->service->dispatcher->detectArgument(HogeController::class, 'argument', $request, [
+        ], $this->service->dispatcher->detectArgument(new HogeController($this->service, 'argument', $request), [
             0      => 'hoge',
             'cval' => 'fuga'
         ]));
@@ -329,7 +394,7 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
         // @action に従うので POST が優先されるはず
         $this->assertSame([
             'request',
-        ], $this->service->dispatcher->detectArgument(HogeController::class, 'arg', $request, []));
+        ], $this->service->dispatcher->detectArgument(new HogeController($this->service, 'arg', $request), []));
 
         $request = Request::createFromGlobals();
         $request->setMethod('POST');
@@ -341,7 +406,7 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertSame([
             'hoge',
             'piyo',
-        ], $this->service->dispatcher->detectArgument(HogeController::class, 'argument', $request, []));
+        ], $this->service->dispatcher->detectArgument(new HogeController($this->service, 'argument', $request), []));
     }
 
     function test_detectArgument_arrayable()
@@ -351,13 +416,13 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
         // 未指定に配列が来た(ng)
         $request->query->replace(['mixed' => [1, 2, 3]]);
         $this->assertStatusCode([404 => 'parameter is not match type'], function () use ($request) {
-            $this->service->dispatcher->detectArgument(HogeController::class, 'arrayable', $request, []);
+            $this->service->dispatcher->detectArgument(new HogeController($this->service, 'arrayable', $request), []);
         });
 
         // string 指定に配列が来た(ng)
         $request->query->replace(['mixed' => null, 'string' => [1, 2, 3]]);
         $this->assertStatusCode([404 => 'parameter is not match type'], function () use ($request) {
-            $this->service->dispatcher->detectArgument(HogeController::class, 'arrayable', $request, []);
+            $this->service->dispatcher->detectArgument(new HogeController($this->service, 'arrayable', $request), []);
         });
 
         // 配列指定に配列が来た(ok)
@@ -366,6 +431,6 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
             null,
             null,
             [1, 2, 3]
-        ], $this->service->dispatcher->detectArgument(HogeController::class, 'arrayable', $request, []));
+        ], $this->service->dispatcher->detectArgument(new HogeController($this->service, 'arrayable', $request), []));
     }
 }

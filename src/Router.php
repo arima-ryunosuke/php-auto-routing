@@ -71,6 +71,7 @@ class Router
         $parentpath = rtrim(preg_replace('#((.+)/)+(.*)#', '$1', preg_replace('#\\.[^/.]*$#', '', $path)), '/');
         $parsed = $this->parse($path, $query);
         $parsed['route'] = null;
+        $request->attributes->set('context', $parsed['context']);
 
         $priority = $this->service->priority;
         foreach ($priority as $prefer) {
