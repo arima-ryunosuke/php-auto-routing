@@ -19,6 +19,11 @@
 ## x.y.z
 
 - psr15(middleware) に対応する？
+- DefaultController::errorAction の廃止
+
+## 1.1.4
+
+- [feature][Service] イベント機構の実装
 
 ## 1.1.3
 
