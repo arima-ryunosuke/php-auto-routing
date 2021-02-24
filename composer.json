@@ -1,7 +1,7 @@
 {
   "config": {
     "platform": {
-      "php": "7.2"
+      "php": "7.4"
     }
   },
   "name": "ryunosuke/microute",
@@ -17,6 +17,7 @@
   "require": {
     "php": ">=7.2",
     "symfony/http-kernel": "4.*",
+    "symfony/mime": "4.*",
     "psr/simple-cache": "*"
   },
   "require-dev": {

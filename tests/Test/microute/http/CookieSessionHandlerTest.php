@@ -28,7 +28,7 @@ class CookieSessionHandlerTest extends \ryunosuke\Test\AbstractTestCase
 
     function test_IO()
     {
-        $value = str_repeat('hoge_', 100);
+        $value = str_repeat('hoge_', 96);
 
         $handler = $this->provideHandler([]);
         $handler->write('sid', $value);
