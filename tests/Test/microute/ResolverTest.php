@@ -162,6 +162,18 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
         $url = $resolver->path('http://hostname:80/css/notdound.css?key=value');
         $this->assertEquals('http://hostname:80/css/notdound.css?key=value', $url);
 
+        $url = $resolver->path('http://hostname:80/css/style.css?key=value', []);
+        $this->assertEquals("http://hostname:80/css/style.css?key=value&$style_css_mtime", $url);
+
+        $url = $resolver->path('http://hostname:80/css/notdound.css?key=value', []);
+        $this->assertEquals('http://hostname:80/css/notdound.css?key=value', $url);
+
+        $url = $resolver->path('http://hostname:80/css/notdound.css', ['v' => 'V', 'a' => ['a' => 'A'], 'n' => null]);
+        $this->assertEquals('http://hostname:80/css/notdound.css?v=V&a%5Ba%5D=A', $url);
+
+        $url = $resolver->path('http://hostname:80/css/notdound.css?key=value', ['v' => 'V', 'a' => ['a' => 'A'], 'n' => null]);
+        $this->assertEquals('http://hostname:80/css/notdound.css?key=value&v=V&a%5Ba%5D=A', $url);
+
         $url = $resolver->path();
         $this->assertEquals('/', $url);
 
@@ -187,6 +199,15 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
 
         $url = $resolver->path('//css/style.css');
         $this->assertEquals("/css/style.css?$style_css_mtime", $url);
+
+        $url = $resolver->path('//css/style.css?a=b', []);
+        $this->assertEquals("/css/style.css?a=b&$style_css_mtime", $url);
+
+        $url = $resolver->path('//css/style.css', ['v' => 'V', 'a' => ['a' => 'A'], 'n' => null]);
+        $this->assertEquals("/css/style.css?$style_css_mtime&v=V&a%5Ba%5D=A", $url);
+
+        $url = $resolver->path('//css/style.css?a=b', ['v' => 'V', 'a' => ['a' => 'A'], 'n' => null]);
+        $this->assertEquals("/css/style.css?a=b&$style_css_mtime&v=V&a%5Ba%5D=A", $url);
     }
 
     function test_query()

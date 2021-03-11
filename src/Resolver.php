@@ -198,11 +198,22 @@ class Resolver
      * - "/"  から始まらない :hostname/base/path/controller/action/{$filename}
      *
      * @param string|null $filename 静的ファイル名
-     * @param bool $appendmtime 更新日時付加フラグ
+     * @param string|array $query クエリパラメータ
      * @return string URL
      */
-    public function path($filename = null, $appendmtime = true)
+    public function path($filename = null, $query = true)
     {
+        // for compatible
+        $appendmtime = true;
+        if (is_bool($query)) {
+            $appendmtime = $query;
+            $query = '';
+        }
+
+        if (is_array($query) || is_object($query)) {
+            $query = preg_replace('#%5B\d+%5D=#', '%5B%5D=', http_build_query($query));
+        }
+
         $docroot = rtrim($this->service->request->server->get('DOCUMENT_ROOT'), '/');
         $basepath = rtrim($this->service->request->getBasePath(), '/');
         $urlparts = parse_url($filename);
@@ -212,9 +223,9 @@ class Resolver
             // 「同じリポジトリだけど静的ファイルは別ホストに分けている」という状況があるので更新日時付与も試みる
             $fullpath = $docroot . $basepath . $urlparts['path'];
             if (is_file($fullpath) && $appendmtime) {
-                return $filename . (isset($urlparts['query']) ? '&' : '?') . filemtime($fullpath);
+                $query = filemtime($fullpath) . (strlen($query) ? '&' : '') . $query;
             }
-            return $filename;
+            return $filename . (strlen($query) ? (isset($urlparts['query']) ? '&' : '?') . $query : '');
         }
 
         // 空っぽはベースパスを表す
@@ -235,11 +246,11 @@ class Resolver
             $filepath = $basepath . '/' . $currentpath . '/' . $filename;
         }
 
-        $fullpath = $docroot . '/' . $filepath;
+        $fullpath = strstr($docroot . '/' . $filepath . '?', '?', true);
         if (is_file($fullpath) && $appendmtime) {
-            return $filepath . '?' . filemtime($fullpath);
+            $query = filemtime($fullpath) . (strlen($query) ? '&' : '') . $query;
         }
-        return $filepath;
+        return $filepath . (strlen($query) ? (isset($urlparts['query']) ? '&' : '?') . $query : '');
     }
 
     /**
