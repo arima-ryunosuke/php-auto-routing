@@ -3,7 +3,6 @@ namespace ryunosuke\Test\microute;
 
 use ryunosuke\microute\Router;
 use ryunosuke\Test\stub\Controller\HogeController;
-use ryunosuke\Test\stub\Controller\PriorityController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 

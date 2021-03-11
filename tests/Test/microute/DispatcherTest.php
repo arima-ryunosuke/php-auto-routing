@@ -161,19 +161,19 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
         $context_csv = [[], [], ['context' => 'csv']];
 
         // 何もしてなければ null（未設定のはず）
-        $response = $service->dispatcher->finish(Response::create(...$ctype_null), new Request(...$context_null));
+        $response = $service->dispatcher->finish(new Response(...$ctype_null), new Request(...$context_null));
         $this->assertEquals(null, $response->headers->get('Content-Type'));
 
         // 明示的に指定されていれば当然それが返るはず
-        $response = $service->dispatcher->finish(Response::create(...$ctype_hoge), new Request(...$context_null));
+        $response = $service->dispatcher->finish(new Response(...$ctype_hoge), new Request(...$context_null));
         $this->assertEquals('hoge/fuga; piyo', $response->headers->get('Content-Type'));
 
         // 自動で text/csv が設定されるはず
-        $response = $service->dispatcher->finish(Response::create(...$ctype_null), new Request(...$context_csv));
+        $response = $service->dispatcher->finish(new Response(...$ctype_null), new Request(...$context_csv));
         $this->assertEquals('text/csv', $response->headers->get('Content-Type'));
 
         // 明示的に指定されていれば自動設定されずそれが返るはず
-        $response = $service->dispatcher->finish(Response::create(...$ctype_hoge), new Request(...$context_csv));
+        $response = $service->dispatcher->finish(new Response(...$ctype_hoge), new Request(...$context_csv));
         $this->assertEquals('hoge/fuga; piyo', $response->headers->get('Content-Type'));
     }
 
@@ -195,19 +195,19 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
         $context_csv = [[], [], ['context' => 'csv']];
 
         // 何もしてなければ null（未設定のはず）
-        $response = $service->dispatcher->finish(Response::create(...$ctype_null), new Request(...$context_null));
+        $response = $service->dispatcher->finish(new Response(...$ctype_null), new Request(...$context_null));
         $this->assertEquals(null, $response->headers->get('Content-Type'));
 
         // 明示的に指定されていれば当然それが返るはず
-        $response = $service->dispatcher->finish(Response::create(...$ctype_hoge), new Request(...$context_null));
+        $response = $service->dispatcher->finish(new Response(...$ctype_hoge), new Request(...$context_null));
         $this->assertEquals('hoge/fuga; piyo', $response->headers->get('Content-Type'));
 
         // 自動で text/csv が設定されるはず
-        $response = $service->dispatcher->finish(Response::create(...$ctype_null), new Request(...$context_csv));
+        $response = $service->dispatcher->finish(new Response(...$ctype_null), new Request(...$context_csv));
         $this->assertEquals('text/csv', $response->headers->get('Content-Type'));
 
         // 明示的に指定されていれば自動設定されずそれが返るはず
-        $response = $service->dispatcher->finish(Response::create(...$ctype_hoge), new Request(...$context_csv));
+        $response = $service->dispatcher->finish(new Response(...$ctype_hoge), new Request(...$context_csv));
         $this->assertEquals('hoge/fuga; piyo', $response->headers->get('Content-Type'));
     }
 

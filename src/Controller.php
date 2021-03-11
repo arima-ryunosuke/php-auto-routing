@@ -166,7 +166,7 @@ class Controller
         $this->service = $service;
         $this->action = $action;
         $this->request = $request ?? $this->service->request;
-        $this->response = Response::create();
+        $this->response = new Response();
 
         $this->construct();
     }
@@ -320,7 +320,7 @@ class Controller
             throw new HttpException(403);
         }
 
-        $response = BinaryFileResponse::create($filename, 200, [], $httpcache && $public, null, false, $httpcache);
+        $response = new BinaryFileResponse($filename, 200, [], $httpcache && $public, null, false, $httpcache);
         if ($httpcache) {
             $this->cache($response);
         }
@@ -338,7 +338,7 @@ class Controller
     public function download($eitherContentOrFileinfo, $filename = null)
     {
         if ($eitherContentOrFileinfo instanceof \SplFileInfo) {
-            $response = BinaryFileResponse::create($eitherContentOrFileinfo);
+            $response = new BinaryFileResponse($eitherContentOrFileinfo);
             $response->headers->set('Content-Type', 'application/octet-stream');
             $response->headers->set('Content-Disposition', $response->headers->makeDisposition('attachment', $eitherContentOrFileinfo->getFilename(), (string) $filename));
         }
@@ -346,7 +346,7 @@ class Controller
             if ($filename === null) {
                 throw new \InvalidArgumentException('$filename must be not null.');
             }
-            $response = StreamedResponse::create($eitherContentOrFileinfo);
+            $response = new StreamedResponse($eitherContentOrFileinfo);
             $response->headers->set('Content-Type', 'application/octet-stream');
             $response->headers->set('Content-Disposition', $response->headers->makeDisposition('attachment', $filename));
         }
@@ -354,7 +354,7 @@ class Controller
             if ($filename === null) {
                 throw new \InvalidArgumentException('$filename must be not null.');
             }
-            $response = Response::create($eitherContentOrFileinfo);
+            $response = new Response($eitherContentOrFileinfo);
             $response->headers->set('Content-Type', 'application/octet-stream');
             $response->headers->set('Content-Disposition', $response->headers->makeDisposition('attachment', $filename));
             $response->headers->set('Content-Length', strlen($eitherContentOrFileinfo));

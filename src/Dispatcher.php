@@ -186,7 +186,6 @@ class Dispatcher
         ];
 
         foreach ($controller_action as $cname => $aname) {
-            /** @var Controller $class_name */
             $class_name = $this->service->controllerNamespace . $cname . $this->service->controllerClass::CONTROLLER_SUFFIX;
 
             if (!class_exists($class_name)) {
