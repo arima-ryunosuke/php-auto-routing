@@ -81,6 +81,33 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
         });
     }
 
+    function test_dispatch_regex()
+    {
+        $service = $this->service;
+
+        // 複数ある場合の優先度は「名前 -> 連番」
+        $service->router->regex('/-test1/(?<arg1>[a-z]+)/([a-z]+/)?(?<arg2>[0-9]+)', HogeController::class, 'actionRegex');
+        $response = $this->service->dispatcher->dispatch(Request::create('/-test1/hoge/dummy/123'));
+        $this->assertEquals('hoge/123', $response->getContent());
+        $response = $this->service->dispatcher->dispatch(Request::create('/-test1/hoge/123'));
+        $this->assertEquals('hoge/123', $response->getContent());
+
+        // 名前がマッチしなくても連番でマッチ
+        $service->router->regex('/-test2/(?<arg1>[a-z]+)/([a-z]+/)?(?<argX>[0-9]+)', HogeController::class, 'actionRegex');
+        $response = $this->service->dispatcher->dispatch(Request::create('/-test2/hoge/dummy/123'));
+        $this->assertEquals('hoge/dummy/', $response->getContent());
+
+        // 名前さえマッチすれば順番は問わない
+        $service->router->regex('/-test3/(?<arg2>[a-z]+)/([a-z]+/)?(?<arg1>[0-9]+)', HogeController::class, 'actionRegex');
+        $response = $this->service->dispatcher->dispatch(Request::create('/-test3/hoge/dummy/123'));
+        $this->assertEquals('123/hoge', $response->getContent());
+
+        // 極論すると順番が正しければ名前も不要
+        $service->router->regex('/-test4/([a-z]+)/([a-z]+/)?([0-9]+)', HogeController::class, 'actionRegex');
+        $response = $this->service->dispatcher->dispatch(Request::create('/-test4/hoge/dummy/123'));
+        $this->assertEquals('hoge/dummy/', $response->getContent());
+    }
+
     function test_dispatch_response()
     {
         $service = $this->service;

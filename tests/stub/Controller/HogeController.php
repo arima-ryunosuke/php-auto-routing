@@ -21,6 +21,11 @@ class HogeController extends AbstractController
     /**
      * @action get
      */
+    public function actionRegexAction($arg1, $arg2) { return "$arg1/$arg2"; }
+
+    /**
+     * @action get
+     */
     public function nopostAction() { }
 
     /**

@@ -316,13 +316,13 @@ class Dispatcher
             if (array_key_exists($name, $datasources)) {
                 $value = $datasources[$name];
             }
+            // 基本的には通常配列で来るが、正規表現ルートでは連想配列で来ることがある
+            elseif (array_key_exists($name, $args)) {
+                $value = $args[$name];
+            }
             // /path/hoge のようなアクションパラメータから来ている
             elseif (array_key_exists($i, $args)) {
                 $value = $args[$i];
-            }
-            // 同上。基本的には通常配列で来るが、正規表現ルートでは連想配列で来ることがある
-            elseif (array_key_exists($name, $args)) {
-                $value = $args[$name];
             }
             // 上記に引っかからなかったらメソッド引数のデフォルト値を使う
             elseif ($parameter['defaultable']) {
