@@ -306,7 +306,7 @@ class Router
     {
         $cachekey = self::CACHE_KEY . '.reverse.' . sha1($name . '?' . json_encode($params));
         $cache = $this->service->cacher->get($cachekey);
-        if ($cache !== null) {
+        if (!$this->service->debug && $cache !== null) {
             return $cache;
         }
 
