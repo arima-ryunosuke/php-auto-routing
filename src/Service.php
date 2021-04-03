@@ -27,6 +27,7 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
  * @property-read string                  $controllerNamespace
  * @property-read string                  $controllerDirectory
  *
+ * @property-read callable                $requestFactory
  * @property-read Request                 $requestClass
  * @property-read Request                 $request
  * @property-read callable[]              $requestTypes
@@ -63,19 +64,22 @@ class Service implements HttpKernelInterface
         $this->values['resolver'] = $values['resolver'] ?? function () { return new Resolver($this); };
         $this->values['controllerClass'] = $values['controllerClass'] ?? Controller::class;
 
-        $this->values['requestClass'] = $values['requestClass'] ?? Request::class;
-        $this->values['request'] = $values['request'] ?? function () {
-                $requestClass = $this->requestClass;
-                $request = $requestClass::createFromGlobals();
+        $this->values['requestFactory'] = $values['requestFactory'] ?? function () {
+                return function ($query, $request, $attributes, $cookies, $files, $server, $content) {
+                    $requestClass = $this->requestClass;
+                    $request = new $requestClass($query, $request, $attributes, $cookies, $files, $server, $content);
 
-                $conv = $this->requestTypes[$request->getContentType()] ?? null;
-                if ($conv !== null) {
-                    $request->request->replace($conv($request->getContent()) ?? []);
-                }
+                    $conv = $this->requestTypes[$request->getContentType()] ?? null;
+                    if ($conv !== null) {
+                        $request->request->replace($conv($request->getContent()) ?? []);
+                    }
 
-                $request->setSessionFactory(function () { return new Session($this->sessionStorage); });
-                return $request;
+                    $request->setSessionFactory(function () { return new Session($this->sessionStorage); });
+                    return $request;
+                };
             };
+        $this->values['requestClass'] = $values['requestClass'] ?? Request::class;
+        $this->values['request'] = $values['request'] ?? function () { return Request::createFromGlobals(); };
         $this->values['requestTypes'] = $values['requestTypes'] ?? [
                 'json' => function ($content) {
                     return json_decode($content, true);
@@ -114,6 +118,8 @@ class Service implements HttpKernelInterface
             $this->values['controllerNamespace'] = $ref->getNamespaceName() . '\\';
             $this->values['controllerDirectory'] = dirname($ref->getFileName()) . DIRECTORY_SEPARATOR;
         }
+
+        Request::setFactory($this->requestFactory);
 
         if ($this->debug) {
             $this->cacher->clear();
