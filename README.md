@@ -113,6 +113,10 @@ $service->run();
     - Controller の基底クラス名を指定します
     - デフォルトは `\ryunosuke\microute\Controller::class` です
     - よほど抜き差しならない状況じゃない限り指定する意味はありません
+- requestFactory: callable
+    - リクエストオブジェクトのプロバイダーを指定します
+    - ここで指定したクロージャは Request::setFactory に登録されます
+    - よほど抜き差しならない状況じゃない限り指定する意味はありません
 - requestClass: string
     - リクエストオブジェクトのクラス名を指定します
     - デフォルトは `\Symfony\Component\HttpFoundation\Request::class` です

@@ -21,6 +21,12 @@
 - psr15(middleware) に対応する？
 - DefaultController::errorAction の廃止
 
+## 1.1.6
+
+- [change][Service] request の発行処理を requestFactory に委譲
+- [refactor][Router] debug 時は reverseRoute がキャッシュされないように変更
+- [fixbug][Dispatcher] 引数名の一致よりも連番の方が優先されていた不具合を修正
+
 ## 1.1.5
 
 - [change][Resolver] path メソッドでクエリパラメータが活きるように修正
