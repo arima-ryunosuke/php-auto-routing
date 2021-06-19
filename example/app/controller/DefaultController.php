@@ -48,7 +48,15 @@ class DefaultController extends AbstractController
         $times = $this->session->get('times', []);
         $times[] = time();
         $this->session->set('times', $times);
-        return 'セッションデータです<pre>' . var_export($this->session->all(), true);
+        $cookie = array_filter($_COOKIE, function ($k) { return strpos($k, session_name()) === 0; }, ARRAY_FILTER_USE_KEY);
+        uksort($cookie, function ($a, $b) { return strnatcmp($a, $b); });
+        return 'セッションデータです。セッションは cookie ストレージで、1分間継続、256バイト毎に分割されるように設定されています<pre>'
+            . "<strong>cookie data</strong>\n"
+            . var_export($cookie, true)
+            . "\n"
+            . "<strong>session data</strong>\n"
+            . var_export($this->session->all(), true)
+            . "\n";
     }
 
     public function jsonAction()

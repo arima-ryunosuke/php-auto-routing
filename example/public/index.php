@@ -12,7 +12,12 @@ $service = new \ryunosuke\microute\Service([
     },
     'priority'           => ['rewrite', 'redirect', 'alias', 'default', 'regex'],
     'sessionStorage'     => function () {
-        return new \Symfony\Component\HttpFoundation\Session\Storage\NativeSessionStorage([], new \ryunosuke\microute\http\CookieSessionHandler(['privateKey' => 'secretkey']));
+        return new \Symfony\Component\HttpFoundation\Session\Storage\NativeSessionStorage([
+            'cookie_lifetime' => 60,
+        ], new \ryunosuke\microute\http\CookieSessionHandler([
+            'privateKey' => 'secretkey',
+            'chunkSize'  => 256,
+        ]));
     },
     'parameterDelimiter' => '/',
     'parameterSeparator' => '&',
