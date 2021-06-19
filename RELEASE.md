@@ -21,6 +21,11 @@
 - psr15(middleware) に対応する？
 - DefaultController::errorAction の廃止
 
+## 1.1.7
+
+- 対象バージョンを php7.4, symfony5.* に格上げ
+- [change] CookieSessionHandler の実装を 7.3 以降に追従
+
 ## 1.1.6
 
 - [change][Service] request の発行処理を requestFactory に委譲
