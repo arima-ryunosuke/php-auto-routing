@@ -111,7 +111,7 @@ class CookieSessionHandler extends AbstractSessionHandler
     private function encode($decrypted_data)
     {
         // Set a random salt
-        $salt = openssl_random_pseudo_bytes(16);
+        $salt = random_bytes(16);
 
         $salted = '';
         $dx = '';
@@ -158,13 +158,14 @@ class CookieSessionHandler extends AbstractSessionHandler
 
     private function setCookies($data)
     {
-        $session_params = session_get_cookie_params();
+        $cookie_params = session_get_cookie_params();
         $session_params = [
-            $session_params['lifetime'],
-            $session_params['path'],
-            $session_params['domain'],
-            $session_params['secure'],
-            $session_params['httponly'],
+            'expires'  => $cookie_params['lifetime'] ? time() + $cookie_params['lifetime'] : 0,
+            'path'     => $cookie_params['path'],
+            'domain'   => $cookie_params['domain'],
+            'secure'   => $cookie_params['secure'],
+            'httponly' => $cookie_params['httponly'],
+            'samesite' => $cookie_params['samesite'],
         ];
 
         $count = (int) $this->cookieBag->get($this->storeName, 0);
@@ -176,12 +177,12 @@ class CookieSessionHandler extends AbstractSessionHandler
         $chunks[''] = $length;
 
         foreach ($chunks as $i => $v) {
-            ($this->setcookie)($this->storeName . $i, $v, ...$session_params);
+            ($this->setcookie)($this->storeName . $i, $v, $session_params);
         }
 
         // 無駄なので余剰を削除する
         for ($i = $length; $i <= $count; $i++) {
-            ($this->setcookie)($this->storeName . $i, '', ...$session_params);
+            ($this->setcookie)($this->storeName . $i, '', $session_params);
         }
 
         return true;

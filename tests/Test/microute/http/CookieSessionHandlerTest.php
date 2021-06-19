@@ -13,7 +13,7 @@ class CookieSessionHandlerTest extends \ryunosuke\Test\AbstractTestCase
             'privateKey' => 'test',
             'cookie'     => $cookies,
             'chunkSize'  => 256,
-            'setcookie'  => function ($name, $value, $expires, $path, $domain, $secure, $httponly) {
+            'setcookie'  => function ($name, $value, $options) {
                 if ($value === '') {
                     unset($this->cookies[$name]);
                 }
@@ -28,7 +28,7 @@ class CookieSessionHandlerTest extends \ryunosuke\Test\AbstractTestCase
 
     function test_IO()
     {
-        $value = str_repeat('hoge_', 96);
+        $value = str_repeat('hoge_', 90);
 
         $handler = $this->provideHandler([]);
         $handler->write('sid', $value);
