@@ -373,7 +373,7 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
 
     function test_detectArgument()
     {
-        $object = new \stdClass();
+        $object = new \Exception();
         $request = Request::createFromGlobals();
         $request->query->set('arg1', "123");
         $request->query->set('arg2', 'hoge');

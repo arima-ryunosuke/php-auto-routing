@@ -163,7 +163,7 @@ class Service implements HttpKernelInterface
     /**
      * @inheritDoc
      */
-    public function handle(Request $request, $type = self::MASTER_REQUEST, $catch = true)
+    public function handle(Request $request, $type = self::MAIN_REQUEST, $catch = true)
     {
         $dispacher = $this->dispatcher;
 

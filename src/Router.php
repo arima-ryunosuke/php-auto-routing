@@ -192,8 +192,7 @@ class Router
             $parameters = explode($separator, $query);
         }
         // 上記以外は $action_name を分割すれば良い
-        elseif (($pos = strpos($action_name, $delimiter)) !== false) {
-            $parts = explode($delimiter, $action_name, 2);
+        elseif (count($parts = explode($delimiter, $action_name, 2)) === 2) {
             $action_name = $parts[0];
             $parameters = explode($separator, $parts[1]);
         }

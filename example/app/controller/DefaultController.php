@@ -13,7 +13,7 @@ class DefaultController extends AbstractController
         if ($ex instanceof \DomainException) {
             throw $ex;
         }
-        return Response::create('これはコントローラ単位のエラーハンドリングでハンドリングされた例外メッセージです：' . $ex->getMessage());
+        return new Response('これはコントローラ単位のエラーハンドリングでハンドリングされた例外メッセージです：' . $ex->getMessage());
     }
 
     public function errorAction(\Exception $ex)

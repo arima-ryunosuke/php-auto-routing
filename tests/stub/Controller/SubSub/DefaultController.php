@@ -12,6 +12,6 @@ class DefaultController extends \ryunosuke\Test\stub\Controller\AbstractControll
 
     public function errorAction(\Exception $ex)
     {
-        return Response::create(__METHOD__);
+        return new Response(__METHOD__);
     }
 }

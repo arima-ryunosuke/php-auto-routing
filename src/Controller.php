@@ -179,6 +179,14 @@ class Controller
         return $this->Accessable__get($name);
     }
 
+    public function __toString()
+    {
+        if ($this) {
+            throw new \DomainException(__METHOD__ . ' is not supported');
+        }
+        return ''; // @codeCoverageIgnore
+    }
+
     /**
      * 名前空間からの相対パスを返す
      *

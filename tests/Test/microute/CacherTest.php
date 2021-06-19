@@ -89,10 +89,6 @@ class CacherTest extends \ryunosuke\Test\AbstractTestCase
             'piyo' => 'default',
         ], $this->cacher->getMultiple(['hoge', 'fuga', 'piyo'], 'default'));
 
-        if (DIRECTORY_SEPARATOR === '/') {
-            $this->markTestSkipped('this test is windows only.');
-        }
-
         $this->assertEquals([
             'hoge' => 'HOGE',
             'fuga' => 'default',

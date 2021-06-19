@@ -24,6 +24,6 @@ class DefaultController extends AbstractController
             throw $ex;
         }
 
-        return Response::create(get_class($ex));
+        return new Response(get_class($ex));
     }
 }

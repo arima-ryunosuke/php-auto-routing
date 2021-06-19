@@ -43,6 +43,12 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertSame($this->service, $controller->service);
     }
 
+    function test___toString()
+    {
+        $controller = new HogeController($this->service, 'action');
+        $this->assertException('__toString is not supported', [$controller, '__toString']);
+    }
+
     function test_location()
     {
         $controller = new HogeController($this->service, 'default');
@@ -596,7 +602,7 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
 
         // other1:pre イベントにマッチするように送ると・・・
         $request = Request::createFromGlobals();
-        $request->query->set('other1:pre', ['1', '2', '3']);
+        $request->query->set('other1:pre', "1, 2, 3");
         $controller = new EventController($this->service, 'other', $request);
         $response = $controller->action([]);
         // other1:pre が返るはず
@@ -604,7 +610,7 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
 
         // other1:post イベントにマッチするように送ると・・・
         $request = Request::createFromGlobals();
-        $request->query->set('other1:post', ['1', '2', '3']);
+        $request->query->set('other1:post', "1, 2, 3");
         $controller = new EventController($this->service, 'other', $request);
         $response = $controller->action([]);
         // other1:post が返るはず
@@ -612,7 +618,7 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
 
         // other2:pre イベントにマッチするように送ると・・・
         $request = Request::createFromGlobals();
-        $request->query->set('other2:pre', ['4', '5', '6']);
+        $request->query->set('other2:pre', "4, 5, 6");
         $controller = new EventController($this->service, 'other', $request);
         $response = $controller->action([]);
         // other2:pre が返るはず
@@ -620,7 +626,7 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
 
         // other2:post イベントにマッチするように送ると・・・
         $request = Request::createFromGlobals();
-        $request->query->set('other2:post', ['4', '5', '6']);
+        $request->query->set('other2:post', "4, 5, 6");
         $controller = new EventController($this->service, 'other', $request);
         $response = $controller->action([]);
         // other2:post が返るはず

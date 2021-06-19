@@ -20,7 +20,7 @@ class AccessableTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertIsInt($object->privateInt);
 
         $this->assertException('hoge is undefined', function () use ($object) {
-            $object->hoge;
+            return $object->hoge;
         });
     }
 

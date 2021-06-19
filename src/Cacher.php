@@ -33,7 +33,8 @@ class Cacher implements CacheInterface
     public function __destruct()
     {
         if ($this->changed) {
-            $contents = '<?php return ' . var_export($this->entries, true) . ';';
+            $value = var_export($this->entries, true) . ';';
+            $contents = '<?php return ' . $value;
             $tempnam = tempnam(sys_get_temp_dir(), 'tmp');
             if (file_put_contents($tempnam, $contents) !== false) {
                 if (rename($tempnam, $this->filename)) {

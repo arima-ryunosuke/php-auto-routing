@@ -77,7 +77,7 @@ class HogeController extends AbstractController
     /**
      * @action get
      */
-    public function action_responseAction() { return Response::create('response'); }
+    public function action_responseAction() { return new Response('response'); }
 
     /**
      * @action get
@@ -242,6 +242,6 @@ class HogeController extends AbstractController
         if (!$ex instanceof \UnexpectedValueException) {
             throw $ex;
         }
-        return Response::create('error');
+        return new Response('error');
     }
 }

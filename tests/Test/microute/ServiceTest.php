@@ -70,7 +70,7 @@ class ServiceTest extends \ryunosuke\Test\AbstractTestCase
     {
         $service = $this->service;
         $this->assertException(new HttpException(404), function () use ($service) {
-            $service->handle(Request::create('none'), Service::MASTER_REQUEST, false);
+            $service->handle(Request::create('none'), Service::MAIN_REQUEST, false);
         });
     }
 

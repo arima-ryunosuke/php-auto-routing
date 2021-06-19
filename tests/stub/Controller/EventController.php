@@ -36,7 +36,7 @@ class EventController extends AbstractController
      */
     public function cacheDirectAction()
     {
-        return Response::create('cached_direct_response:' . mt_rand());
+        return new Response('cached_direct_response:' . mt_rand());
     }
 
     /**
@@ -45,7 +45,7 @@ class EventController extends AbstractController
      */
     public function otherAction()
     {
-        return Response::create('other_event:' . mt_rand());
+        return new Response('other_event:' . mt_rand());
     }
 
     /**
@@ -53,19 +53,19 @@ class EventController extends AbstractController
      */
     public function unknownAction()
     {
-        return Response::create('other_event:' . mt_rand());
+        return new Response('other_event:' . mt_rand());
     }
 
     protected function other1Event($context, $a, $b, $c)
     {
         if ($context === 'pre') {
-            if ($this->request->query->get('other1:pre') === [$a, $b, $c]) {
-                return Response::create('other1:pre');
+            if ($this->request->query->get('other1:pre') === "$a, $b, $c") {
+                return new Response('other1:pre');
             }
         }
         if ($context === 'post') {
-            if ($this->request->query->get('other1:post') === [$a, $b, $c]) {
-                return Response::create('other1:post');
+            if ($this->request->query->get('other1:post') === "$a, $b, $c") {
+                return new Response('other1:post');
             }
         }
     }
@@ -73,15 +73,14 @@ class EventController extends AbstractController
     protected function other2Event($context, $a, $b, $c)
     {
         if ($context === 'pre') {
-            if ($this->request->query->get('other2:pre') === [$a, $b, $c]) {
-                return Response::create('other2:pre');
+            if ($this->request->query->get('other2:pre') === "$a, $b, $c") {
+                return new Response('other2:pre');
             }
 
         }
         if ($context === 'post') {
-
-            if ($this->request->query->get('other2:post') === [$a, $b, $c]) {
-                return Response::create('other2:post');
+            if ($this->request->query->get('other2:post') === "$a, $b, $c") {
+                return new Response('other2:post');
             }
         }
     }
