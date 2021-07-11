@@ -10,7 +10,7 @@ $service = new \ryunosuke\microute\Service([
             printf('これは "logger" でハンドリングされた例外メッセージです（%s）：%s<br>', $request === null ? 'NULL' : $request->getRequestUri(), $exception->getMessage());
         };
     },
-    'priority'           => ['rewrite', 'redirect', 'alias', 'default', 'regex'],
+    'priority'           => ['rewrite', 'redirect', 'alias', 'default', 'scope', 'regex'],
     'sessionStorage'     => function () {
         return new \Symfony\Component\HttpFoundation\Session\Storage\NativeSessionStorage([
             'cookie_lifetime' => 60,

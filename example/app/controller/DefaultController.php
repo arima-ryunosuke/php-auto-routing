@@ -5,6 +5,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 /**
  * @alias /alias
+ * @scope (?<pref_id>\d+)/
  */
 class DefaultController extends AbstractController
 {
@@ -28,6 +29,15 @@ class DefaultController extends AbstractController
     public function defaultAction()
     {
         $this->view->url = $this->request->getRequestUri();
+    }
+
+    public function relativeAction($pref_id)
+    {
+        return '相対リンクです。'
+            . '<p>ダイレクトにここに来た場合はパラメータが一致しないエラーになります</p>'
+            . '<p>scope 経由でここに来た場合は URL がスコープ付きになっていてかつスコープパラメータが渡ってきています</p>'
+            . '<pre>' . var_export($this->request->getRequestUri(), true) . '</pre>'
+            . '<pre>pref_id: ' . var_export($pref_id, true) . '</pre>';
     }
 
     public function urlsAction()
