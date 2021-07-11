@@ -5,6 +5,7 @@ use ryunosuke\Test\stub\Controller\AbstractController;
 
 /**
  * @alias /relay
+ * @scope (?<scoped>[0-9a-z]+)/
  */
 class AllController extends AbstractController
 {

@@ -254,6 +254,49 @@ class RouterTest extends \ryunosuke\Test\AbstractTestCase
         ], $route);
     }
 
+    function test_scope()
+    {
+        $service = $this->service;
+
+        $service->router->scope('/(?<hoge_id>[0-9a-z]+)/', HogeController::class);
+
+        $route = $service->router->match(Request::create('/id13/'));
+        $this->assertEquals([
+            'controller' => 'Hoge',
+            'action'     => 'default',
+            'context'    => '',
+            'parameters' => [
+                'hoge_id' => 'id13',
+                0         => 'id13',
+            ],
+            'route'      => 'scope',
+        ], $route);
+
+        $route = $service->router->match(Request::create('/id14/scope'));
+        $this->assertEquals([
+            'controller' => 'Hoge',
+            'action'     => 'scope',
+            'context'    => '',
+            'parameters' => [
+                'hoge_id' => 'id14',
+                0         => 'id14',
+            ],
+            'route'      => 'scope',
+        ], $route);
+
+        $route = $service->router->match(Request::create('/id15/scope.json'));
+        $this->assertEquals([
+            'controller' => 'Hoge',
+            'action'     => 'scope',
+            'context'    => 'json',
+            'parameters' => [
+                'hoge_id' => 'id15',
+                0         => 'id15',
+            ],
+            'route'      => 'scope',
+        ], $route);
+    }
+
     function test_regex()
     {
         $service = $this->service;
@@ -348,6 +391,9 @@ class RouterTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertException('is not defined route method', function () use ($service) {
             $service->router->match(Request::create('/'));
         });
+        $this->assertException('is not defined route method', function () use ($service) {
+            $service->router->reverseRoute('Hoge::fuga');
+        });
     }
 
     function test_currentRoute()
@@ -369,6 +415,23 @@ class RouterTest extends \ryunosuke\Test\AbstractTestCase
         $service->router->regex('/(?<name>[a-z0-9]+)/detail/(?<seq>[0-9]+)', HogeController::class, 'default');
         $url = $service->router->reverseRoute('routeName', ['name' => 'hoge', 'seq' => 789]);
         $this->assertEquals('/hoge/detail/789', $url);
+    }
+
+    function test_reverseRoute_scope()
+    {
+        $service = $this->provideService();
+        $service->cacher->clear();
+        $service->router->route('routeName', HogeController::class, 'default');
+        $service->router->scope('(?<pref>[a-z]+)/(?<city>[a-z]+)/', HogeController::class);
+        $url = $service->router->reverseRoute('routeName', ['pref' => 'tokyo', 'city' => 'chiyoda', 'dummy' => 0]);
+        $this->assertEquals('/hoge/tokyo/chiyoda/?dummy=0', $url);
+
+        $service = $this->provideService();
+        $service->cacher->clear();
+        $service->router->route('routeName', HogeController::class, 'actionSimple');
+        $service->router->scope('/(?<pref>[a-z]+)/(?<city>[a-z]+)/', HogeController::class);
+        $url = $service->router->reverseRoute('routeName', ['pref' => 'tokyo', 'city' => 'chiyoda', 'dummy' => 0]);
+        $this->assertEquals('/tokyo/chiyoda/action-simple?dummy=0', $url);
     }
 
     function test_reverseRoute_name_and_index()
@@ -447,177 +510,208 @@ class RouterTest extends \ryunosuke\Test\AbstractTestCase
 
         $expects = [
             // URL リダイレクトルーティング
-            '/basepath/hoge/notfound/old'                           => [
+            '/basepath/hoge/notfound/old'                                             => [
                 'route'  => Router::ROUTE_REDIRECT,
                 'name'   => null,
                 'target' => '/hoge/notfound',
                 'method' => [],
             ],
-            '/basepath/notfound/action/old'                         => [
+            '/basepath/notfound/action/old'                                           => [
                 'route'  => Router::ROUTE_REDIRECT,
                 'name'   => null,
                 'target' => '/notfound/action',
                 'method' => [],
             ],
             // デフォルトルーティング
-            '/basepath/url/all/default-on'                          => [
+            '/basepath/url/all/default-on'                                            => [
                 'route'  => 'default',
                 'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::defaultOn',
                 'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::defaultOnAction',
                 'method' => [],
             ],
-            '/basepath/url/all/parameter?arg1=string&arg2=array'    => [
+            '/basepath/url/all/parameter?arg1=string&arg2=array'                      => [
                 'route'  => 'default',
                 'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::parameter',
                 'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::parameterAction',
                 'method' => [],
             ],
-            '/basepath/url/all/queryable?$arg1@integer&$arg2@array' => [
+            '/basepath/url/all/queryable?$arg1@integer&$arg2@array'                   => [
                 'route'  => 'default',
                 'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::queryable',
                 'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::queryableAction',
                 'method' => [],
             ],
-            '/basepath/url/all/post'                                => [
+            '/basepath/url/all/post'                                                  => [
                 'route'  => 'default',
                 'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::post',
                 'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::postAction',
                 'method' => ['POST'],
             ],
-            '/basepath/url/all/redirect'                            => [
+            '/basepath/url/all/redirect'                                              => [
                 'route'  => 'default',
                 'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::redirect',
                 'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::redirectAction',
                 'method' => [],
             ],
-            '/basepath/url/all/regex'                               => [
+            '/basepath/url/all/regex'                                                 => [
                 'route'  => 'default',
                 'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::regex',
                 'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::regexAction',
                 'method' => [],
             ],
-            '/basepath/url/all/rewrite'                             => [
+            '/basepath/url/all/rewrite'                                               => [
                 'route'  => 'default',
                 'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::rewrite',
                 'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::rewriteAction',
                 'method' => [],
             ],
-            '/basepath/url/all/routename'                           => [
+            '/basepath/url/all/routename'                                             => [
                 'route'  => 'default',
                 'name'   => 'mappingRoute',
                 'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::routenameAction',
                 'method' => [],
             ],
             // リダイレクト
-            '/basepath/mapping/redirect1'                           => [
+            '/basepath/mapping/redirect1'                                             => [
                 'route'  => 'redirect',
                 'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::redirect',
                 'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::redirectAction',
                 'method' => [],
             ],
-            '/basepath/mapping/redirect2'                           => [
+            '/basepath/mapping/redirect2'                                             => [
                 'route'  => 'redirect',
                 'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::redirect',
                 'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::redirectAction',
                 'method' => [],
             ],
             // 正規表現
-            '/basepath/mapping/regex1'                              => [
+            '/basepath/mapping/regex1'                                                => [
                 'route'  => 'regex',
                 'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::regex',
                 'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::regexAction',
                 'method' => [],
             ],
-            '/basepath/mapping/regex2'                              => [
+            '/basepath/mapping/regex2'                                                => [
                 'route'  => 'regex',
                 'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::regex',
                 'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::regexAction',
                 'method' => [],
             ],
-            '/basepath/mapping/route'                               => [
+            '/basepath/mapping/route'                                                 => [
                 'route'  => 'regex',
                 'name'   => 'mappingRoute',
                 'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::routenameAction',
                 'method' => [],
             ],
             // リライト
-            '/basepath/mapping/rewrite1'                            => [
+            '/basepath/mapping/rewrite1'                                              => [
                 'route'  => 'rewrite',
                 'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::rewrite',
                 'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::rewriteAction',
                 'method' => [],
             ],
-            '/basepath/mapping/rewrite2'                            => [
+            '/basepath/mapping/rewrite2'                                              => [
                 'route'  => 'rewrite',
                 'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::rewrite',
                 'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::rewriteAction',
                 'method' => [],
             ],
             // エイリアス
-            '/basepath/relay/default-off'                           => [
+            '/basepath/relay/default-off'                                             => [
                 'route'  => 'alias',
                 'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::defaultOff',
                 'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::defaultOffAction',
                 'method' => [],
             ],
-            '/basepath/relay/default-on'                            => [
+            '/basepath/relay/default-on'                                              => [
                 'route'  => 'alias',
                 'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::defaultOn',
                 'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::defaultOnAction',
                 'method' => [],
             ],
-            '/basepath/relay/parameter?arg1=string&arg2=array'      => [
+            '/basepath/relay/parameter?arg1=string&arg2=array'                        => [
                 'route'  => 'alias',
                 'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::parameter',
                 'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::parameterAction',
                 'method' => [],
             ],
-            '/basepath/relay/queryable?$arg1@integer&$arg2@array'   => [
+            '/basepath/relay/queryable?$arg1@integer&$arg2@array'                     => [
                 'route'  => 'alias',
                 'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::queryable',
                 'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::queryableAction',
                 'method' => [],
             ],
-            '/basepath/relay/post'                                  => [
+            '/basepath/relay/post'                                                    => [
                 'route'  => 'alias',
                 'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::post',
                 'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::postAction',
                 'method' => ['POST',],
             ],
-            '/basepath/relay/redirect'                              => [
+            '/basepath/relay/redirect'                                                => [
                 'route'  => 'alias',
                 'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::redirect',
                 'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::redirectAction',
                 'method' => [],
             ],
-            '/basepath/relay/regex'                                 => [
+            '/basepath/relay/regex'                                                   => [
                 'route'  => 'alias',
                 'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::regex',
                 'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::regexAction',
                 'method' => [],
             ],
-            '/basepath/relay/rewrite'                               => [
+            '/basepath/relay/rewrite'                                                 => [
                 'route'  => 'alias',
                 'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::rewrite',
                 'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::rewriteAction',
                 'method' => [],
             ],
-            '/basepath/relay/routename'                             => [
+            '/basepath/relay/routename'                                               => [
                 'route'  => 'alias',
                 'name'   => 'mappingRoute',
                 'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::routenameAction',
                 'method' => [],
             ],
-            '/basepath/relay/context.json?id=integer(123)'          => [
+            '/basepath/relay/context.json?id=integer(123)'                            => [
                 'route'  => 'alias',
                 'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::context',
                 'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::contextAction',
                 'method' => [],
             ],
-            '/basepath/relay/context.xml?id=integer(123)'           => [
+            '/basepath/relay/context.xml?id=integer(123)'                             => [
                 'route'  => 'alias',
                 'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::context',
                 'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::contextAction',
+                'method' => [],
+            ],
+            // スコープ（抜粋）
+            '/basepath/sub-sub/(?<id>[0-9]+)/index'                                   => [
+                'route'  => 'scope',
+                'name'   => 'ryunosuke\\Test\\stub\\Controller\\SubSub\\DefaultController::index',
+                'target' => 'ryunosuke\\Test\\stub\\Controller\\SubSub\\DefaultController::indexAction',
+                'method' => [],
+            ],
+            '/basepath/sub-sub/scoped/(?<type>[a-z]+)/'                               => [
+                'route'  => 'scope',
+                'name'   => 'ryunosuke\\Test\\stub\\Controller\\SubSub\\ScopedController::default',
+                'target' => 'ryunosuke\\Test\\stub\\Controller\\SubSub\\ScopedController::defaultAction',
+                'method' => [],
+            ],
+            '/basepath/sub-sub/scoped/(?<type>[a-z]+)/hoge'                           => [
+                'route'  => 'scope',
+                'name'   => 'ryunosuke\\Test\\stub\\Controller\\SubSub\\ScopedController::hoge',
+                'target' => 'ryunosuke\\Test\\stub\\Controller\\SubSub\\ScopedController::hogeAction',
+                'method' => [],
+            ],
+            '/basepath/url/all/(?<scoped>[0-9a-z]+)/context.json?id=integer(123)'     => [
+                'route'  => 'scope',
+                'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::context',
+                'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::contextAction',
+                'method' => [],
+            ],
+            '/basepath/url/all/(?<scoped>[0-9a-z]+)/parameter?arg1=string&arg2=array' => [
+                'route'  => 'scope',
+                'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::parameter',
+                'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::parameterAction',
                 'method' => [],
             ],
         ];

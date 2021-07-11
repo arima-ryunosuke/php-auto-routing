@@ -81,6 +81,28 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
         });
     }
 
+    function test_dispatch_scope()
+    {
+        $response = $this->service->dispatcher->dispatch(Request::create('/sub-sub/99/index'));
+        $this->assertEquals('index_action: 99', $response->getContent());
+
+        $response = $this->service->dispatcher->dispatch(Request::create('/sub-sub/scoped/tokyo/'));
+        $this->assertEquals('default: tokyo', $response->getContent());
+
+        $response = $this->service->dispatcher->dispatch(Request::create('/sub-sub/scoped/tokyo/hoge'));
+        $this->assertEquals('hoge: tokyo', $response->getContent());
+
+        $response = $this->service->dispatcher->dispatch(Request::create('/sub-sub/scoped/tokyo/null'));
+        $this->assertEquals('hoge: "tokyo"', $response->getContent());
+
+        $response = $this->service->dispatcher->dispatch(Request::create('/sub-sub/scoped/null'));
+        $this->assertEquals('hoge: null', $response->getContent());
+
+        $this->assertStatusCode(404, function () {
+            $this->service->dispatcher->dispatch(Request::create('/sub-sub/scoped/hoge'));
+        });
+    }
+
     function test_dispatch_regex()
     {
         $service = $this->service;

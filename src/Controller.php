@@ -67,6 +67,7 @@ class Controller
 
         $metadata = [
             '@alias'   => static::getAnnotationAsHash('alias', [null, 'comment'], null, []),
+            '@scope'   => static::getAnnotationAsHash('scope', [null, 'comment'], null, []),
             'abstract' => static::reflect()->isAbstract(),
             'actions'  => array_map(function (\ReflectionMethod $action) {
                 $aname = $action->name;

@@ -16,6 +16,7 @@ class Router
     const ROUTE_DEFAULT  = 'default';
     const ROUTE_ROUTE    = 'route';
     const ROUTE_ALIAS    = 'alias';
+    const ROUTE_SCOPE    = 'scope';
     const ROUTE_REWRITE  = 'rewrite';
     const ROUTE_REDIRECT = 'redirect';
     const ROUTE_REGEX    = 'regex';
@@ -35,6 +36,7 @@ class Router
             $this->routings = [
                 self::ROUTE_ROUTE    => [/* [name, controller, action] */],
                 self::ROUTE_ALIAS    => [/* [prefix, controller] */],
+                self::ROUTE_SCOPE    => [/* [regex, controller] */],
                 self::ROUTE_REWRITE  => [/* [from_url, to_url, action] */],
                 self::ROUTE_REDIRECT => [/* [from_url, to_url, action, status] */],
                 self::ROUTE_REGEX    => [/* [regex, controller, action] */],
@@ -43,6 +45,9 @@ class Router
                 $metadata = $controller::metadata($this->service->cacher);
                 foreach ($metadata['@alias'] as $prefix => $option) {
                     $this->alias($prefix, $controller);
+                }
+                foreach ($metadata['@scope'] as $regex => $option) {
+                    $this->scope($regex, $controller);
                 }
                 foreach ($metadata['actions'] as $action => $action_data) {
                     foreach ($action_data["@route"] as $name => $option) {
@@ -119,6 +124,24 @@ class Router
                             }
                             $parsed['controller'] = $this->service->dispatcher->shortenController($to);
                             $parsed['route'] = self::ROUTE_ALIAS;
+                            return $parsed;
+                        }
+                    }
+                    break;
+                case 'scope':
+                    foreach ($this->routings[self::ROUTE_SCOPE] as $regex => $routing) {
+                        if (preg_match("#^$regex#u", $path, $matches)) {
+                            $path2 = preg_replace("#^$regex#u", '', $path, 1, $count);
+                            $parsed2 = $this->parse($path2);
+                            $parsed['controller'] = $this->service->dispatcher->shortenController($routing);
+                            $parsed['action'] = $parsed2['action'];
+                            if (strlen($parsed['action']) === 0) {
+                                $parsed['action'] = 'default';
+                            }
+                            // スコープルートは parameters を完全上書き（どうせ渡ってこない）
+                            array_shift($matches);
+                            $parsed['parameters'] = $matches;
+                            $parsed['route'] = self::ROUTE_SCOPE;
                             return $parsed;
                         }
                     }
@@ -233,6 +256,22 @@ class Router
     }
 
     /**
+     * スコープルート定義
+     *
+     * @param string $regex 正規表現
+     * @param string $controller コントローラ名
+     * @return $this
+     */
+    public function scope($regex, $controller)
+    {
+        if ($regex[0] !== '/') {
+            $regex = rtrim($this->service->resolver->url($controller, '', [], ''), '/') . '/' . $regex;
+        }
+        $this->routings[self::ROUTE_SCOPE][$regex] = $controller;
+        return $this;
+    }
+
+    /**
      * リライトルート定義
      *
      * @param string $from_url 元 URL
@@ -319,24 +358,40 @@ class Router
             }
         }
 
-        // 正規表現ルートは逆引きのルールがまるで異なるし、正常系でそれなりに定義されるので特別扱い
-        foreach ($this->routings[self::ROUTE_REGEX] as $regex => $rca) {
-            if ($rca === $controller_action) {
-                $url = $regex;
-                foreach ($params as $key => $val) {
-                    $qkey = preg_quote($key);
-                    $regex = "(\( (\?P?<$qkey>)? (?:[^()]+ | (?1) )* \))";
-                    if (preg_match("#$regex#x", $url, $m)) {
-                        // スラッシュは regex ルーティングで使うこともあるので encode しない
-                        $val = strtr(rawurlencode($val), ['%2F' => '/']);
-                        $url = str_replace($m[1], $val, $url);
-                        unset($params[$key]);
+        $priority = $this->service->priority;
+        foreach ($priority as $prefer) {
+            switch ($prefer) {
+                default:
+                    throw new \UnexpectedValueException("$prefer is not defined route method");
+                // 旨味がないしもともと暫定ルーティングのつもりだったので対応しない
+                case 'default':
+                case 'rewrite':
+                case 'redirect':
+                case 'alias':
+                    break;
+                case 'scope':
+                    foreach ($this->routings[self::ROUTE_SCOPE] as $regex => $rc) {
+                        if ($rc === $controller_action[0]) {
+                            $action = $this->actionMethodToAction($controller_action[1]);
+                            $url = $this->reverseRegex($regex, $params);
+                            $querystring = $params ? '?' . http_build_query($params) : '';
+                            $cache = $this->service->request->getBasePath() . $url . $action . $querystring;
+                            $this->service->cacher->set($cachekey, $cache);
+                            return $cache;
+                        }
                     }
-                }
-                $querystring = $params ? '?' . http_build_query($params) : '';
-                $cache = $this->service->request->getBasePath() . $url . $querystring;
-                $this->service->cacher->set($cachekey, $cache);
-                return $cache;
+                    break;
+                case 'regex':
+                    foreach ($this->routings[self::ROUTE_REGEX] as $regex => $rca) {
+                        if ($rca === $controller_action) {
+                            $url = $this->reverseRegex($regex, $params);
+                            $querystring = $params ? '?' . http_build_query($params) : '';
+                            $cache = $this->service->request->getBasePath() . $url . $querystring;
+                            $this->service->cacher->set($cachekey, $cache);
+                            return $cache;
+                        }
+                    }
+                    break;
             }
         }
 
@@ -371,6 +426,15 @@ class Router
             $rname = array_search([$controller, $action], $this->routings[self::ROUTE_ROUTE]);
             $queryable = $action_data['@queryable'];
 
+            // スコープルートのベースパラメータは差っ引いておく必要がある
+            if ($route === 'scope') {
+                // 無理やり match させることで名前付きキャプチャーの名前一覧が得られる。
+                preg_match_all("#$url#", '', $m);
+                $baseparams = preg_grep('#^[0-9]+$#', array_keys($m), PREG_GREP_INVERT);
+                $action_data['parameters'] = array_filter($action_data['parameters'], function ($param) use ($baseparams) {
+                    return !in_array($param['name'], $baseparams, true);
+                });
+            }
             // パラメータ（regex はルート自体がパラメータ付きのようなものなので除外）
             $pathinfo = '';
             if ($action_data['parameters'] && $route !== 'regex') {
@@ -431,6 +495,12 @@ class Router
                 $gather($result, self::ROUTE_ALIAS, $this->service->resolver->url($controller, $action, [], $alias), $controller, $action);
             }
         }
+        foreach ($this->routings[self::ROUTE_SCOPE] as $scope => $controller) {
+            $metadata = $controller::metadata($this->service->cacher);
+            foreach ($metadata['actions'] as $action => $action_data) {
+                $gather($result, self::ROUTE_SCOPE, $this->service->request->getBasePath() . $scope . $this->actionMethodToAction($action), $controller, $action);
+            }
+        }
         foreach ($this->getControllers() as $controller) {
             $metadata = $controller::metadata($this->service->cacher);
             foreach ($metadata['actions'] as $action => $action_data) {
@@ -470,5 +540,29 @@ class Router
             $controllers[] = $class_name;
         }
         return $controllers;
+    }
+
+    private function actionMethodToAction($action)
+    {
+        if ($action === 'default') {
+            return '';
+        }
+        return strtolower(preg_replace('#([^/])([A-Z])#', '$1-$2', $action));
+    }
+
+    private function reverseRegex($regex, &$params)
+    {
+        $url = $regex;
+        foreach ($params as $key => $val) {
+            $qkey = preg_quote($key);
+            $pattern = "(\( (\?P?<$qkey>)? (?:[^()]+ | (?1) )* \))";
+            if (preg_match("#$pattern#x", $url, $m)) {
+                // スラッシュはルーティングで使うこともあるので encode しない
+                $val = strtr(rawurlencode($val), ['%2F' => '/']);
+                $url = str_replace($m[1], $val, $url);
+                unset($params[$key]);
+            }
+        }
+        return $url;
     }
 }
