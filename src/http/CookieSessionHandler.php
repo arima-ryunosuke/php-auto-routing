@@ -21,19 +21,22 @@ class CookieSessionHandler extends AbstractSessionHandler
     /** @var ParameterBag */
     private $cookieBag;
 
-    /** @var callable */
+    /** @var array */
+    private $metadata;
+
+    /** @var \Closure */
     private $setcookie;
 
     public function __construct($options = [])
     {
         assert(array_key_exists('privateKey', $options));
 
-        $this->privateKey = $options['privateKey'];
-        $this->chunkSize = $options['chunkSize'] ?? 4095; // ブラウザの最小サイズは 4095 byte
-        $this->maxLength = $options['maxLength'] ?? 19; // RFC 的には 20 個。ただし個数クッキーで1つ使うので -1
+        $this->privateKey = (string) $options['privateKey'];
+        $this->chunkSize = (int) ($options['chunkSize'] ?? 4095); // ブラウザの最小サイズは 4095 byte
+        $this->maxLength = (int) ($options['maxLength'] ?? 19); // RFC 的には 20 個。ただし個数クッキーで1つ使うので -1
 
         $this->cookieBag = new ParameterBag($options['cookie'] ?? $_COOKIE);
-        $this->setcookie = $options['setcookie'] ?? '\setcookie';
+        $this->setcookie = \Closure::fromCallable($options['setcookie'] ?? '\setcookie');
     }
 
     /**
@@ -45,6 +48,21 @@ class CookieSessionHandler extends AbstractSessionHandler
         // クッキーサイズ制限にはクッキー名、さらに path, domain まで含まれる（メタ部分は http_build_query で概算）
         $this->chunkSize -= strlen($sessionName) + strlen(http_build_query(session_get_cookie_params()));
 
+        // for compatible
+        $metadata = $this->cookieBag->get($this->storeName, '{}');
+        if (ctype_digit((string) $metadata)) {
+            $this->metadata = [
+                'length'  => $metadata,
+                'version' => 0,
+            ];
+        }
+        else {
+            $this->metadata = json_decode($metadata, true);
+        }
+
+        $this->metadata['length'] = (int) min($this->metadata['length'] ?? 0, $this->maxLength);
+        $this->metadata['version'] = (int) ($this->metadata['version'] ?? 1);
+
         return parent::open($savePath, $sessionName);
     }
 
@@ -53,19 +71,7 @@ class CookieSessionHandler extends AbstractSessionHandler
      */
     protected function doRead($sessionId): string
     {
-        $data = '';
-        $count = (int) $this->cookieBag->get($this->storeName, 0);
-        if ($count === 0) {
-            return '';
-        }
-        for ($i = 0; $i < $count; $i++) {
-            $value = $this->cookieBag->get($this->storeName . $i);
-            if ($value === null) {
-                break;
-            }
-            $data .= $value;
-        }
-        return @$this->decode($data);
+        return @$this->getCookies();
     }
 
     /**
@@ -124,8 +130,8 @@ class CookieSessionHandler extends AbstractSessionHandler
         $key = substr($salted, 0, 32);
         $iv = substr($salted, 32, 16);
 
-        $encrypted_data = openssl_encrypt($decrypted_data, 'AES-256-CBC', $key, 0, $iv);
-        return strtr(base64_encode(gzcompress($salt . $encrypted_data, 9)), [
+        $encrypted_data = openssl_encrypt(gzdeflate($decrypted_data, 9), 'AES-256-CBC', $key, 0, $iv);
+        return strtr(base64_encode($salt . $encrypted_data), [
             '/' => '_',
             '+' => '-',
         ]);
@@ -133,10 +139,15 @@ class CookieSessionHandler extends AbstractSessionHandler
 
     private function decode($encrypted_data)
     {
-        $data = gzuncompress(base64_decode(strtr($encrypted_data, [
+        $data = base64_decode(strtr($encrypted_data, [
             '_' => '/',
             '-' => '+',
-        ])));
+        ]));
+
+        // for compatible
+        if ($this->metadata['version'] === 0) {
+            $data = gzuncompress($data);
+        }
 
         $salt = substr($data, 0, 16);
         $ct = substr($data, 16);
@@ -153,7 +164,25 @@ class CookieSessionHandler extends AbstractSessionHandler
         $key = substr($result, 0, 32);
         $iv = substr($result, 32, 16);
 
-        return openssl_decrypt($ct, 'AES-256-CBC', $key, 0, $iv) ?: '';
+        $decrypted_data = openssl_decrypt($ct, 'AES-256-CBC', $key, 0, $iv) ?: '';
+        if ($this->metadata['version'] === 0) {
+            return $decrypted_data;
+        }
+        return (string) gzinflate($decrypted_data);
+    }
+
+    private function getCookies()
+    {
+        if ($this->metadata['length'] <= 0) {
+            return '';
+        }
+
+        $data = '';
+        for ($i = 0; $i < $this->metadata['length']; $i++) {
+            $value = $this->cookieBag->get($this->storeName . $i, '');
+            $data .= $value;
+        }
+        return @$this->decode($data);
     }
 
     private function setCookies($data)
@@ -168,20 +197,22 @@ class CookieSessionHandler extends AbstractSessionHandler
             'samesite' => $cookie_params['samesite'],
         ];
 
-        $count = (int) $this->cookieBag->get($this->storeName, 0);
         $chunks = array_filter(str_split($data, $this->chunkSize), function ($v) { return strlen($v); });
         $length = count($chunks);
         if ($length > $this->maxLength) {
             return false;
         }
-        $chunks[''] = $length;
+        $chunks[''] = json_encode([
+            'length'  => $length,
+            'version' => 1,
+        ]);
 
         foreach ($chunks as $i => $v) {
             ($this->setcookie)($this->storeName . $i, $v, $session_params);
         }
 
         // 無駄なので余剰を削除する
-        for ($i = $length; $i <= $count; $i++) {
+        for ($i = $length; $i <= $this->metadata['length']; $i++) {
             ($this->setcookie)($this->storeName . $i, '', $session_params);
         }
 
