@@ -56,7 +56,7 @@ class Service implements HttpKernelInterface
         $this->values['cacher'] = $values['cacher'] ?? new Cacher();
         $this->values['logger'] = $values['logger'] ?? function () { return function ($ex, $request) { }; };
         $this->values['origin'] = $values['origin'] ?? [];
-        $this->values['priority'] = $values['priority'] ?? ['rewrite', 'redirect', 'alias', 'regex', 'scope', 'default'];
+        $this->values['priority'] = $values['priority'] ?? [Router::ROUTE_REWRITE, Router::ROUTE_REDIRECT, Router::ROUTE_ALIAS, Router::ROUTE_REGEX, Router::ROUTE_SCOPE, Router::ROUTE_DEFAULT];
         $this->values['events'] = $values['events'] ?? [];
 
         $this->values['router'] = $values['router'] ?? function () { return new Router($this); };

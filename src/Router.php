@@ -83,13 +83,13 @@ class Router
             switch ($prefer) {
                 default:
                     throw new \UnexpectedValueException("$prefer is not defined route method");
-                case 'default':
+                case self::ROUTE_DEFAULT:
                     if (is_string($this->service->dispatcher->findController($parsed['controller'], $parsed['action'])[0])) {
                         $parsed['route'] = $parsed['route'] ?? self::ROUTE_DEFAULT;
                         return $parsed;
                     }
                     break;
-                case 'rewrite':
+                case self::ROUTE_REWRITE:
                     foreach ($this->routings[self::ROUTE_REWRITE] as $from => $routing) {
                         if (preg_match("#$from#", $path)) {
                             [$controller, $action] = $routing;
@@ -104,7 +104,7 @@ class Router
                         }
                     }
                     break;
-                case 'redirect':
+                case self::ROUTE_REDIRECT:
                     foreach ($this->routings[self::ROUTE_REDIRECT] as $from => $routing) {
                         if ($from === $path) {
                             [$controller, $action, $status] = $routing;
@@ -116,7 +116,7 @@ class Router
                         }
                     }
                     break;
-                case 'alias':
+                case self::ROUTE_ALIAS:
                     foreach ($this->routings[self::ROUTE_ALIAS] as $from => $to) {
                         if ($from === $parentpath) {
                             if ($parsed['controller'] === '' || $parentpath === $path) {
@@ -128,7 +128,7 @@ class Router
                         }
                     }
                     break;
-                case 'scope':
+                case self::ROUTE_SCOPE:
                     foreach ($this->routings[self::ROUTE_SCOPE] as $regex => $routing) {
                         if (preg_match("#^$regex#u", $path, $matches)) {
                             $path2 = preg_replace("#^$regex#u", '', $path, 1, $count);
@@ -146,7 +146,7 @@ class Router
                         }
                     }
                     break;
-                case 'regex':
+                case self::ROUTE_REGEX:
                     foreach ($this->routings[self::ROUTE_REGEX] as $regex => $routing) {
                         if (preg_match("#^$regex$#u", $path, $matches)) {
                             [$controller, $action] = $routing;
@@ -364,12 +364,12 @@ class Router
                 default:
                     throw new \UnexpectedValueException("$prefer is not defined route method");
                 // 旨味がないしもともと暫定ルーティングのつもりだったので対応しない
-                case 'default':
-                case 'rewrite':
-                case 'redirect':
-                case 'alias':
+                case self::ROUTE_DEFAULT:
+                case self::ROUTE_REWRITE:
+                case self::ROUTE_REDIRECT:
+                case self::ROUTE_ALIAS:
                     break;
-                case 'scope':
+                case self::ROUTE_SCOPE:
                     foreach ($this->routings[self::ROUTE_SCOPE] as $regex => $rc) {
                         if ($rc === $controller_action[0]) {
                             $action = $this->actionMethodToAction($controller_action[1]);
@@ -381,7 +381,7 @@ class Router
                         }
                     }
                     break;
-                case 'regex':
+                case self::ROUTE_REGEX:
                     foreach ($this->routings[self::ROUTE_REGEX] as $regex => $rca) {
                         if ($rca === $controller_action) {
                             $url = $this->reverseRegex($regex, $params);
@@ -430,7 +430,7 @@ class Router
             $queryable = $action_data['@queryable'];
 
             // スコープルートのベースパラメータは差っ引いておく必要がある
-            if ($route === 'scope') {
+            if ($route === self::ROUTE_SCOPE) {
                 // 無理やり match させることで名前付きキャプチャーの名前一覧が得られる。
                 preg_match_all("#$url#", '', $m);
                 $baseparams = preg_grep('#^[0-9]+$#', array_keys($m), PREG_GREP_INVERT);
@@ -440,7 +440,7 @@ class Router
             }
             // パラメータ（regex はルート自体がパラメータ付きのようなものなので除外）
             $pathinfo = '';
-            if ($action_data['parameters'] && $route !== 'regex') {
+            if ($action_data['parameters'] && $route !== self::ROUTE_REGEX) {
                 if ($queryable) {
                     $delimiter = '?';
                     $separator = '&';
