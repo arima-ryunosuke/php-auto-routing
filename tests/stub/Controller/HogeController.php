@@ -177,6 +177,11 @@ class HogeController extends AbstractController
      */
     public function queryAction($p1, $p2) { }
 
+    public function nullAction($arg = null)
+    {
+        return json_encode($arg);
+    }
+
     /**
      * @action get
      * @context json

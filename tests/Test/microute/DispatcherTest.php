@@ -458,6 +458,20 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
         ], $this->service->dispatcher->detectArgument(new HogeController($this->service, 'argument', $request), []));
     }
 
+    function test_detectArgument_null()
+    {
+        $request = Request::createFromGlobals();
+
+        $this->assertSame([
+            null,
+        ], $this->service->dispatcher->detectArgument(new HogeController($this->service, 'null', $request), []));
+
+        $request->query->set('arg', 'hoge');
+        $this->assertSame([
+            'hoge',
+        ], $this->service->dispatcher->detectArgument(new HogeController($this->service, 'null', $request), []));
+    }
+
     function test_detectArgument_arrayable()
     {
         $request = Request::createFromGlobals();

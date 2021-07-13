@@ -336,11 +336,12 @@ class Dispatcher
             // キャストや配列のチェック
             $type = $parameter['type'];
             if ($type) {
+                $firsttype = array_key_first($type);
                 if (!$arrayable && !isset($type['array']) && is_array($value)) {
                     throw new HttpException(404, 'parameter is not match type.');
                 }
-                if (!isset($type[strtolower(gettype($value))])) {
-                    @settype($value, array_key_first($type));
+                if ($firsttype !== "null" && !isset($type[strtolower(gettype($value))])) {
+                    @settype($value, $firsttype);
                 }
             }
             // 型指定が存在しないかつ配列が来たら 404
