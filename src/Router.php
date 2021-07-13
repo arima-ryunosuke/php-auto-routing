@@ -411,6 +411,9 @@ class Router
     public function urls()
     {
         $gather = function (&$receiver, $route, $url, $controller, $action) {
+            if ($action === 'error') {
+                return;
+            }
             if ($action === null) {
                 $receiver[$url] = [
                     'route'  => $route,
