@@ -21,6 +21,14 @@
 - psr15(middleware) に対応する？
 - DefaultController::errorAction の廃止
 
+## 1.1.9
+
+- [fixbug][Dispatcher] 型指定が null しかないときにパラメータがすべて null になってしまう不具合を修正
+- [fixbug][Router] urls からエラーアクションを除外
+- [refactor][all] 直値を使っている箇所を定数に置換
+- [feature][Router] scope ルーティングを実装
+- [change][CookieSessionHandler] シリアライズ方式を変更
+
 ## 1.1.7
 
 - 対象バージョンを php7.4, symfony5.* に格上げ

@@ -20,6 +20,8 @@ MVC の MV 的な機能は一切ありません。
             - 「正規表現に一致する URL をある Controller/Action として動作させる」機能です。巷のフレームワークでのいわゆる「ルーティング」と似たような意味です
         - alias ルーティング
             - 「ある URL をある Controller として動作させる」機能です。apache における「mod_alias」とほぼ同じ意味です
+        - scope ルーティング
+            - 「あるプレフィックスをある Controller として動作させる」機能です。apache における「mod_alias」とほぼ同じ意味です（URL パラメータが使える）
     - ルーティングの設定の仕方は3つあります
         - デフォルトルーティング（CamelCase(`HogeFugaController::FooBarAction`) を chain-case(`hoge-fuga/foo-bar`) に変換）
         - @redirect, @regex などのアノテーションによるルーティング
@@ -99,7 +101,7 @@ $service->run();
     - デフォルトは `[]` です
 - priority: `array`
     - ルーティングの優先順位を指定します
-    - デフォルトは `['rewrite', 'redirect', 'alias', 'regex', 'default']` です
+    - デフォルトは `['rewrite', 'redirect', 'alias', 'regex', 'scope', 'default']` です
 - router: `\ryunosuke\microute\Router`
     - Router インスタンスを指定します
     - よほど抜き差しならない状況じゃない限り指定する意味はありません
@@ -387,6 +389,8 @@ $service->run();
     - `/` 以外から始まると「本来そのコントローラが持つ URL（CamelCase -> chain-case のデフォルトルーティング）」からの相対パスでマッチします
 - [V] @alias /url description
     - /url アクセス時に alias されてこの**コントローラへ**到達します
+- [V] @scope /pattern description
+    - /pattern アクセス時にキャプチャーされつつこの**コントローラへ**到達します
 
 `V` のものは複数記述できます。
 
@@ -415,6 +419,24 @@ class HogeController extends \ryunosuke\microute\Web\Controller
 このようなクラス定義をすると `/fuga/foo` という URL はこのコントローラの fooAction へ行き着きます。
 つまり php レイヤでクラス名を変更するのと同じ効果があります。
 
+同様に scope は「URL → Controller」のルーティングなのでメソッドではなくクラスアノテーションとして記述します。
+
+```php
+/**
+ * @scope (?<pref_id>\d+)/
+ */
+class HogeController extends \ryunosuke\microute\Web\Controller
+{
+    public function fooAction($pref_id) {}
+}
+```
+
+このようなクラス定義をすると `/hoge/13/foo` という URL はこのコントローラの fooAction へ行き着きます。
+pref_id がキャプチャされる点と相対パスが使える点が alias と異なります。
+
+foo だけではなく、他にアクションが生えていれば到達します。
+つまり、「全アクションで @regex して共通パラメータを定義」したと同様の振る舞いをしますし、そのような使い方を想定しています。
+
 ### アクションメソッドに渡ってくるパラメータ
 
 クエリストリング や `parameterDelimiter` `parameterSeparator` `parameterArrayable` などに応じてアクションメソッドは引数を取ることができます。
@@ -428,6 +450,8 @@ class HogeController extends \ryunosuke\microute\Web\Controller
 - @param で指定した型でキャストされます（複数指定時は最初の型）
     - php7 のタイプヒントがあればそれも使用されます（最優先）
 - @regex でルーティングされた場合はマッチ結果が渡ってきます
+    - 名前付きキャプチャの名前が一致するものが優先で、名前が見つからない場合はマッチ順でマップします
+- @scope でルーティングされた場合はマッチ結果が渡ってきます
     - 名前付きキャプチャの名前が一致するものが優先で、名前が見つからない場合はマッチ順でマップします
 
 php7 の型宣言があれば大抵の場合で不要ですが、キャストが便利な状況もあります（例えば int に not intable な文字列が来ると即死するなど）。
