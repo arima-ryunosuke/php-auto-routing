@@ -32,8 +32,9 @@ class CookieSessionHandler extends AbstractSessionHandler
         assert(array_key_exists('privateKey', $options));
 
         $this->privateKey = (string) $options['privateKey'];
+        $this->storeName = (string) ($options['storeName'] ?? '');
         $this->chunkSize = (int) ($options['chunkSize'] ?? 4095); // ブラウザの最小サイズは 4095 byte
-        $this->maxLength = (int) ($options['maxLength'] ?? 19); // RFC 的には 20 個。ただし個数クッキーで1つ使うので -1
+        $this->maxLength = (int) ($options['maxLength'] ?? 19);   // RFC 的には 20 個。ただし個数クッキーで1つ使うので -1
 
         $this->cookieBag = new ParameterBag($options['cookie'] ?? $_COOKIE);
         $this->setcookie = \Closure::fromCallable($options['setcookie'] ?? '\setcookie');
@@ -44,9 +45,9 @@ class CookieSessionHandler extends AbstractSessionHandler
      */
     public function open($savePath, $sessionName)
     {
-        $this->storeName = $sessionName;
+        $this->storeName = strlen($this->storeName) ? $this->storeName : $sessionName;
         // クッキーサイズ制限にはクッキー名、さらに path, domain まで含まれる（メタ部分は http_build_query で概算）
-        $this->chunkSize -= strlen($sessionName) + strlen(http_build_query(session_get_cookie_params()));
+        $this->chunkSize -= strlen($this->storeName) + strlen(http_build_query(session_get_cookie_params()));
 
         // for compatible
         $metadata = $this->cookieBag->get($this->storeName, '{}');
@@ -63,7 +64,7 @@ class CookieSessionHandler extends AbstractSessionHandler
         $this->metadata['length'] = (int) min($this->metadata['length'] ?? 0, $this->maxLength);
         $this->metadata['version'] = (int) ($this->metadata['version'] ?? 1);
 
-        return parent::open($savePath, $sessionName);
+        return parent::open($savePath, $this->storeName);
     }
 
     /**

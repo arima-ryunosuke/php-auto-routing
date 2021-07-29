@@ -113,6 +113,17 @@ class CookieSessionHandlerTest extends \ryunosuke\Test\AbstractTestCase
         ]), $v0cookies['sessname']);
     }
 
+    function test_open()
+    {
+        $cookies = [];
+        $handler = $this->provideHandler($cookies, [
+            'storeName' => 'hoge',
+        ]);
+        $this->assertArrayNotHasKey('hoge', $cookies);
+        $handler->write('sid', 'hogera');
+        $this->assertArrayHasKey('hoge', $cookies);
+    }
+
     function test_destroy()
     {
         $cookies = [];
