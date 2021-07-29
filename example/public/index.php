@@ -16,6 +16,7 @@ $service = new \ryunosuke\microute\Service([
             'cookie_lifetime' => 60,
         ], new \ryunosuke\microute\http\CookieSessionHandler([
             'privateKey' => 'secretkey',
+            'storeName'  => 'SID',
             'chunkSize'  => 256,
         ]));
     },
