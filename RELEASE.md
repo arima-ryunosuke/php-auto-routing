@@ -21,6 +21,10 @@
 - psr15(middleware) に対応する？
 - DefaultController::errorAction の廃止
 
+## 1.1.10
+
+- [fixbug][CookieSessionHandler] 標準のセッション機構と競合していた不具合を修正
+
 ## 1.1.9
 
 - [fixbug][Dispatcher] 型指定が null しかないときにパラメータがすべて null になってしまう不具合を修正
