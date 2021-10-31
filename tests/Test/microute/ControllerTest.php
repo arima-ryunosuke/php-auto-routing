@@ -347,7 +347,7 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         $controller = new HogeController($this->service, 'action-a');
 
         $response = $controller->download(new \SplFileInfo(__FILE__), 'filename.txt');
-        $this->assertEquals("attachment; filename=filename.txt; filename*=utf-8''ControllerTest.php", $response->headers->get('Content-Disposition'));
+        $this->assertEquals("attachment; filename=filename.txt", $response->headers->get('Content-Disposition'));
         ob_start();
         $response->send();
         $actual = ob_get_clean();

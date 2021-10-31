@@ -349,7 +349,7 @@ class Controller
         if ($eitherContentOrFileinfo instanceof \SplFileInfo) {
             $response = new BinaryFileResponse($eitherContentOrFileinfo);
             $response->headers->set('Content-Type', 'application/octet-stream');
-            $response->headers->set('Content-Disposition', $response->headers->makeDisposition('attachment', $eitherContentOrFileinfo->getFilename(), (string) $filename));
+            $response->headers->set('Content-Disposition', $response->headers->makeDisposition('attachment', $filename ?? $eitherContentOrFileinfo->getFilename()));
         }
         elseif ($eitherContentOrFileinfo instanceof \Closure) {
             if ($filename === null) {
