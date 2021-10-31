@@ -262,7 +262,7 @@ class Controller
      * @param int $status ステータスコード
      * @return RedirectResponse
      */
-    public function redirectRoute($route, $params, $status = 302)
+    public function redirectRoute($route, $params = [], $status = 302)
     {
         $url = $this->service->router->reverseRoute($route, $params);
         return $this->redirect($url, $status);
