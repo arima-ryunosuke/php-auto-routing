@@ -353,10 +353,12 @@ class RouterTest extends \ryunosuke\Test\AbstractTestCase
 
         $priority(['rewrite', 'redirect', 'alias', 'regex', 'default']);
         $route = $service->router->match(Request::create('/hoge/action-simple'));
-        $this->assertArraySubset([
+        $this->assertEquals([
             'controller' => "",
             'action'     => "rewrite",
             'route'      => "rewrite",
+            'context'    => '',
+            'parameters' => [],
         ], $route);
 
         $priority(['redirect', 'alias', 'regex', 'default', 'rewrite']);
@@ -365,26 +367,32 @@ class RouterTest extends \ryunosuke\Test\AbstractTestCase
 
         $priority(['alias', 'regex', 'default', 'rewrite', 'redirect']);
         $route = $service->router->match(Request::create('/hoge/action-simple'));
-        $this->assertArraySubset([
+        $this->assertEquals([
             'controller' => "alias",
             'action'     => "actionSimple",
             'route'      => "alias",
+            'context'    => '',
+            'parameters' => [],
         ], $route);
 
         $priority(['regex', 'default', 'rewrite', 'redirect', 'alias']);
         $route = $service->router->match(Request::create('/hoge/action-simple'));
-        $this->assertArraySubset([
+        $this->assertEquals([
             'controller' => "Hoge",
             'action'     => "default",
             'route'      => "regex",
+            'context'    => '',
+            'parameters' => [],
         ], $route);
 
         $priority(['default', 'rewrite', 'redirect', 'alias', 'regex']);
         $route = $service->router->match(Request::create('/hoge/action-simple'));
-        $this->assertArraySubset([
+        $this->assertEquals([
             'controller' => "Hoge",
             'action'     => "actionSimple",
             'route'      => "default",
+            'context'    => '',
+            'parameters' => [],
         ], $route);
 
         $priority(['undefined']);

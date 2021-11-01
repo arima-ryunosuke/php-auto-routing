@@ -138,14 +138,14 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
                 'response="' . $response . '"',
                 'qop=' . $auth['qop'],
                 'nc=00000001',
-                'cnonce="0123456789abcdef"'
+                'cnonce="0123456789abcdef"',
             ]);
         };
 
         $service = $this->provideService([
             'authenticationProvider' => function () {
                 return function ($username) { return strtoupper($username); };
-            }
+            },
         ]);
         $request = new Request();
         $request->server->set('REQUEST_URI', '/path');
@@ -551,7 +551,7 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         // Expires は未設定のはず
         $this->assertEquals(null, $response->getExpires());
         // 中身はあるはず
-        $this->assertContains('cached_response', $response->getContent());
+        $this->assertStringContainsString('cached_response', $response->getContent());
 
         // If-Modified-Since を設定しても・・・
         $controller = new EventController($this->service, 'cache', $request);
@@ -560,7 +560,7 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         // 200 のはず
         $this->assertEquals(200, $response->getStatusCode());
         // 中身はあるはず
-        $this->assertContains('cached_response', $response->getContent());
+        $this->assertStringContainsString('cached_response', $response->getContent());
     }
 
     function test_event_cache_1()
@@ -577,7 +577,7 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         // Expires が設定されているはず
         $this->assertInstanceOf('DateTime', $response->getExpires());
         // 中身はあるはず
-        $this->assertContains('cached_response', $response->getContent());
+        $this->assertStringContainsString('cached_response', $response->getContent());
 
         // If-Modified-Since を設定すると・・・
         $controller = new EventController($this->service, 'cache1', $request);
@@ -595,7 +595,7 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         // 200 のはず
         $this->assertEquals(200, $response->getStatusCode());
         // 中身はあるはず
-        $this->assertContains('cached_response', $response->getContent());
+        $this->assertStringContainsString('cached_response', $response->getContent());
     }
 
     function test_event_cache_direct()
@@ -625,7 +625,7 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
     function test_event_cache_debug()
     {
         $service = $this->provideService([
-            'debug' => true
+            'debug' => true,
         ]);
 
         $request = Request::createFromGlobals();
@@ -640,7 +640,7 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         // debug 中は null のはず
         $this->assertNull($response->getExpires());
         // 中身はあるはず
-        $this->assertContains('cached_response', $response->getContent());
+        $this->assertStringContainsString('cached_response', $response->getContent());
     }
 
     function test_event_other()
@@ -650,7 +650,7 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         $controller = new EventController($this->service, 'other', $request);
         $response = $controller->action([]);
         // 普通の action レスポンスが返るはず
-        $this->assertContains('other_event', $response->getContent());
+        $this->assertStringContainsString('other_event', $response->getContent());
 
         // other1:pre イベントにマッチするように送ると・・・
         $request = Request::createFromGlobals();
@@ -697,7 +697,7 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
             $request = Request::createFromGlobals();
             $controller = new EventController($this->service, 'unknown', $request);
             $response = $controller->action([]);
-            $this->assertContains('other_event', $response->getContent());
+            $this->assertStringContainsString('other_event', $response->getContent());
         });
     }
 }

@@ -8,7 +8,7 @@ class CacherTest extends \ryunosuke\Test\AbstractTestCase
     /** @var Cacher */
     protected $cacher;
 
-    function setUp()
+    function setUp(): void
     {
         // overrite parent (because don't use $service)
 

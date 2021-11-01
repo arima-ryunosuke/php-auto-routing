@@ -11,7 +11,7 @@ abstract class AbstractTestCase extends TestCase
     /** @var Service */
     protected $service;
 
-    function setUp()
+    function setUp(): void
     {
         parent::setUp();
 
@@ -55,7 +55,7 @@ abstract class AbstractTestCase extends TestCase
             }
             // メッセージも指定されていたときのみ
             if (strlen($e->getMessage()) > 0) {
-                self::assertContains($e->getMessage(), $ex->getMessage(), $message);
+                self::assertStringContainsString($e->getMessage(), $ex->getMessage(), $message);
             }
             return;
         }
@@ -73,7 +73,7 @@ abstract class AbstractTestCase extends TestCase
                 $message = reset($expectedCode);
                 $code = key($expectedCode);
                 self::assertEquals($code, $hx->getStatusCode());
-                self::assertContains($message, $hx->getMessage());
+                self::assertStringContainsString($message, $hx->getMessage());
             }
             else {
                 self::assertEquals($expectedCode, $hx->getStatusCode());

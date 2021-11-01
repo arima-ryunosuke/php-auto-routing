@@ -9,7 +9,7 @@ use Symfony\Component\HttpKernel\HttpKernelBrowser;
  */
 class ExampleTest extends AbstractTestCase
 {
-    function setUp()
+    function setUp(): void
     {
         ob_start();
         $this->service = require __DIR__ . '/../../example/public/index.php';
@@ -146,7 +146,7 @@ class ExampleTest extends AbstractTestCase
         $client = new HttpKernelBrowser($this->service);
         ob_start();
         $crawler = $client->request('GET', '/throw-domain');
-        $this->assertContains('throwDomainAction', ob_get_clean());
+        $this->assertStringContainsString('throwDomainAction', ob_get_clean());
 
         $this->assertEquals(500, $client->getResponse()->getStatusCode());
         $this->assertStringContainsString('Stack trace', $crawler->html());

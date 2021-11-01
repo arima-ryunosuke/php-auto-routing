@@ -61,7 +61,7 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
         $service = $this->provideService([
             'request' => new class extends Request {
                 public function getBaseUrl() { return '/base/path'; }
-            }
+            },
         ]);
         $resolver = $service->resolver;
         $this->assertEquals('/base/path/hoge', $resolver->url(HogeController::class));
@@ -97,7 +97,7 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
         $service = $this->provideService([
             'request' => new class extends Request {
                 public function getBaseUrl() { return '/base/path'; }
-            }
+            },
         ]);
         $resolver = $service->resolver;
         $this->assertEquals('/base/path/aliaspath/action', $resolver->url(HogeController::class, 'action', [], '/aliaspath'));

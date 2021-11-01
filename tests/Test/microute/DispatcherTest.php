@@ -156,7 +156,7 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
         $service = $this->provideService([
             'logger' => function () {
                 return function (\Exception $ex) { echo $ex->getMessage(), "\n"; };
-            }
+            },
         ]);
 
         $request = Request::create('hoge/action_throw');
@@ -179,7 +179,7 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
     {
         $service = $this->provideService([
             'controllerLocation' => [
-                'ryunosuke\\Test\\Web\\Mock\\Controller2\\' => __DIR__ . '/../../stub/Controller2/'
+                'ryunosuke\\Test\\Web\\Mock\\Controller2\\' => __DIR__ . '/../../stub/Controller2/',
             ],
         ]);
         $service->cacher->clear();
@@ -429,7 +429,7 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
             'fuga',
         ], $this->service->dispatcher->detectArgument(new HogeController($this->service, 'argument', $request), [
             0      => 'hoge',
-            'cval' => 'fuga'
+            'cval' => 'fuga',
         ]));
     }
 
@@ -493,7 +493,7 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertSame([
             null,
             null,
-            [1, 2, 3]
+            [1, 2, 3],
         ], $this->service->dispatcher->detectArgument(new HogeController($this->service, 'arrayable', $request), []));
     }
 }

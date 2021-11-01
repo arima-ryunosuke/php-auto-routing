@@ -2,3 +2,4 @@
 /tests/coverage
 /tests/phpunit.xml
 /tests/tmp
+/tests/.phpunit.result.cache

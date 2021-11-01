@@ -18,7 +18,7 @@ class ServiceTest extends \ryunosuke\Test\AbstractTestCase
         $values = $ref->getProperty('values');
         $values->setAccessible(true);
         foreach ($values->getValue($this->service) as $property => $value) {
-            $this->assertContains("\$$property", $doccomment);
+            $this->assertStringContainsString("\$$property", $doccomment);
         }
     }
 

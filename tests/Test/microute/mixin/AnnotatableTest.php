@@ -79,7 +79,7 @@ class AnnotatableTest extends \ryunosuke\Test\AbstractTestCase
             [
                 2 => 'int',
                 1 => '$a',
-                0 => 'this is a value'
+                0 => 'this is a value',
             ],
             [
                 2 => 'int|string|null',
@@ -104,7 +104,7 @@ class AnnotatableTest extends \ryunosuke\Test\AbstractTestCase
             ],
             '$c' => [
                 'type'    => '\\stdclass',
-                'comment' => null
+                'comment' => null,
             ],
         ], MiscClass::getAnnotationAsHash('param', ['type', null, 'comment'], 'f'));
 
