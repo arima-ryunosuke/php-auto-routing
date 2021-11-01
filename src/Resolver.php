@@ -1,6 +1,8 @@
 <?php
 namespace ryunosuke\microute;
 
+use ryunosuke\microute\mixin\Utility;
+
 /**
  * リゾルバクラス
  *
@@ -8,6 +10,8 @@ namespace ryunosuke\microute;
  */
 class Resolver
 {
+    use Utility;
+
     const CACHE_KEY = 'Resolver' . Service::CACHE_VERSION;
 
     /** @var Service */
@@ -66,6 +70,7 @@ class Resolver
         if ($action === 'default') {
             $action = '';
         }
+        $action = strtolower(preg_replace('#([^/])([A-Z])#', '$1-$2', $action));
 
         $controller = $this->service->dispatcher->resolveController($controller);
         $class_name = $this->service->dispatcher->shortenController($controller);
@@ -82,8 +87,21 @@ class Resolver
             $base = $this->service->request->getBasePath() . $base;
         }
 
+        $metadata = $controller::metadata($this->service->cacher);
+
+        if ($metadata['@scope']) {
+            $parameter = $this->service->request->attributes->get('parameter', []);
+            foreach ($metadata['@scope'] as $scope => $comment) {
+                $paramnames = $this->regexParameter($scope);
+                if (array_intersect_key($paramnames, $parameter) === $paramnames) {
+                    $action = $this->reverseRegex($scope, $parameter) . $action;
+                    break;
+                }
+            }
+        }
+
         if (strlen($maction)) {
-            $action_data = $controller::metadata($this->service->cacher)['actions'][$maction];
+            $action_data = $metadata['actions'][$maction];
             $parameters = $action_data['parameters'];
             $pathinfo = '';
             if ($action_data['@queryable']) {
@@ -126,7 +144,6 @@ class Resolver
             }
 
             $querysep = ($pathinfo[0] ?? '') === '?' ? '&' : '?';
-            $action = strtolower(preg_replace('#([^/])([A-Z])#', '$1-$2', $action));
             $action .= $pathinfo . (strlen($context) ? ".$context" : '') . ($params ? $querysep . http_build_query($params) : '');
         }
 

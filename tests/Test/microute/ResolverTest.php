@@ -44,7 +44,8 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
 
     function test_url()
     {
-        $service = $this->service;
+        $resuest = Request::create('/dummy');
+        $service = $this->provideService(['request' => $resuest]);
         $resolver = $service->resolver;
         $this->assertEquals('/', $resolver->url(DefaultController::class, 'default'));
         $this->assertEquals('/index', $resolver->url(DefaultController::class, 'index'));
@@ -53,6 +54,9 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals('/hoge', $resolver->url(HogeController::class, 'default'));
         $this->assertEquals('/hoge/action', $resolver->url(HogeController::class, 'action'));
         $this->assertEquals('/hoge/action-id?123&name=hoge', $resolver->url(HogeController::class, 'actionId', ['id' => 123, 'name' => 'hoge']));
+
+        $resuest->attributes->set('parameter', ['id' => 123]);
+        $this->assertEquals('/sub-sub/123/index', $resolver->url(\ryunosuke\Test\stub\Controller\SubSub\DefaultController::class, 'index'));
 
         $service = $this->provideService([
             'request' => new class extends Request {
