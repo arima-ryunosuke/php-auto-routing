@@ -187,6 +187,23 @@ class Resolver
     }
 
     /**
+     * URL ビルダー（現在 URL）
+     *
+     * 現在 URL を返す。
+     * ただし、クエリパラメータを与えればクエリ部分は書き換えることができる。
+     *
+     * @param array $params クエリパラメータ
+     * @return string URL
+     */
+    public function current($params = [])
+    {
+        $basepath = rtrim($this->service->request->getBasePath(), '/');
+        $currentpath = $this->service->request->getPathInfo();
+
+        return $basepath . $currentpath . $this->query($params);
+    }
+
+    /**
      * URL ビルダー（静的ファイル）
      *
      * ファイル名に公開パスと更新日時を付加したものを生成。

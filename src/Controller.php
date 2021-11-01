@@ -299,6 +299,19 @@ class Controller
     }
 
     /**
+     * 現在の URL へリダイレクト
+     *
+     * @param array $params パラメータ
+     * @param int $status ステータスコード
+     * @return RedirectResponse
+     */
+    public function redirectCurrent($params = [], $status = 302)
+    {
+        $url = $this->service->resolver->current($params);
+        return $this->redirect($url, $status);
+    }
+
+    /**
      * JSON レスポンスを返す
      *
      * @param array $data JSON データ

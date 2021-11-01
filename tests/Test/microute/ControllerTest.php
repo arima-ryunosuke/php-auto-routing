@@ -255,6 +255,15 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertTrue($response->isRedirect('/sub-sub/foo-bar/action-test?test=123'));
     }
 
+    function test_redirectCurrent()
+    {
+        $controller = new HogeController($this->provideService([
+            'request' => Request::create('/path/to/current'),
+        ]), 'action-a');
+        $response = $controller->redirectCurrent(['test' => 123]);
+        $this->assertTrue($response->isRedirect('/path/to/current?test=123'));
+    }
+
     function test_json()
     {
         $controller = new HogeController($this->service, 'action-a');

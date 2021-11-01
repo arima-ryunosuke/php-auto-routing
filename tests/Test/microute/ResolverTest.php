@@ -136,6 +136,17 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals('/resolver/action1', $url);
     }
 
+    function test_current()
+    {
+        $service = $this->provideService([
+            'request' => Request::create('/resolver/current?id=123&op=x'),
+        ]);
+        $resolver = $service->resolver;
+
+        $url = $resolver->current(['op' => 'y', 'appendix' => 'hoge']);
+        $this->assertEquals('/resolver/current?id=123&op=y&appendix=hoge', $url);
+    }
+
     function test_path()
     {
         $request = Request::create('controller/action');
