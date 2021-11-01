@@ -1,6 +1,7 @@
 <?php
 namespace ryunosuke\microute;
 
+use ryunosuke\microute\mixin\Utility;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -11,6 +12,8 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class Router
 {
+    use Utility;
+
     const CACHE_KEY = 'Router' . Service::CACHE_VERSION;
 
     const ROUTE_DEFAULT  = 'default';
@@ -431,11 +434,9 @@ class Router
 
             // スコープルートのベースパラメータは差っ引いておく必要がある
             if ($route === self::ROUTE_SCOPE) {
-                // 無理やり match させることで名前付きキャプチャーの名前一覧が得られる。
-                preg_match_all("#$url#", '', $m);
-                $baseparams = preg_grep('#^[0-9]+$#', array_keys($m), PREG_GREP_INVERT);
+                $baseparams = $this->regexParameter($url);
                 $action_data['parameters'] = array_filter($action_data['parameters'], function ($param) use ($baseparams) {
-                    return !in_array($param['name'], $baseparams, true);
+                    return !isset($baseparams[$param['name']]);
                 });
             }
             // パラメータ（regex はルート自体がパラメータ付きのようなものなので除外）
@@ -551,21 +552,5 @@ class Router
             return '';
         }
         return strtolower(preg_replace('#([^/])([A-Z])#', '$1-$2', $action));
-    }
-
-    private function reverseRegex($regex, &$params)
-    {
-        $url = $regex;
-        foreach ($params as $key => $val) {
-            $qkey = preg_quote($key);
-            $pattern = "(\( (\?P?<$qkey>)? (?:[^()]+ | (?1) )* \))";
-            if (preg_match("#$pattern#x", $url, $m)) {
-                // スラッシュはルーティングで使うこともあるので encode しない
-                $val = strtr(rawurlencode($val), ['%2F' => '/']);
-                $url = str_replace($m[1], $val, $url);
-                unset($params[$key]);
-            }
-        }
-        return $url;
     }
 }
