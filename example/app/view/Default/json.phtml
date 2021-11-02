@@ -25,7 +25,7 @@ ob_start(); ?>
                 body: document.querySelector('#json').value
             })
                 .then((r) => r.text())
-                .then(function(r){
+                .then(function (r) {
                     document.querySelector('#json').value = r;
                 })
                 .catch(console.error);

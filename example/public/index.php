@@ -23,7 +23,7 @@ $service = new \ryunosuke\microute\Service([
     'parameterDelimiter' => '/',
     'parameterSeparator' => '&',
     'controllerLocation' => [
-        'ryunosuke\\microute\\example\\controller\\' => __DIR__ . '/../app/controller/'
+        'ryunosuke\\microute\\example\\controller\\' => __DIR__ . '/../app/controller/',
     ],
 ]);
 

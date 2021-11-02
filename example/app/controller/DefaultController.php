@@ -180,6 +180,17 @@ class DefaultController extends AbstractController
         return $this->download(new \SplFileObject(__FILE__));
     }
 
+    public function pushAction()
+    {
+        if ($this->request->headers->get('accept') !== 'text/event-stream') {
+            return;
+        }
+        return $this->push(function ($prevdata) {
+            sleep(3);
+            return date('Y-m-dTh:i:s');
+        });
+    }
+
     /**
      * @action get
      * @event:cache 10
@@ -190,7 +201,7 @@ class DefaultController extends AbstractController
         return date('Y/m/d H:i:s') . '：ものすごく重い処理のキャッシュレスポンスです。大体3秒かかりますが10秒間キャッシュされています';
     }
 
-    public function resolverAction()
+    public function resolverAction($pref_id)
     {
     }
 

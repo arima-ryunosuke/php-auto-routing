@@ -34,6 +34,13 @@ Resolver のサンプルです。結果しか表示していないので「何�
         </td>
     </tr>
     <tr>
+        <th>URL 生成（現在URL）</th>
+        <td>
+            <code><?php echo htmlspecialchars($resolver->current()) ?></code>（完全同一）<br>
+            <code><?php echo htmlspecialchars($resolver->current(['param1' => 789, 'id' => 123])) ?></code>（クエリ書き換え）<br>
+        </td>
+    </tr>
+    <tr>
         <th>URL 生成（静的ファイル）</th>
         <td>
             <code><?php echo $resolver->path("/jquery-3.0.0.min.js", true) ?></code>（更新日時付与あり）<br>
@@ -54,7 +61,7 @@ Resolver のサンプルです。結果しか表示していないので「何�
             <code><?php echo htmlspecialchars($resolver->query([
                     'param1' => 789,
                     'param2' => null,
-                    'param3' => ['X']
+                    'param3' => ['X'],
                 ])) ?></code>（param1 を書き換えて param2 を削除して param3 を追加したクエリストリング）<br>
         </td>
     </tr>

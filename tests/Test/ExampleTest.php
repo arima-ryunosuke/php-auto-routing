@@ -123,10 +123,19 @@ class ExampleTest extends AbstractTestCase
         $this->assertStringContainsString('/context.json?id=1', $crawler->html());
     }
 
+    function test_push()
+    {
+        $client = new HttpKernelBrowser($this->service);
+        $crawler = $client->request('GET', '/push');
+
+        $this->assertEquals(200, $client->getResponse()->getStatusCode());
+        $this->assertStringContainsString('SSE', $crawler->html());
+    }
+
     function test_resolver()
     {
         $client = new HttpKernelBrowser($this->service);
-        $crawler = $client->request('GET', '/resolver');
+        $crawler = $client->request('GET', '/13/resolver');
 
         $this->assertEquals(200, $client->getResponse()->getStatusCode());
         $this->assertEquals('/context/123.json', $crawler->filter('code')->eq(1)->text());

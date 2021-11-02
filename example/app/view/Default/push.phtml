@@ -1,0 +1,16 @@
+<?php ob_start(); ?>
+このページは SSE で3秒間隔でデータを垂れ流します<br>
+
+<div>
+    <pre id="result"></pre>
+    <script>
+        var result = document.getElementById('result');
+        var evtSource = new EventSource("");
+        evtSource.addEventListener("message", function (e) {
+            result.textContent += e.data + "\n";
+        }, false);
+    </script>
+</div>
+
+<?php $contents = ob_get_clean(); ?>
+<?php include __DIR__ . '/../layout.phtml'; ?>
