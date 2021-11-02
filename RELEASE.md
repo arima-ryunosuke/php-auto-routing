@@ -21,6 +21,14 @@
 - psr15(middleware) に対応する？
 - DefaultController::errorAction の廃止
 
+## 1.1.11
+
+- [feature][Resolver] url 生成で現在スコープが活きるように修正
+- [feature][Resolver] current を実装
+- [feature][Controller] push を実装
+- [change][Controller] redirectRoute のデフォルト引数
+- [fixbug][Controller] download でファイル名指定が効かない不具合を修正
+
 ## 1.1.10
 
 - [fixbug][CookieSessionHandler] 標準のセッション機構と競合していた不具合を修正
