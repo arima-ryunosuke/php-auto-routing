@@ -390,6 +390,49 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         });
     }
 
+    function test_push()
+    {
+        $controller = new HogeController($this->service, 'action-a');
+
+        ob_start();
+        $controller->push(function () {
+            yield [1, 2, 3];
+        }, 1, true)->sendContent();
+        $output = ob_get_clean();
+        $this->assertStringContainsString('data: [1,2,3]', $output);
+
+        ob_start();
+        $controller->push(function () {
+            yield "string data1\nstring data2";
+        }, 1, true)->sendContent();
+        $output = ob_get_clean();
+        $this->assertStringContainsString('data: string data1', $output);
+        $this->assertStringContainsString('data: string data2', $output);
+
+        ob_start();
+        $controller->push(function () {
+            yield (object) [
+                'id'    => 123,
+                'event' => 'receive',
+                'retry' => 1000,
+                'data'  => "object data1\nobject data2",
+            ];
+        }, 1, true)->sendContent();
+        $output = ob_get_clean();
+        $this->assertStringContainsString('id: 123', $output);
+        $this->assertStringContainsString('event: receive', $output);
+        $this->assertStringContainsString('retry: 1000', $output);
+        $this->assertStringContainsString('data: object data1', $output);
+        $this->assertStringContainsString('data: object data2', $output);
+
+        ob_start();
+        $controller->push(function () {
+            return [];
+        }, 0.5, true)->sendContent();
+        $output = ob_get_clean();
+        $this->assertEquals('', $output);
+    }
+
     function test_dispatch()
     {
         $request = Request::createFromGlobals();

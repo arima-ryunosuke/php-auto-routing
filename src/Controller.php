@@ -372,6 +372,77 @@ class Controller
         return $response;
     }
 
+    /**
+     * プッシュ（SSE）レスポンスを返す
+     *
+     * $provider は前回のデータを引数として受けるので、流したいデータを返せばそれが SSE のレスポンスとして返される。
+     * いわゆるポーリングとして動作するので、適宜 sleep 処理などを必ず入れなければならない。
+     * 返り値はレコード or レコード配列でなければならない。
+     * 「レコード」とは返すべきデータを表す。
+     *
+     * レコードが配列の場合は json_encode して data として送出される。
+     * レコードがオブジェクトの場合はイテレータ結果が送出される。
+     * レコードがプリミティブの場合は単純に data として送出される。
+     *
+     * @param \Closure $provider データを返すクロージャ
+     * @param int|float $timeout タイムアウト秒
+     * @param bool $testing テストフラグ（出力を扱うため引数で与える）
+     * @return StreamedResponse
+     */
+    public function push($provider, $timeout = 10, $testing = false)
+    {
+        $response = new StreamedResponse(function () use ($provider, $timeout, $testing) {
+            session_write_close();
+            $mtime = microtime(true);
+            while (true) {
+                if (connection_aborted() || $timeout < (microtime(true) - $mtime)) {
+                    break;
+                }
+
+                $value = $provider($prev ?? []);
+                if ($value === []) {
+                    usleep(1 * 1000); // 念の為
+                    continue;
+                }
+                $prev = $value;
+
+                $values = (is_array($value) || $value instanceof \Generator) ? $value : [$value];
+                foreach ($values as $record) {
+                    if (is_array($record)) {
+                        echo 'data: ' . json_encode($record) . "\n";
+                    }
+                    elseif (is_object($record)) {
+                        foreach ($record as $k => $v) {
+                            foreach (preg_split('#\\R#u', strval($v)) as $line) {
+                                echo "$k: $line\n";
+                            }
+                        }
+                    }
+                    else {
+                        foreach (preg_split('#\\R#u', strval($record)) as $line) {
+                            echo "data: $line\n";
+                        }
+                    }
+                    echo "\n";
+                }
+
+                if (!$testing) {
+                    Response::closeOutputBuffers(0, true); // @codeCoverageIgnore
+                }
+                flush();
+
+                if ($testing && $value instanceof \Generator) {
+                    break;
+                }
+            }
+        });
+        $response->headers->set('Content-Type', 'text/event-stream; charset=utf-8');
+        $response->headers->set('Cach-Control', 'no-cache');
+        $response->headers->set('X-Accel-Buffering', 'no');
+
+        return $response;
+    }
+
     public function dispatch($args = [], $error_handling = true)
     {
         $metadata = static::metadata($this->service->cacher);
