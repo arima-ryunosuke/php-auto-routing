@@ -393,9 +393,10 @@ class Controller
      * 返り値はレコード or レコード配列でなければならない。
      * 「レコード」とは返すべきデータを表す。
      *
+     * レコードがプリミティブの場合は単純に data として送出される。
      * レコードが配列の場合は json_encode して data として送出される。
      * レコードがオブジェクトの場合はイテレータ結果が送出される。
-     * レコードがプリミティブの場合は単純に data として送出される。
+     * その際、フィールドが配列の場合は json_encode, オブジェクトの場合は __toString/json_encode される（__toString 優先）。
      *
      * @param \Closure $provider データを返すクロージャ
      * @param int|float $timeout タイムアウト秒
@@ -426,6 +427,9 @@ class Controller
                     }
                     elseif (is_object($record)) {
                         foreach ($record as $k => $v) {
+                            if (is_array($v) || (is_object($v) && !method_exists($v, '__toString'))) {
+                                $v = json_encode($v);
+                            }
                             foreach (preg_split('#\\R#u', strval($v)) as $line) {
                                 echo "$k: $line\n";
                             }

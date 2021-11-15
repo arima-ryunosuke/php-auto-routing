@@ -423,16 +423,17 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
             yield (object) [
                 'id'    => 123,
                 'event' => 'receive',
-                'retry' => 1000,
-                'data'  => "object data1\nobject data2",
+                'retry' => new class {
+                    public function __toString() { return '1000'; }
+                },
+                'data'  => (object) ["object data1", "object data2"],
             ];
         }, 1, true)->sendContent();
         $output = ob_get_clean();
         $this->assertStringContainsString('id: 123', $output);
         $this->assertStringContainsString('event: receive', $output);
         $this->assertStringContainsString('retry: 1000', $output);
-        $this->assertStringContainsString('data: object data1', $output);
-        $this->assertStringContainsString('data: object data2', $output);
+        $this->assertStringContainsString('data: {"0":"object data1","1":"object data2"}', $output);
 
         ob_start();
         $controller->push(function () {
