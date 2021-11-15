@@ -21,6 +21,10 @@
 - psr15(middleware) に対応する？
 - DefaultController::errorAction の廃止
 
+## 1.1.12
+
+- [fixbug][Controller] push に複合型を与えるとエラーになる不具合を修正
+
 ## 1.1.11
 
 - [feature][Resolver] url 生成で現在スコープが活きるように修正
