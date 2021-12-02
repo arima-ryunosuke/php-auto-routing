@@ -53,14 +53,25 @@ class DefaultController extends AbstractController
     {
     }
 
+    public function requestAction()
+    {
+        return '拡張リクエストです<pre>' . var_export([
+                'user-agent' => $this->request->getUserAgent(),
+                'referer'    => $this->request->getReferer(),
+            ], true);
+    }
+
     public function sessionAction()
     {
         $times = $this->session->get('times', []);
-        $times[] = time();
-        $this->session->set('times', $times);
-        $cookie = array_filter($_COOKIE, function ($k) { return strpos($k, session_name()) === 0; }, ARRAY_FILTER_USE_KEY);
+        $times[] = intval(time() / 5) * 5;
+        $this->session->set('times', array_unique($times));
+        $cookie = array_filter($_COOKIE, function ($k) { return strpos($k, 'SID') === 0; }, ARRAY_FILTER_USE_KEY);
         uksort($cookie, function ($a, $b) { return strnatcmp($a, $b); });
-        return 'セッションデータです。セッションは cookie ストレージで、1分間継続、256バイト毎に分割されるように設定されています<pre>'
+        return 'セッションデータです。'
+            . '<p>セッションは cookie ストレージで、1分間継続、256バイト毎に分割されるように設定されています</p>'
+            . '<p>session.lazy_write が有効だと同じセッションデータの場合は set-cookie を発行しません（このサンプルだと5秒間クッキーを吐きません）</p>'
+            . '<pre>'
             . "<strong>cookie data</strong>\n"
             . var_export($cookie, true)
             . "\n"

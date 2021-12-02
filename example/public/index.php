@@ -18,7 +18,7 @@ $service = new \ryunosuke\microute\Service([
             'privateKey' => 'secretkey',
             'storeName'  => 'SID',
             'chunkSize'  => 256,
-        ]));
+        ]), new \Symfony\Component\HttpFoundation\Session\Storage\MetadataBag('_sf2_meta', PHP_INT_MAX));
     },
     'parameterDelimiter' => '/',
     'parameterSeparator' => '&',
