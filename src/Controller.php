@@ -19,7 +19,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  *
  * @property-read Service $service
  * @property-read SessionInterface $session
- * @property-read Request $request
+ * @property-read \ryunosuke\microute\http\Request $request
  * @property-read Response $response
  * @property-read string $action
  */

@@ -78,8 +78,8 @@ class Service implements HttpKernelInterface
                     return $request;
                 };
             };
-        $this->values['requestClass'] = $values['requestClass'] ?? Request::class;
-        $this->values['request'] = $values['request'] ?? function () { return Request::createFromGlobals(); };
+        $this->values['requestClass'] = $values['requestClass'] ?? \ryunosuke\microute\http\Request::class;
+        $this->values['request'] = $values['request'] ?? function () { return $this->requestClass::createFromGlobals(); };
         $this->values['requestTypes'] = $values['requestTypes'] ?? [
                 'json' => function ($content) {
                     return json_decode($content, true);
