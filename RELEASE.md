@@ -20,6 +20,12 @@
 
 - psr15(middleware) に対応する？
 - DefaultController::errorAction の廃止
+- タイプヒントの設定
+
+## 1.1.13
+
+- [refactor][all] 一部を 7.4 記法に変更
+- [feature][Request] Request::get が内部メソッドになったので専用の Request を用意
 
 ## 1.1.12
 
