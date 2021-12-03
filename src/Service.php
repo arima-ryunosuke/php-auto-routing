@@ -26,6 +26,7 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
  * @property-read Controller              $controllerClass
  * @property-read string                  $controllerNamespace
  * @property-read string                  $controllerDirectory
+ * @property-read array|Controller        $controllerLocation
  *
  * @property-read callable                $requestFactory
  * @property-read Request                 $requestClass
@@ -47,62 +48,54 @@ class Service implements HttpKernelInterface
     /** @var string キャッシュバージョン。本体のバージョンと同期する必要はないがキャッシュ形式を変えたらアップする */
     const CACHE_VERSION = '1.0.0';
 
-    private $values = [];
+    private $values;
     private $frozen = [];
 
     public function __construct($values = [])
     {
-        $this->values['debug'] = $values['debug'] ?? false;
-        $this->values['cacher'] = $values['cacher'] ?? new Cacher();
-        $this->values['logger'] = $values['logger'] ?? function () { return function ($ex, $request) { }; };
-        $this->values['origin'] = $values['origin'] ?? [];
-        $this->values['priority'] = $values['priority'] ?? [Router::ROUTE_REWRITE, Router::ROUTE_REDIRECT, Router::ROUTE_ALIAS, Router::ROUTE_REGEX, Router::ROUTE_SCOPE, Router::ROUTE_DEFAULT];
-        $this->values['events'] = $values['events'] ?? [];
+        $values['debug'] ??= false;
+        $values['cacher'] ??= new Cacher();
+        $values['logger'] ??= fn() => fn($ex, $request) => null;
+        $values['origin'] ??= [];
+        $values['priority'] ??= [Router::ROUTE_REWRITE, Router::ROUTE_REDIRECT, Router::ROUTE_ALIAS, Router::ROUTE_REGEX, Router::ROUTE_SCOPE, Router::ROUTE_DEFAULT];
+        $values['events'] ??= [];
 
-        $this->values['router'] = $values['router'] ?? function () { return new Router($this); };
-        $this->values['dispatcher'] = $values['dispatcher'] ?? function () { return new Dispatcher($this); };
-        $this->values['resolver'] = $values['resolver'] ?? function () { return new Resolver($this); };
-        $this->values['controllerClass'] = $values['controllerClass'] ?? Controller::class;
+        $values['router'] ??= fn() => new Router($this);
+        $values['dispatcher'] ??= fn() => new Dispatcher($this);
+        $values['resolver'] ??= fn() => new Resolver($this);
+        $values['controllerClass'] ??= Controller::class;
 
-        $this->values['requestFactory'] = $values['requestFactory'] ?? function () {
-                return function ($query, $request, $attributes, $cookies, $files, $server, $content) {
-                    $requestClass = $this->requestClass;
-                    $request = new $requestClass($query, $request, $attributes, $cookies, $files, $server, $content);
+        $values['requestFactory'] ??= fn() => function ($query, $request, $attributes, $cookies, $files, $server, $content) {
+            $requestClass = $this->requestClass;
+            $request = new $requestClass($query, $request, $attributes, $cookies, $files, $server, $content);
 
-                    $conv = $this->requestTypes[$request->getContentType()] ?? null;
-                    if ($conv !== null) {
-                        $request->request->replace($conv($request->getContent()) ?? []);
-                    }
+            $conv = $this->requestTypes[$request->getContentType()] ?? null;
+            if ($conv !== null) {
+                $request->request->replace($conv($request->getContent()) ?? []);
+            }
 
-                    $request->setSessionFactory(function () { return new Session($this->sessionStorage); });
-                    return $request;
-                };
-            };
-        $this->values['requestClass'] = $values['requestClass'] ?? \ryunosuke\microute\http\Request::class;
-        $this->values['request'] = $values['request'] ?? function () { return $this->requestClass::createFromGlobals(); };
-        $this->values['requestTypes'] = $values['requestTypes'] ?? [
-                'json' => function ($content) {
-                    return json_decode($content, true);
-                },
-            ];
-        $this->values['sessionStorage'] = $values['sessionStorage'] ?? function () { return new NativeSessionStorage(); };
-        $this->values['parameterDelimiter'] = $values['parameterDelimiter'] ?? '?';
-        $this->values['parameterSeparator'] = $values['parameterSeparator'] ?? '&';
-        $this->values['parameterArrayable'] = $values['parameterArrayable'] ?? false;
-        $this->values['parameterContexts'] = $values['parameterContexts'] ?? [];
+            $request->setSessionFactory(fn() => new Session($this->sessionStorage));
+            return $request;
+        };
+        $values['requestClass'] ??= \ryunosuke\microute\http\Request::class;
+        $values['request'] ??= fn() => $this->requestClass::createFromGlobals();
+        $values['requestTypes'] ??= [
+            'json' => fn($content) => json_decode($content, true),
+        ];
+        $values['sessionStorage'] ??= fn() => new NativeSessionStorage();
+        $values['parameterDelimiter'] ??= '?';
+        $values['parameterSeparator'] ??= '&';
+        $values['parameterArrayable'] ??= false;
+        $values['parameterContexts'] ??= [];
 
-        $this->values['authenticationProvider'] = $values['authenticationProvider'] ?? [];
-        $this->values['authenticationComparator'] = $values['authenticationComparator'] ?? function () {
-                return function ($valid_password, $password) { return $valid_password === $password; };
-            };
-        $this->values['authenticationNoncer'] = $values['authenticationNoncer'] ?? function () {
-                return function ($nonce) { return $nonce === null ? sha1(openssl_random_pseudo_bytes(40)) : null; };
-            };
+        $values['authenticationProvider'] ??= [];
+        $values['authenticationComparator'] ??= fn() => fn($valid_password, $password) => $valid_password === $password;
+        $values['authenticationNoncer'] ??= fn() => fn($nonce) => $nonce === null ? sha1(openssl_random_pseudo_bytes(40)) : null;
 
         if (is_array($values['controllerLocation'])) {
             foreach ($values['controllerLocation'] as $ns => $dir) {
-                $this->values['controllerNamespace'] = trim($ns, '\\') . '\\';
-                $this->values['controllerDirectory'] = rtrim($dir, '\\/') . DIRECTORY_SEPARATOR;
+                $values['controllerNamespace'] = trim($ns, '\\') . '\\';
+                $values['controllerDirectory'] = rtrim($dir, '\\/') . DIRECTORY_SEPARATOR;
                 spl_autoload_register(function ($class) {
                     $localname = str_replace($this->controllerNamespace, '', $class);
                     $localpath = str_replace('\\', DIRECTORY_SEPARATOR, $localname);
@@ -115,9 +108,11 @@ class Service implements HttpKernelInterface
         }
         else {
             $ref = new \ReflectionClass($values['controllerLocation']);
-            $this->values['controllerNamespace'] = $ref->getNamespaceName() . '\\';
-            $this->values['controllerDirectory'] = dirname($ref->getFileName()) . DIRECTORY_SEPARATOR;
+            $values['controllerNamespace'] = $ref->getNamespaceName() . '\\';
+            $values['controllerDirectory'] = dirname($ref->getFileName()) . DIRECTORY_SEPARATOR;
         }
+
+        $this->values = $values;
 
         Request::setFactory($this->requestFactory);
 

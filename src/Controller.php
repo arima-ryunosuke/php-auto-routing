@@ -86,7 +86,7 @@ class Controller
                     '@rewrite'        => static::getAnnotationAsHash('rewrite', [null, 'comment'], $aname, []),
                     '@regex'          => static::getAnnotationAsHash('regex', [null, 'comment'], $aname, []),
                     // アクション系
-                    '@events'         => array_map(function ($v) { return preg_split('#\s*,\s*#', $v['args']); }, $events),
+                    '@events'         => array_map(fn($v) => preg_split('#\s*,\s*#', $v['args']), $events),
                     '@action'         => array_map('strtoupper', static::getAnnotationAsList('action', ',', $aname, [])),
                     '@argument'       => array_map('strtoupper', static::getAnnotationAsList('argument', ',', $aname, [])),
                     // メタデータ系
@@ -594,13 +594,11 @@ class Controller
                     $comparator = $this->service->authenticationComparator;
                     return $comparator($passworder($username), $password) ? $username : null;
                 },
-                'header' => function () use ($realm) {
-                    return sprintf('Basic realm="%s"', $realm);
-                },
+                'header' => fn() => sprintf('Basic realm="%s"', $realm),
             ],
             'digest' => [
                 'verify' => function () use ($passworder, $realm) {
-                    $md5implode = static function ($_) { return md5(implode(':', func_get_args())); };
+                    $md5implode = static fn($_) => md5(implode(':', func_get_args()));
                     $keys = ['response', 'nonce', 'nc', 'cnonce', 'qop', 'uri', 'username'];
                     $digest = $this->request->server->get('PHP_AUTH_DIGEST');
 

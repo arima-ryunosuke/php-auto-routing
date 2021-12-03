@@ -435,9 +435,7 @@ class Router
             // スコープルートのベースパラメータは差っ引いておく必要がある
             if ($route === self::ROUTE_SCOPE) {
                 $baseparams = $this->regexParameter($url);
-                $action_data['parameters'] = array_filter($action_data['parameters'], function ($param) use ($baseparams) {
-                    return !isset($baseparams[$param['name']]);
-                });
+                $action_data['parameters'] = array_filter($action_data['parameters'], fn($param) => !isset($baseparams[$param['name']]));
             }
             // パラメータ（regex はルート自体がパラメータ付きのようなものなので除外）
             $pathinfo = '';

@@ -198,7 +198,7 @@ class CookieSessionHandler extends AbstractSessionHandler
             'samesite' => $cookie_params['samesite'],
         ];
 
-        $chunks = array_filter(str_split($data, $this->chunkSize), function ($v) { return strlen($v); });
+        $chunks = array_filter(str_split($data, $this->chunkSize), fn($v) => strlen($v));
         $length = count($chunks);
         if ($length > $this->maxLength) {
             return false;
