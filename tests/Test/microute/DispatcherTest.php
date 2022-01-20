@@ -4,6 +4,7 @@ namespace ryunosuke\Test\microute;
 use ryunosuke\Test\stub\Controller\DefaultController;
 use ryunosuke\Test\stub\Controller\HogeController;
 use ryunosuke\Test\stub\Controller\SubSub;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -258,6 +259,15 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
         // 明示的に指定されていれば自動設定されずそれが返るはず
         $response = $service->dispatcher->finish(new Response(...$ctype_hoge), new Request(...$context_csv));
         $this->assertEquals('hoge/fuga; piyo', $response->headers->get('Content-Type'));
+    }
+
+    function test_finish_301()
+    {
+        $response = $this->service->dispatcher->finish(new RedirectResponse('/', 301), new Request());
+        $this->assertTrue($response->headers->getCacheControlDirective('no-store'));
+
+        $response = $this->service->dispatcher->finish(new RedirectResponse('/', 302), new Request());
+        $this->assertNull($response->headers->getCacheControlDirective('no-store'));
     }
 
     function test_dispatchedController()

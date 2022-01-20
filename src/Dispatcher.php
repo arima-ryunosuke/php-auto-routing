@@ -110,6 +110,11 @@ class Dispatcher
                 $response->headers->set('Content-Type', $contexts[$context]);
             }
         }
+        if ($response->getStatusCode() === 301) {
+            $response->setCache([
+                'no_store' => true,
+            ]);
+        }
         return $response;
     }
 
