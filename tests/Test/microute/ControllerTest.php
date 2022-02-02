@@ -2,6 +2,7 @@
 namespace ryunosuke\Test\microute;
 
 use ryunosuke\microute\Controller;
+use ryunosuke\Test\microute\autoload\Hoge;
 use ryunosuke\Test\stub\Controller\DispatchController;
 use ryunosuke\Test\stub\Controller\EventController;
 use ryunosuke\Test\stub\Controller\HogeController;
@@ -31,6 +32,22 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals(['', 'json'], $mdata['actions']['action_andcontext']['@context']);
         $this->assertEquals(['*'], $mdata['actions']['action_anycontext']['@context']);
         $this->assertEquals(['GET', 'COOKIE'], $mdata['actions']['argument']['@argument']);
+    }
+
+    function test_autoload()
+    {
+        $namespace = 'ryunosuke\\Test\\microute\\autoload';
+        $this->assertEquals([$namespace], Controller::autoload($namespace));
+
+        $controller1 = new HogeController($this->service, 'default');
+        $controller2 = new FooBarController($this->service, 'default');
+        $this->assertSame($controller1->Hoge, $controller2->Hoge);
+        $this->assertInstanceOf(Hoge::class, $controller1->Hoge);
+        $this->assertEquals(1, Hoge::$newCount);
+
+        $this->assertException(new \DomainException('hoge is undefined'), function () use ($controller1) {
+            return $controller1->hoge;
+        });
     }
 
     function test___get()

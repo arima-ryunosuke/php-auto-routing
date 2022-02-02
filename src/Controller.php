@@ -41,6 +41,9 @@ class Controller
     /** @var array メタデータ */
     private static $metadata = [];
 
+    /** @var object[] オートロードオブジェクト */
+    private static $namespaces = [];
+
     /** @var Service */
     private $service;
 
@@ -162,6 +165,22 @@ class Controller
         return self::$metadata[static::class] = $metadata;
     }
 
+    /**
+     * getter のオートロード名前空間を指定する
+     *
+     * オートロード自体は composer などの外部頼りで自前でロードは行わない。
+     * オブジェクトはキャッシュされるので生成は一度きりとなる。
+     * （ほぼ内部仕様だが、このメソッドはキャッシュの削除も兼ねている）。
+     *
+     * @param string $namespace オートロードする名前空間
+     * @return array 現在の名前空間配列
+     */
+    public static function autoload($namespace)
+    {
+        self::$namespaces[trim($namespace, '\\')] = [];
+        return array_keys(self::$namespaces);
+    }
+
     final public function __construct(Service $service, $action, Request $request = null)
     {
         $this->service = $service;
@@ -177,6 +196,14 @@ class Controller
         if ($name === 'session') {
             return $this->request->getSession();
         }
+
+        // オートロード空間から一致するクラスを返す
+        foreach (self::$namespaces as $namespace => &$objects) {
+            if (class_exists($class = "$namespace\\$name") && (new \ReflectionClass($class))->getName() === $class) {
+                return $objects[$class] ??= new $class();
+            }
+        }
+
         return $this->Accessable__get($name);
     }
 
