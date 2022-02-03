@@ -6,7 +6,7 @@ use Symfony\Component\HttpFoundation\Response;
 class EventController extends AbstractController
 {
     /**
-     * @cache 10
+     * @cache 10 * 10
      */
     public function alternateAction()
     {

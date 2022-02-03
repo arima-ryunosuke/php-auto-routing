@@ -78,7 +78,8 @@ class Controller
                 $events = static::getAnnotationAsHash('event:', [null, 'args'], $aname, []);
                 $cache = static::getAnnotationAsString('cache', $aname, null);
                 if ($cache !== null) {
-                    $events['cache'] = ['args' => $cache ?: '60'];
+                    // アノテーション由来だしキャッシュされるしなので eval でも問題はない
+                    $events['cache'] = ['args' => $cache ? eval("return $cache;") : '60'];
                 }
                 $paramannotations = static::getAnnotationAsHash('param', ['type', null, 'comment'], $aname, []);
                 return [

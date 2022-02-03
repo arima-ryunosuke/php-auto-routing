@@ -706,7 +706,7 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
     function test_event_alternate()
     {
         $metadata = EventController::metadata();
-        $this->assertEquals(['cache' => ['10']], $metadata['actions']['alternate']['@events']);
+        $this->assertEquals(['cache' => ['100']], $metadata['actions']['alternate']['@events']);
     }
 
     function test_event_unknown()
