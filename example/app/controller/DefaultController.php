@@ -212,6 +212,16 @@ class DefaultController extends AbstractController
         return date('Y/m/d H:i:s') . '：ものすごく重い処理のキャッシュレスポンスです。大体3秒かかりますが10秒間キャッシュされています';
     }
 
+    /**
+     * @action get
+     * @context html
+     * @event:public 10
+     */
+    public function publicAction()
+    {
+        return 'このレスポンスは初回以降 php ではなく web サーバーが返しています';
+    }
+
     public function resolverAction($pref_id)
     {
     }
