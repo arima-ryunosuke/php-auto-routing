@@ -40,6 +40,15 @@ class EventController extends AbstractController
     }
 
     /**
+     * @public 10
+     * @context html
+     */
+    public function publicAction()
+    {
+        return new Response('publiced_response');
+    }
+
+    /**
      * @event:other1 1, 2, 3
      * @event:other2 4, 5, 6
      */

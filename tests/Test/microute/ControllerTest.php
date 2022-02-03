@@ -661,6 +661,54 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertStringContainsString('cached_response', $response->getContent());
     }
 
+    function test_event_post_public()
+    {
+        $request = Request::createFromGlobals();
+        $request->setMethod('POST');
+
+        // POSTリクエストを送ると・・・
+        $controller = new EventController($this->service, 'public', $request);
+        $response = $controller->action([]);
+        // 200 のはず
+        $this->assertEquals(200, $response->getStatusCode());
+        // LastModified は未設定のはず
+        $this->assertEquals(null, $response->getLastModified());
+        // Expires は未設定のはず
+        $this->assertEquals(null, $response->getExpires());
+        // 中身はあるはず
+        $this->assertEquals('publiced_response', $response->getContent());
+
+        // If-Modified-Since を設定しても・・・
+        $controller = new EventController($this->service, 'public', $request);
+        $request->headers->set('if-modified-since', date('r'));
+        $response = $controller->action([]);
+        // 200 のはず
+        $this->assertEquals(200, $response->getStatusCode());
+        // 中身はあるはず
+        $this->assertEquals('publiced_response', $response->getContent());
+    }
+
+    function test_event_get_public()
+    {
+        $request = Request::create('/public.html');
+        $request->server->set('DOCUMENT_ROOT', realpath(__DIR__ . '/../../stub/public'));
+        $request->setMethod('GET');
+
+        // GETリクエストを送ると・・・
+        $controller = new EventController($this->service, 'public', $request);
+        $response = $controller->action([]);
+        // 200 のはず
+        $this->assertEquals(200, $response->getStatusCode());
+        // LastModified が設定されているはず
+        $this->assertInstanceOf('DateTime', $response->getLastModified());
+        // Expires が設定されているはず
+        $this->assertInstanceOf('DateTime', $response->getExpires());
+        // 中身はあるはず
+        $this->assertEquals('publiced_response', $response->getContent());
+        // 公開ディレクトリにファイルが出来ているはず
+        $this->assertStringEqualsFile(__DIR__ . '/../../stub/public/public.html', $response->getContent());
+    }
+
     function test_event_other()
     {
         // 普通にリクエストを送ると・・・

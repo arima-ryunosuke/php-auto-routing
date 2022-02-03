@@ -81,6 +81,11 @@ class Controller
                     // アノテーション由来だしキャッシュされるしなので eval でも問題はない
                     $events['cache'] = ['args' => $cache ? eval("return $cache;") : '60'];
                 }
+                $public = static::getAnnotationAsString('public', $aname, null);
+                if ($public !== null) {
+                    // アノテーション由来だしキャッシュされるしなので eval でも問題はない
+                    $events['public'] = ['args' => $public ? eval("return $public;") : '60'];
+                }
                 $paramannotations = static::getAnnotationAsHash('param', ['type', null, 'comment'], $aname, []);
                 return [
                     // ルーティング系
@@ -733,6 +738,34 @@ class Controller
                 'max_age'       => $expire,
                 'last_modified' => new \DateTime(),
             ]);
+        }
+    }
+
+    protected function publicEvent($phase, $expire)
+    {
+        // debug 中は無効
+        if ($this->service->debug) {
+            return; // @codeCoverageIgnore
+        }
+
+        // http 的キャッシュが許容されているのは GET, HEAD のみ
+        if (!$this->request->isMethodCacheable()) {
+            return;
+        }
+
+        if ($phase === 'post') {
+            if ($this->response->getStatusCode() === 200) {
+                $filename = $this->request->server->get('DOCUMENT_ROOT') . '/' . $this->request->getBasePath() . '/' . $this->request->getPathInfo();
+                @mkdir(dirname($filename), 0777, true);
+                file_put_contents($filename, $this->response->getContent(), LOCK_EX);
+
+                // レスポンスヘッダはアプリのものなのでキャッシュヘッダを設定しないと次のリクエストでもう一回リクエストが来てしまう
+                $this->response->setExpires(new \DateTime("+$expire seconds"));
+                $this->response->setCache([
+                    'max_age'       => $expire,
+                    'last_modified' => new \DateTime(),
+                ]);
+            }
         }
     }
 
