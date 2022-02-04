@@ -345,7 +345,7 @@ class Dispatcher
                 if (!$arrayable && !isset($type['array']) && is_array($value)) {
                     throw new HttpException(404, 'parameter is not match type.');
                 }
-                if ($firsttype !== "null" && !isset($type[strtolower(gettype($value))])) {
+                if ($firsttype !== "null" && !isset($type[strtolower(gettype($value))]) && !class_exists($firsttype)) {
                     @settype($value, $firsttype);
                 }
             }
