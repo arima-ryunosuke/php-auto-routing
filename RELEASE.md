@@ -22,6 +22,14 @@
 - DefaultController::errorAction の廃止
 - タイプヒントの設定
 
+## 1.1.14
+
+- [all] php8.1 の暫定対応
+- [Controller] public アノテーションを追加
+- [Controller] cache アノテーションに数式が使えるように修正
+- [Controller] オートロード機能を追加
+- [Dispatcher] 301 のキャッシュを無効化
+
 ## 1.1.13
 
 - [refactor][all] 一部を 7.4 記法に変更
