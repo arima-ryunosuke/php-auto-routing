@@ -21,10 +21,11 @@ abstract class AbstractTestCase extends TestCase
     function provideService($options = [])
     {
         $defaults = [
-            'cacher'             => new Cacher(__DIR__ . '/../tmp/tests'),
-            'controllerLocation' => [
+            'cacher'                   => new Cacher(__DIR__ . '/../tmp/tests'),
+            'controllerLocation'       => [
                 '\\ryunosuke\\Test\\stub\\Controller\\' => __DIR__ . '/../stub/Controller/',
             ],
+            'defaultActionAsDirectory' => true,
         ];
         return new Service($options + $defaults);
     }

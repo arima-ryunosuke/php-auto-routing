@@ -147,7 +147,12 @@ class Resolver
             $action .= $pathinfo . (strlen($context) ? ".$context" : '') . ($params ? $querysep . http_build_query($params) : '');
         }
 
-        $url = rtrim($base, '/') . (strlen($action) ? '/' . $action : '');
+        if ($this->service->defaultActionAsDirectory) {
+            $url = rtrim($base, '/') . "/$action";
+        }
+        else {
+            $url = rtrim($base, '/') . (strlen($action) ? '/' . $action : '');
+        }
         return strlen($url) ? $url : '/';
     }
 

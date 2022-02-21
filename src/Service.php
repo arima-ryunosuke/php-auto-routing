@@ -33,6 +33,7 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
  * @property-read Request                 $request
  * @property-read callable[]              $requestTypes
  * @property-read SessionStorageInterface $sessionStorage
+ * @property-read bool                    $defaultActionAsDirectory
  * @property-read string                  $parameterDelimiter
  * @property-read string                  $parameterSeparator
  * @property-read bool                    $parameterArrayable
@@ -83,6 +84,7 @@ class Service implements HttpKernelInterface
             'json' => fn($content) => json_decode($content, true),
         ];
         $values['sessionStorage'] ??= fn() => new NativeSessionStorage();
+        $values['defaultActionAsDirectory'] ??= false; // for compatible
         $values['parameterDelimiter'] ??= '?';
         $values['parameterSeparator'] ??= '&';
         $values['parameterArrayable'] ??= false;

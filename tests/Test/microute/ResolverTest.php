@@ -50,8 +50,8 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals('/', $resolver->url(DefaultController::class, 'default'));
         $this->assertEquals('/index', $resolver->url(DefaultController::class, 'index'));
         $this->assertEquals('/sub-sub/index', $resolver->url(\ryunosuke\Test\stub\Controller\SubSub\DefaultController::class, 'index'));
-        $this->assertEquals('/hoge', $resolver->url(HogeController::class));
-        $this->assertEquals('/hoge', $resolver->url(HogeController::class, 'default'));
+        $this->assertEquals('/hoge/', $resolver->url(HogeController::class));
+        $this->assertEquals('/hoge/', $resolver->url(HogeController::class, 'default'));
         $this->assertEquals('/hoge/action', $resolver->url(HogeController::class, 'action'));
         $this->assertEquals('/hoge/action-id?123&name=hoge', $resolver->url(HogeController::class, 'actionId', ['id' => 123, 'name' => 'hoge']));
 
@@ -64,7 +64,7 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
             },
         ]);
         $resolver = $service->resolver;
-        $this->assertEquals('/base/path/hoge', $resolver->url(HogeController::class));
+        $this->assertEquals('/base/path/hoge/', $resolver->url(HogeController::class));
     }
 
     function test_url_params()
@@ -111,7 +111,7 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
         $resolver = $service->resolver;
         $this->assertEquals('/', $resolver->url(DefaultController::class, ''));
         $this->assertEquals('/', $resolver->url(DefaultController::class, 'default'));
-        $this->assertEquals('/hoge', $resolver->url(HogeController::class, 'default'));
+        $this->assertEquals('/hoge/', $resolver->url(HogeController::class, 'default'));
         $this->assertEquals('/?hoge=1', $resolver->url(DefaultController::class, 'default', ['hoge' => 1]));
     }
 

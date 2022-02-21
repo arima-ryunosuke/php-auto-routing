@@ -144,8 +144,8 @@ class RouterTest extends \ryunosuke\Test\AbstractTestCase
     {
         $service = $this->service;
         $service->router->route('route', HogeController::class, 'default');
-        $this->assertEquals('/hoge', $service->router->reverseRoute('route'));
-        $this->assertEquals('/hoge', $service->router->reverseRoute('route')); // for cache coverage
+        $this->assertEquals('/hoge/', $service->router->reverseRoute('route'));
+        $this->assertEquals('/hoge/', $service->router->reverseRoute('route')); // for cache coverage
     }
 
     function test_rewrite()
