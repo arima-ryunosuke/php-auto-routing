@@ -22,6 +22,10 @@
 - DefaultController::errorAction の廃止
 - タイプヒントの設定
 
+## 1.1.15
+
+- [Resolver] デフォルトアクションを / 付きに変更
+
 ## 1.1.14
 
 - [all] php8.1 の暫定対応

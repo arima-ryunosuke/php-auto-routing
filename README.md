@@ -133,6 +133,9 @@ $service->run();
 - sessionStorage: `\Symfony\Component\HttpFoundation\Session\Storage\SessionStorageInterface`
     - セッションストレージを指定します
     - デフォルトは `\Symfony\Component\HttpFoundation\Session\Storage\NativeSessionStorage` です
+- defaultActionAsDirectory: `bool`
+    - デフォルトアクションの url を `/` 付きにします
+    - デフォルトは `false` です。このデフォルトは将来的に変更される可能性があります
 - parameterDelimiter: `string`
     - パスとパラメータの区切り文字を指定します
     - これを `/` などにすると `/controller/action/123` のような restful な URL でアクセスできます
