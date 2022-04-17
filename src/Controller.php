@@ -41,8 +41,11 @@ class Controller
     /** @var array メタデータ */
     private static $metadata = [];
 
-    /** @var object[] オートロードオブジェクト */
+    /** @var array[] オートロード名前空間 */
     private static $namespaces = [];
+
+    /** @var object[] オートロードインスタンス */
+    private static $instances = [];
 
     /** @var Service */
     private $service;
@@ -179,11 +182,14 @@ class Controller
      * （ほぼ内部仕様だが、このメソッドはキャッシュの削除も兼ねている）。
      *
      * @param string $namespace オートロードする名前空間
+     * @param array $ctor_args コンストラクタ引数
      * @return array 現在の名前空間配列
      */
-    public static function autoload($namespace)
+    public static function autoload($namespace, $ctor_args = [])
     {
-        self::$namespaces[trim($namespace, '\\')] = [];
+        $namespace = trim($namespace, '\\');
+        self::$namespaces[$namespace] = $ctor_args;
+        self::$instances[$namespace] = [];
         return array_keys(self::$namespaces);
     }
 
@@ -204,9 +210,9 @@ class Controller
         }
 
         // オートロード空間から一致するクラスを返す
-        foreach (self::$namespaces as $namespace => &$objects) {
+        foreach (self::$namespaces as $namespace => $ctor_args) {
             if (class_exists($class = "$namespace\\$name") && (new \ReflectionClass($class))->getName() === $class) {
-                return $objects[$class] ??= new $class();
+                return self::$instances[$class] ??= new $class(...$ctor_args);
             }
         }
 

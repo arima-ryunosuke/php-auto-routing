@@ -37,12 +37,13 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
     function test_autoload()
     {
         $namespace = 'ryunosuke\\Test\\microute\\autoload';
-        $this->assertEquals([$namespace], Controller::autoload($namespace));
+        $this->assertEquals([$namespace], Controller::autoload($namespace, ['a', 'b', 'c']));
 
         $controller1 = new HogeController($this->service, 'default');
         $controller2 = new FooBarController($this->service, 'default');
         $this->assertSame($controller1->Hoge, $controller2->Hoge);
         $this->assertInstanceOf(Hoge::class, $controller1->Hoge);
+        $this->assertEquals(['a', 'b', 'c'], $controller1->Hoge->ctor_args);
         $this->assertEquals(1, Hoge::$newCount);
 
         $this->assertException(new \DomainException('hoge is undefined'), function () use ($controller1) {
