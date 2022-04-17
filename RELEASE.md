@@ -22,6 +22,13 @@
 - DefaultController::errorAction の廃止
 - タイプヒントの設定
 
+## 1.1.16
+
+- [feature][Controller] メタデータのアトリビュート対応
+- [fixbug][Controller] キャッシュ制御がうまく動いていない不具合を修正
+- [feature][Controller] 後処理を行う background メソッドを追加
+- [feature][Controller] autoload でコンストラクタ引数を指定可能に変更
+
 ## 1.1.15
 
 - [Resolver] デフォルトアクションを / 付きに変更
