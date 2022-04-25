@@ -731,18 +731,16 @@ class Controller
             $response->setLastModified($lastModified instanceof \DateTime ? $lastModified : (new \DateTime())->setTimestamp($lastModified));
         }
 
-        if ($response->isNotModified($this->request)) {
-            // session_cache_limiter を無効化する
-            if (PHP_SAPI !== 'cli') {
-                // @codeCoverageIgnoreStart
-                header_remove('Expires');
-                header_remove('Cache-Control');
-                header_remove('Pragma');
-                // @codeCoverageIgnoreEnd
-            }
-            return true;
+        // session_cache_limiter を無効化する
+        if (PHP_SAPI !== 'cli') {
+            // @codeCoverageIgnoreStart
+            header_remove('Expires');
+            header_remove('Cache-Control');
+            header_remove('Pragma');
+            // @codeCoverageIgnoreEnd
         }
-        return false;
+
+        return $response->isNotModified($this->request);
     }
 
     protected function cacheEvent($phase, $expire)
