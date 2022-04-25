@@ -1,64 +1,43 @@
 <?php
 namespace ryunosuke\Test\stub\Controller;
 
-/**
- * @default-route false
- * @queryable false
- */
+#[\ryunosuke\microute\attribute\DefaultRoute(false)]
+#[\ryunosuke\microute\attribute\Queryable(false)]
 class RoutingController extends AbstractController
 {
-    /**
-     * @action get
-     * @default-route true
-     */
+    #[\ryunosuke\microute\attribute\Method('get')]
+    #[\ryunosuke\microute\attribute\DefaultRoute(true)]
     public function defaultOnAction()
     {
         return 'defaultOn';
     }
 
-    /**
-     * @action get
-     * @default-route false
-     * @rewrite /routing/custom-on
-     */
+    #[\ryunosuke\microute\attribute\Method('get')]
+    #[\ryunosuke\microute\attribute\DefaultRoute(false)]
+    #[\ryunosuke\microute\attribute\Rewrite('/routing/custom-on')]
     public function defaultOffAction()
     {
         return 'defaultOff';
     }
 
-    /**
-     * @action get
-     */
+    #[\ryunosuke\microute\attribute\Method('get')]
     public function defaultdefaultAction()
     {
         return 'defaultdefaul';
     }
 
-    /**
-     * @param int $param
-     * @return string
-     */
-    public function queryableDefault($param)
+    public function queryableDefault(int $param)
     {
         return 'queryableDefault' . $param;
     }
 
-    /**
-     * @param int $param
-     * @return string
-     * @queryable true
-     */
-    public function queryableTrue($param)
+    #[\ryunosuke\microute\attribute\Queryable(true)]
+    public function queryableTrue(int $param)
     {
         return 'queryableTrue' . $param;
     }
-
-    /**
-     * @param int $param
-     * @return string
-     * @queryable false
-     */
-    public function queryableFalse($param)
+    #[\ryunosuke\microute\attribute\Queryable(false)]
+    public function queryableFalse(int $param)
     {
         return 'queryableFalse' . $param;
     }

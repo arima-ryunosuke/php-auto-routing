@@ -1,9 +1,7 @@
 <?php
 namespace ryunosuke\Test\stub\Controller\SubSub;
 
-/**
- * @scope (?<type>[a-z]+)/
- */
+#[\ryunosuke\microute\attribute\Scope('(?<type>[a-z]+)/')]
 class ScopedController extends \ryunosuke\Test\stub\Controller\AbstractController
 {
     public function defaultAction($type)

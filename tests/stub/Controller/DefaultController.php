@@ -5,9 +5,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class DefaultController extends AbstractController
 {
-    /**
-     * @action get
-     */
+    #[\ryunosuke\microute\attribute\Method('get')]
     public function defaultAction()
     {
         return $this->location();

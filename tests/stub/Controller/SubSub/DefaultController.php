@@ -3,9 +3,7 @@ namespace ryunosuke\Test\stub\Controller\SubSub;
 
 use Symfony\Component\HttpFoundation\Response;
 
-/**
- * @scope (?<id>[0-9]+)/
- */
+#[\ryunosuke\microute\attribute\Scope('(?<id>[0-9]+)/')]
 class DefaultController extends \ryunosuke\Test\stub\Controller\AbstractController
 {
     public function indexAction($id)

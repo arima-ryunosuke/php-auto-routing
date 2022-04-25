@@ -3,68 +3,41 @@ namespace ryunosuke\Test\stub\Controller\Url;
 
 use ryunosuke\Test\stub\Controller\AbstractController;
 
-/**
- * @alias /relay
- * @scope (?<scoped>[0-9a-z]+)/
- */
+#[\ryunosuke\microute\attribute\Alias('/relay')]
+#[\ryunosuke\microute\attribute\Scope('(?<scoped>[0-9a-z]+)/')]
 class AllController extends AbstractController
 {
-    /**
-     * @default-route true
-     */
+    #[\ryunosuke\microute\attribute\DefaultRoute(true)]
     public function defaultOnAction() { }
 
-    /**
-     * @default-route false
-     */
+    #[\ryunosuke\microute\attribute\DefaultRoute(false)]
     public function defaultOffAction() { }
 
-    /**
-     * @action post
-     */
+    #[\ryunosuke\microute\attribute\Method('post')]
     public function postAction() { }
 
-    /**
-     * @param string $arg1
-     * @param $arg2
-     */
     public function parameterAction(string $arg1, array $arg2) { }
 
-    /**
-     * @param int $arg1
-     * @param $arg2
-     * @queryable false
-     */
+    #[\ryunosuke\microute\attribute\Queryable(false)]
     public function queryableAction(int $arg1, array $arg2) { }
 
-    /**
-     * @redirect /mapping/redirect1 301 hoge
-     * @redirect /mapping/redirect2 302 fuga
-     * @redirect /mapping/redirect3 piyo
-     */
+    #[\ryunosuke\microute\attribute\Redirect('/mapping/redirect1', 301)]
+    #[\ryunosuke\microute\attribute\Redirect('/mapping/redirect2', 302)]
+    #[\ryunosuke\microute\attribute\Redirect('/mapping/redirect3')]
     public function redirectAction() { }
 
-    /**
-     * @rewrite /mapping/rewrite1 hoge
-     * @rewrite /mapping/rewrite2 fuga
-     */
+    #[\ryunosuke\microute\attribute\Rewrite('/mapping/rewrite1')]
+    #[\ryunosuke\microute\attribute\Rewrite('/mapping/rewrite2')]
     public function rewriteAction() { }
 
-    /**
-     * @regex /mapping/regex1 hoge
-     * @regex /mapping/regex2 fuga
-     */
+    #[\ryunosuke\microute\attribute\Regex('/mapping/regex1')]
+    #[\ryunosuke\microute\attribute\Regex('/mapping/regex2')]
     public function regexAction() { }
 
-    /**
-     * @route mappingRoute hoge
-     * @regex /mapping/route
-     */
+    #[\ryunosuke\microute\attribute\Route('mappingRoute')]
+    #[\ryunosuke\microute\attribute\Regex('/mapping/route')]
     public function routenameAction() { }
 
-    /**
-     * @param $id
-     * @context json, xml
-     */
+    #[\ryunosuke\microute\attribute\Context('json', 'xml')]
     public function contextAction(int $id = 123) { }
 }

@@ -21,9 +21,7 @@ class DispatchController extends AbstractController
         parent::before();
     }
 
-    /**
-     * @action get
-     */
+    #[\ryunosuke\microute\attribute\Method('get')]
     public function mainAction()
     {
         return 'main';
@@ -45,17 +43,13 @@ class DispatchController extends AbstractController
         };
     }
 
-    /**
-     * @action get
-     */
+    #[\ryunosuke\microute\attribute\Method('get')]
     public function thrown1Action()
     {
         throw new \UnexpectedValueException('catch');
     }
 
-    /**
-     * @action get
-     */
+    #[\ryunosuke\microute\attribute\Method('get')]
     public function thrown2Action()
     {
         throw new \Exception('uncatch');

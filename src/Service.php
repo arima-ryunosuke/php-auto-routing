@@ -2,6 +2,7 @@
 namespace ryunosuke\microute;
 
 use Psr\SimpleCache\CacheInterface;
+use ryunosuke\polyfill\attribute\Provider;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Session\Session;
@@ -27,6 +28,7 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
  * @property-read string                  $controllerNamespace
  * @property-read string                  $controllerDirectory
  * @property-read array|Controller        $controllerLocation
+ * @property-read bool                    $controllerAnnotation
  *
  * @property-read callable                $requestFactory
  * @property-read Request                 $requestClass
@@ -47,7 +49,7 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
 class Service implements HttpKernelInterface
 {
     /** @var string キャッシュバージョン。本体のバージョンと同期する必要はないがキャッシュ形式を変えたらアップする */
-    const CACHE_VERSION = '1.0.0';
+    const CACHE_VERSION = '1.1.0';
 
     private $values;
     private $frozen = [];
@@ -117,6 +119,8 @@ class Service implements HttpKernelInterface
         $this->values = $values;
 
         Request::setFactory($this->requestFactory);
+        Controller::$enabledAttribute = !($values['controllerAnnotation'] ?? true);
+        Provider::setCacheConfig($this->cacher);
 
         if ($this->debug) {
             $this->cacher->clear();

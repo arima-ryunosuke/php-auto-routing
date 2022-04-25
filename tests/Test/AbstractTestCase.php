@@ -16,6 +16,7 @@ abstract class AbstractTestCase extends TestCase
         parent::setUp();
 
         $this->service = $this->provideService();
+        $this->service->cacher->clear();
     }
 
     function provideService($options = [])
@@ -26,6 +27,7 @@ abstract class AbstractTestCase extends TestCase
                 '\\ryunosuke\\Test\\stub\\Controller\\' => __DIR__ . '/../stub/Controller/',
             ],
             'defaultActionAsDirectory' => true,
+            'controllerAnnotation'     => false,
         ];
         return new Service($options + $defaults);
     }

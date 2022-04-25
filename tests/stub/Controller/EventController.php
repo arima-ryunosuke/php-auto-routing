@@ -5,61 +5,47 @@ use Symfony\Component\HttpFoundation\Response;
 
 class EventController extends AbstractController
 {
-    /**
-     * @cache 10 * 10
-     */
+    #[\ryunosuke\microute\attribute\Cache(10 * 10)]
     public function alternateAction()
     {
         return 'alternateAction';
     }
 
-    /**
-     * @event:cache 10
-     */
+    #[\ryunosuke\microute\attribute\Event('cache', 10)]
     public function cacheAction()
     {
         return 'cached_response:' . mt_rand();
     }
 
-    /**
-     * @action get
-     * @event:cache 10
-     */
+    #[\ryunosuke\microute\attribute\Method('get')]
+    #[\ryunosuke\microute\attribute\Event('cache', 10)]
     public function cache1Action()
     {
         return 'cached_response1:' . mt_rand();
     }
 
-    /**
-     * @action get
-     * @event:cache 10
-     */
+    #[\ryunosuke\microute\attribute\Method('get')]
+    #[\ryunosuke\microute\attribute\Event('cache', 10)]
     public function cacheDirectAction()
     {
         return new Response('cached_direct_response:' . mt_rand());
     }
 
-    /**
-     * @public 10
-     * @context html
-     */
+    #[\ryunosuke\microute\attribute\WebCache(10)]
+    #[\ryunosuke\microute\attribute\Context('html')]
     public function publicAction()
     {
         return new Response('publiced_response');
     }
 
-    /**
-     * @event:other1 1, 2, 3
-     * @event:other2 4, 5, 6
-     */
+    #[\ryunosuke\microute\attribute\Event('other1', 1, 2, 3)]
+    #[\ryunosuke\microute\attribute\Event('other2', 4, 5, 6)]
     public function otherAction()
     {
         return new Response('other_event:' . mt_rand());
     }
 
-    /**
-     * @event:unknown
-     */
+    #[\ryunosuke\microute\attribute\Event('unknown')]
     public function unknownAction()
     {
         return new Response('other_event:' . mt_rand());
