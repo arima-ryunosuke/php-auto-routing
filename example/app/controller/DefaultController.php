@@ -3,10 +3,8 @@ namespace ryunosuke\microute\example\controller;
 
 use Symfony\Component\HttpFoundation\Response;
 
-/**
- * @alias /alias
- * @scope (?<pref_id>\d+)/
- */
+#[\ryunosuke\microute\attribute\Alias('/alias')]
+#[\ryunosuke\microute\attribute\Scope('(?<pref_id>\d+)/')]
 class DefaultController extends AbstractController
 {
     protected function error(\Exception $ex)
@@ -22,10 +20,8 @@ class DefaultController extends AbstractController
         $this->view->exception = $ex;
     }
 
-    /**
-     * @action GET
-     * @route default-index
-     */
+    #[\ryunosuke\microute\attribute\Method('GET')]
+    #[\ryunosuke\microute\attribute\Route('default-index')]
     public function defaultAction()
     {
         $this->view->url = $this->request->getRequestUri();
@@ -45,10 +41,7 @@ class DefaultController extends AbstractController
         return '存在する URL の一覧です<pre>' . var_export($this->service->router->urls(), true);
     }
 
-    /**
-     * @origin http://localhost
-     * @origin http://localhost:8000, http://localhost:3000
-     */
+    #[\ryunosuke\microute\attribute\Origin('http://localhost', 'http://localhost:8000', 'http://localhost:3000')]
     public function originAction()
     {
     }
@@ -80,6 +73,16 @@ class DefaultController extends AbstractController
             . "\n";
     }
 
+    public function backgroundAction()
+    {
+        $now = date('Y-m-d H:i:s');
+        $this->background(function () use ($now) {
+            sleep(5);
+            file_put_contents(__DIR__ . '/../../public/background.txt', "$now\n", FILE_APPEND);
+        });
+        return "fpm の場合、この処理は即座に帰りますが、5秒後に<a href='background.txt'>background.txt</a>に「{$now}」が追記されます";
+    }
+
     public function jsonAction()
     {
         if ($this->request->getContentType() === 'json') {
@@ -89,13 +92,7 @@ class DefaultController extends AbstractController
         }
     }
 
-    /**
-     * @param int $id
-     * @param string $name
-     * @param string $default
-     * @return string
-     */
-    public function argumentAction($id, $name, $default = 'default')
+    public function argumentAction(int $id, string $name, string $default = 'default')
     {
         return 'クエリストリングがアクションメソッドの引数に渡ってきます<pre>' . var_export([
                 'url'       => $this->request->getRequestUri(),
@@ -103,12 +100,8 @@ class DefaultController extends AbstractController
             ], true);
     }
 
-    /**
-     * @queryable false
-     * @context ,json
-     * @param int $id
-     * @return string
-     */
+    #[\ryunosuke\microute\attribute\Queryable(false)]
+    #[\ryunosuke\microute\attribute\Context('', 'json')]
     public function pathfulAction($id)
     {
         return '/ 区切りでアクションメソッドの引数に渡ってきます<pre>' . var_export([
@@ -117,11 +110,7 @@ class DefaultController extends AbstractController
             ], true);
     }
 
-    /**
-     * @argument file
-     * @param \Symfony\Component\HttpFoundation\File\UploadedFile $file
-     * @return string
-     */
+    #[\ryunosuke\microute\attribute\Argument('file')]
     public function uploadAction($file = null)
     {
         if ($this->request->isMethod('POST')) {
@@ -132,11 +121,9 @@ class DefaultController extends AbstractController
         }
     }
 
-    /**
-     * @redirect /hoge 302
-     * @redirect /fuga 303
-     * @rewrite /piyo
-     */
+    #[\ryunosuke\microute\attribute\Redirect('/hoge', 302)]
+    #[\ryunosuke\microute\attribute\Redirect('/fuga', 303)]
+    #[\ryunosuke\microute\attribute\Rewrite('/piyo')]
     public function originalAction()
     {
         return 'このページは /hoge でも /fuga でも /piyo でもアクセスできます。/hoge は 302 リダイレクト、 /fuga は 303 リダイレクト、 /piyo は URL そのままです<pre>' . var_export([
@@ -144,13 +131,8 @@ class DefaultController extends AbstractController
             ], true);
     }
 
-    /**
-     * @regex /regex/(?<id>\d+)-([a-z]+)
-     * @param int $id
-     * @param string $name
-     * @return string
-     */
-    public function articleAction($id, $name)
+    #[\ryunosuke\microute\attribute\Regex('/regex/(?<id>\d+)-([a-z]+)')]
+    public function articleAction(int $id, string $name)
     {
         return '$id は名前付きキャプチャ、$name は2番目マッチで2番目の引数に渡ってきます<pre>' . var_export([
                 'url'       => $this->request->getRequestUri(),
@@ -158,22 +140,15 @@ class DefaultController extends AbstractController
             ], true);
     }
 
-    /**
-     * @regex /[_a-zA-Z0-9]+
-     * @return string
-     */
+    #[\ryunosuke\microute\attribute\Regex('/[_a-zA-Z0-9]+')]
     public function anyregexAction()
     {
         return '本来なら [_\-a-zA-Z0-9]+ にマッチするあらゆるリクエストがここに到達しますが、正規表現ルーティングの優先順位を下げているので、他のルーティングで到達しなかった場合のみ到達します';
     }
 
-    /**
-     * @context json,xml
-     * @queryable false
-     * @param int $id
-     * @return string
-     */
-    public function contextAction($id)
+    #[\ryunosuke\microute\attribute\Context('json', 'xml')]
+    #[\ryunosuke\microute\attribute\Queryable(false)]
+    public function contextAction(int $id)
     {
         return '@context するとパスの最後に拡張子をつけてもこのアクションに到達します<pre>' . var_export([
                 'url'       => $this->request->getRequestUri(),
@@ -202,21 +177,23 @@ class DefaultController extends AbstractController
         });
     }
 
-    /**
-     * @action get
-     * @event:cache 10
-     */
+    #[\ryunosuke\microute\attribute\Method('GET')]
+    #[\ryunosuke\microute\attribute\Event('cache', 10)]
     public function cacheAction()
     {
+        $this->session->set('hoge', 'hoge');
         sleep(3);
-        return date('Y/m/d H:i:s') . '：ものすごく重い処理のキャッシュレスポンスです。大体3秒かかりますが10秒間キャッシュされています';
+        if ($this->request->query->has('img')) {
+            $this->response->headers->set('content-type', 'image/svg+xml');
+            return '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="40"><text y="12" font-size="12">自分自身へのトップレベルではないリクエスト</text></svg>';
+        }
+        $img = '<img src="./cache?img=true">';
+        return date('Y/m/d H:i:s') . '：ものすごく重い処理のキャッシュレスポンスです。大体3秒かかりますが10秒間キャッシュされています<br>' . $img;
     }
 
-    /**
-     * @action get
-     * @context html
-     * @event:public 10
-     */
+    #[\ryunosuke\microute\attribute\Method('GET')]
+    #[\ryunosuke\microute\attribute\Context('html')]
+    #[\ryunosuke\microute\attribute\Event('public', 10)]
     public function publicAction()
     {
         return 'このレスポンスは初回以降 php ではなく web サーバーが返しています';

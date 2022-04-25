@@ -1,6 +1,7 @@
 <?php
 namespace ryunosuke\Test;
 
+use ryunosuke\microute\example\controller\DefaultController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpKernel\HttpKernelBrowser;
 
@@ -43,6 +44,15 @@ class ExampleTest extends AbstractTestCase
 
         $this->assertEquals(200, $client->getResponse()->getStatusCode());
         $this->assertStringContainsString('/urls', $crawler->html());
+    }
+
+    function test_background()
+    {
+        $client = new HttpKernelBrowser($this->service);
+        $crawler = $client->request('GET', '/background');
+
+        $this->assertEquals(200, $client->getResponse()->getStatusCode());
+        $this->assertStringContainsString('<a href="background.txt">', $crawler->html());
     }
 
     function test_argument()
