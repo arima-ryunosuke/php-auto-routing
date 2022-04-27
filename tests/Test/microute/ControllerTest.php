@@ -92,6 +92,14 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals(true, $cookie1->isSecure());
     }
 
+    function test_background()
+    {
+        $controller = new HogeController($this->service, '');
+
+        $callback = $controller->background(function () { return 123; });
+        $this->assertEquals(123, $callback());
+    }
+
     function test_authenticate_basic()
     {
         $service = $this->provideService([

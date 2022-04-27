@@ -265,6 +265,31 @@ class Controller
     }
 
     /**
+     * リクエスト終了後の処理を登録する
+     *
+     * 実態は register_shutdown_function であり、 fpm 環境でなければほとんど意味はない。
+     * （fpm 環境なら fastcgi_finish_request でコールされるので後処理として活用できるのを利用している）。
+     * それに付随するいくつかのボイラープレートをまとめ上げただけなので、ちょろっと呼ぶだけなら普通に register_shutdown_function を呼ぶだけとあまり変わらない。
+     *
+     * @param \Closure $tack 実行する処理
+     * @param int $timeout 後処理のタイムアウト（0は無制限。request_terminate_timeout_track_finished:no だと決してタイムアウトしないので注意）
+     */
+    public function background($tack, $timeout = 0)
+    {
+        $callback = function () use ($tack, $timeout) {
+            // ファイルセッションだと次のリクエストをブロックしてしまうのでセッションを書き込んで終了する
+            session_write_close();
+
+            // 後処理したいということはそれなりに長い時間が予想されるのでタイムアウトを設定する
+            set_time_limit($timeout);
+
+            return $tack();
+        };
+        register_shutdown_function($callback);
+        return $callback; // for testing
+    }
+
+    /**
      * 指定 URL へリダイレクト
      *
      * @param string $url リダイレクト URL
