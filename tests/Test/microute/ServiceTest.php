@@ -1,6 +1,7 @@
 <?php
 namespace ryunosuke\Test\microute;
 
+use MockLogger;
 use ryunosuke\microute\Controller;
 use ryunosuke\microute\Service;
 use ryunosuke\Test\stub\Controller\DefaultController;
@@ -56,7 +57,7 @@ class ServiceTest extends \ryunosuke\Test\AbstractTestCase
     function test___get()
     {
         $this->assertFalse($this->service->debug);
-        $this->assertIsCallable($this->service->logger);
+        $this->assertIsCallable($this->service->requestFactory);
     }
 
     function test_handle()
@@ -86,11 +87,11 @@ class ServiceTest extends \ryunosuke\Test\AbstractTestCase
         $logs = [];
         $self = $this;
         $service = $this->provideService([
-            'logger' => function () use (&$logs) {
-                return function (\Throwable $t) use (&$logs) {
-                    $logs[] = $t->getMessage();
-                };
-            },
+            'logger' => new MockLogger(function ($level, $message, $context) use (&$logs) {
+                if (isset($context['exception'])) {
+                    $logs[] = $context['exception']->getMessage();
+                }
+            }),
             'events' => [
                 'request'  => [
                     function (Request $request) use ($self) {
@@ -171,7 +172,24 @@ class ServiceTest extends \ryunosuke\Test\AbstractTestCase
                     throw new \TypeError();
                 };
             },
-            'logger'         => function () use (&$logs) {
+            'logger'         => new MockLogger(function ($level, $message, $context) use (&$logs) {
+                $logs[] = $context['exception'];
+            }),
+        ]);
+        $service->run();
+        $this->assertInstanceOf(\Throwable::class, $logs[0]);
+    }
+
+    function test_logger_compatible()
+    {
+        $logs = [];
+        $service = $this->provideService([
+            'requestFactory' => function () {
+                return function ($query, $request, $attributes, $cookies, $files, $server, $content) {
+                    throw new \TypeError();
+                };
+            },
+            'logger' => function () use (&$logs) {
                 return function ($t) use (&$logs) {
                     $logs[] = $t;
                 };

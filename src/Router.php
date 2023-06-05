@@ -88,6 +88,7 @@ class Router
                     throw new \UnexpectedValueException("$prefer is not defined route method");
                 case self::ROUTE_DEFAULT:
                     if (is_string($this->service->dispatcher->findController($parsed['controller'], $parsed['action'])[0])) {
+                        $this->service->logger->info("match " . self::ROUTE_DEFAULT . "({$parsed['controller']}@{$parsed['action']}): $path");
                         $parsed['route'] = $parsed['route'] ?? self::ROUTE_DEFAULT;
                         return $parsed;
                     }
@@ -95,6 +96,7 @@ class Router
                 case self::ROUTE_REWRITE:
                     foreach ($this->routings[self::ROUTE_REWRITE] as $from => $routing) {
                         if (preg_match("#$from#", $path)) {
+                            $this->service->logger->info("match " . self::ROUTE_REWRITE . "($from): $path");
                             [$controller, $action] = $routing;
                             if ($action !== null) {
                                 $controller = $this->service->resolver->url($controller, $action, [], '');
@@ -110,6 +112,7 @@ class Router
                 case self::ROUTE_REDIRECT:
                     foreach ($this->routings[self::ROUTE_REDIRECT] as $from => $routing) {
                         if ($from === $path) {
+                            $this->service->logger->info("match " . self::ROUTE_REDIRECT . "($from): $path");
                             [$controller, $action, $status] = $routing;
                             if ($action !== null) {
                                 $action = $action . (strlen($parsed['context']) ? '.' . $parsed['context'] : '');
@@ -122,6 +125,7 @@ class Router
                 case self::ROUTE_ALIAS:
                     foreach ($this->routings[self::ROUTE_ALIAS] as $from => $to) {
                         if ($from === $parentpath) {
+                            $this->service->logger->info("match " . self::ROUTE_ALIAS . "($from): $path");
                             if ($parsed['controller'] === '' || $parentpath === $path) {
                                 $parsed['action'] = 'default';
                             }
@@ -134,6 +138,7 @@ class Router
                 case self::ROUTE_SCOPE:
                     foreach ($this->routings[self::ROUTE_SCOPE] as $regex => $routing) {
                         if (preg_match("#^$regex#u", $path, $matches)) {
+                            $this->service->logger->info("match " . self::ROUTE_SCOPE . "($regex): $path");
                             $path2 = preg_replace("#^$regex#u", '', $path, 1, $count);
                             $parsed2 = $this->parse($path2);
                             $parsed['controller'] = $this->service->dispatcher->shortenController($routing);
@@ -152,6 +157,7 @@ class Router
                 case self::ROUTE_REGEX:
                     foreach ($this->routings[self::ROUTE_REGEX] as $regex => $routing) {
                         if (preg_match("#^$regex$#u", $path, $matches)) {
+                            $this->service->logger->info("match " . self::ROUTE_REGEX . "($regex): $path");
                             [$controller, $action] = $routing;
                             $parsed['controller'] = $this->service->dispatcher->shortenController($controller);
                             $parsed['action'] = $action;
@@ -241,6 +247,7 @@ class Router
      */
     public function route($name, $controller, $action)
     {
+        $this->service->logger->debug(self::ROUTE_ROUTE . " $name: $controller@$action");
         $this->routings[self::ROUTE_ROUTE][$name] = [$controller, $action];
         return $this;
     }
@@ -254,6 +261,7 @@ class Router
      */
     public function alias($prefix, $controller)
     {
+        $this->service->logger->debug(self::ROUTE_ALIAS . " $prefix: $controller");
         $this->routings[self::ROUTE_ALIAS][$prefix] = $controller;
         return $this;
     }
@@ -270,6 +278,7 @@ class Router
         if ($regex[0] !== '/') {
             $regex = rtrim($this->service->resolver->url($controller, '', [], ''), '/') . '/' . $regex;
         }
+        $this->service->logger->debug(self::ROUTE_SCOPE . " $regex: $controller");
         $this->routings[self::ROUTE_SCOPE][$regex] = $controller;
         return $this;
     }
@@ -284,6 +293,7 @@ class Router
      */
     public function rewrite($from_url, $to_url, $action = null)
     {
+        $this->service->logger->debug(self::ROUTE_REWRITE . " $from_url: $to_url@$action");
         $this->routings[self::ROUTE_REWRITE][$from_url] = [$to_url, $action];
         return $this;
     }
@@ -302,6 +312,7 @@ class Router
         if (!(300 <= $status_code && $status_code < 400)) {
             $status_code = 302;
         }
+        $this->service->logger->debug(self::ROUTE_REDIRECT . " $from_url: $to_url($status_code)@$action");
         $this->routings[self::ROUTE_REDIRECT][$from_url] = [$to_url, $action, $status_code];
         return $this;
     }
@@ -319,6 +330,7 @@ class Router
         if ($regex[0] !== '/') {
             $regex = rtrim($this->service->resolver->url($controller, '', [], ''), '/') . '/' . $regex;
         }
+        $this->service->logger->debug(self::ROUTE_REGEX . " $regex: $controller@$action");
         $this->routings[self::ROUTE_REGEX][$regex] = [$controller, $action];
         return $this;
     }

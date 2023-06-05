@@ -1,6 +1,9 @@
 <?php
 namespace ryunosuke\microute;
 
+use Psr\Log\AbstractLogger;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Psr\SimpleCache\CacheInterface;
 use ryunosuke\polyfill\attribute\Provider;
 use Symfony\Component\HttpFoundation\Request;
@@ -16,7 +19,7 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
  *
  * @property-read bool                    $debug
  * @property-read CacheInterface          $cacher
- * @property-read \Closure                $logger
+ * @property-read LoggerInterface         $logger
  * @property-read callable[][]            $events
  * @property-read string[]|\Closure       $origin
  * @property-read string[]                $priority
@@ -58,7 +61,7 @@ class Service implements HttpKernelInterface
     {
         $values['debug'] ??= false;
         $values['cacher'] ??= new Cacher();
-        $values['logger'] ??= fn() => fn($ex, $request) => null;
+        $values['logger'] ??= new NullLogger();
         $values['origin'] ??= [];
         $values['priority'] ??= [Router::ROUTE_REWRITE, Router::ROUTE_REDIRECT, Router::ROUTE_ALIAS, Router::ROUTE_REGEX, Router::ROUTE_SCOPE, Router::ROUTE_DEFAULT];
         $values['events'] ??= [];
@@ -139,6 +142,25 @@ class Service implements HttpKernelInterface
         if (!(isset($this->frozen[$name]) || array_key_exists($name, $this->frozen))) {
             $value = $this->values[$name];
             $this->frozen[$name] = $value instanceof \Closure ? $value($this) : $value;
+
+            // for compatible
+            if ($name === 'logger' && $this->frozen[$name] instanceof \Closure) {
+                $this->frozen[$name] = new class($this->frozen[$name]) extends AbstractLogger {
+                    private \Closure $closure;
+
+                    public function __construct($closure)
+                    {
+                        $this->closure = $closure;
+                    }
+
+                    public function log($level, $message, array $context = [])
+                    {
+                        if (isset($context['exception'])) {
+                            ($this->closure)($context['exception'], $context['request'] ?? null);
+                        }
+                    }
+                };
+            }
         }
         return $this->frozen[$name];
     }
@@ -187,10 +209,11 @@ class Service implements HttpKernelInterface
     public function run()
     {
         try {
-            $response = $this->handle($this->request);
+            $request = $this->request;
+            $response = $this->handle($request);
         }
         catch (\Throwable $t) {
-            ($this->logger)($t);
+            $this->logger->critical('failed to run', ['exception' => $t, 'request' => $request ?? null]);
             $response = new Response('', 400);
         }
         session_write_close();

@@ -643,21 +643,25 @@ class Controller
         // 5大イベントディスパッチ
         try {
             // init は初期化処理（Response の返却を許す）
+            $this->service->logger->info(get_class($this) . " init");
             $response = $this->init();
             if ($response instanceof Response) {
                 return $this->response = $response;
             }
 
             // before は共通事前処理
+            $this->service->logger->info(get_class($this) . " before");
             $this->before();
 
             // action はメイン処理
+            $this->service->logger->info(get_class($this) . " action");
             $this->response = $this->action($args);
 
             // after は共通事後処理
             $this->after();
 
             // finish は後始末処理（Response の返却を許す）
+            $this->service->logger->info(get_class($this) . " finish");
             $response = $this->finish();
             if ($response instanceof Response) {
                 return $this->response = $response;
@@ -668,6 +672,7 @@ class Controller
         catch (\Exception $ex) {
             // コントローラレベルの例外ハンドリング
             if ($error_handling) {
+                $this->service->logger->info(get_class($this) . " error");
                 $response = $this->error($ex);
                 if ($response instanceof Response) {
                     return $this->response = $response;

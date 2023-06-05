@@ -1,6 +1,7 @@
 <?php
 namespace ryunosuke\Test\microute;
 
+use MockLogger;
 use ryunosuke\Test\stub\Controller\DefaultController;
 use ryunosuke\Test\stub\Controller\HogeController;
 use ryunosuke\Test\stub\Controller\SubSub;
@@ -155,9 +156,11 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
     function test_error()
     {
         $service = $this->provideService([
-            'logger' => function () {
-                return function (\Exception $ex) { echo $ex->getMessage(), "\n"; };
-            },
+            'logger' => new MockLogger(function ($level, $message, $context) use (&$logs) {
+                if (isset($context['exception'])) {
+                    echo $context['exception']->getMessage(), "\n";
+                }
+            }),
         ]);
 
         $request = Request::create('hoge/action_throw');
