@@ -89,7 +89,8 @@ $service->run();
     - 内部で使用するキャッシュインスタンスを指定します
     - デフォルトは var_export/include による素朴なキャッシュです。 `symfony/cache` `doctrine/cache` などのしっかりとした psr16 ライブラリを使用を推奨します
 - **logger**: `callable`
-    - 未キャッチ例外をログる callable を渡します
+    - 動作をログる psr3 LoggerInterface を指定します
+    - 互換性担保のため callable も受け入れます。その場合未チャッチ例外のみがログられます
     - デフォルトは何もしません
 - **events**: `callable[][]`
     - 各イベントごとに実行されるイベントハンドラを指定します

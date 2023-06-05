@@ -22,6 +22,10 @@
 - DefaultController::errorAction の廃止
 - タイプヒントの設定
 
+## 1.1.17
+
+- [feature] logger の psr3 への変更とロギングの強化
+
 ## 1.1.16
 
 - [feature][Controller] メタデータのアトリビュート対応
