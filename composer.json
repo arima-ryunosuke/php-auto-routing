@@ -19,6 +19,7 @@
     "symfony/http-kernel": "5.*",
     "symfony/mime": "5.*",
     "psr/simple-cache": "*",
+    "psr/log": "*",
     "ryunosuke/polyfill-attribute": "1.*"
   },
   "require-dev": {
