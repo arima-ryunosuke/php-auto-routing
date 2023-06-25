@@ -3,6 +3,7 @@ namespace ryunosuke\Test\microute;
 
 use ryunosuke\microute\Controller;
 use ryunosuke\Test\microute\autoload\Hoge;
+use ryunosuke\Test\microute\autoload\Next\Foo;
 use ryunosuke\Test\stub\Controller\DispatchController;
 use ryunosuke\Test\stub\Controller\EventController;
 use ryunosuke\Test\stub\Controller\HogeController;
@@ -36,15 +37,23 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
 
     function test_autoload()
     {
-        $namespace = 'ryunosuke\\Test\\microute\\autoload';
-        $this->assertEquals([$namespace], Controller::autoload($namespace, ['a', 'b', 'c']));
+        $service = $this->provideService([
+            'controllerAutoload' => ['ryunosuke\\Test\\microute\\autoload' => ['a', 'b', 'c']],
+        ]);
+        $namespace = 'ryunosuke\\Test\\microute\\autoload\\Next\\';
+        $this->assertEquals([
+            'ryunosuke\\Test\\microute\\autoload',
+            'ryunosuke\\Test\\microute\\autoload\\Next',
+        ], Controller::autoload($namespace, ['x', 'y', 'z']));
 
-        $controller1 = new HogeController($this->service, 'default');
-        $controller2 = new FooBarController($this->service, 'default');
+        $controller1 = new HogeController($service, 'default');
+        $controller2 = new FooBarController($service, 'default');
         $this->assertSame($controller1->Hoge, $controller2->Hoge);
         $this->assertInstanceOf(Hoge::class, $controller1->Hoge);
         $this->assertEquals(['a', 'b', 'c'], $controller1->Hoge->ctor_args);
+        $this->assertEquals(['x', 'y', 'z'], $controller2->Foo->ctor_args);
         $this->assertEquals(1, Hoge::$newCount);
+        $this->assertEquals(1, Foo::$newCount);
 
         $this->assertException(new \DomainException('hoge is undefined'), function () use ($controller1) {
             return $controller1->hoge;

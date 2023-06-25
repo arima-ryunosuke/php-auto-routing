@@ -32,6 +32,7 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
  * @property-read string                  $controllerDirectory
  * @property-read array|Controller        $controllerLocation
  * @property-read bool                    $controllerAnnotation
+ * @property-read array                   $controllerAutoload
  *
  * @property-read callable                $requestFactory
  * @property-read Request                 $requestClass
@@ -70,6 +71,11 @@ class Service implements HttpKernelInterface
         $values['dispatcher'] ??= fn() => new Dispatcher($this);
         $values['resolver'] ??= fn() => new Resolver($this);
         $values['controllerClass'] ??= Controller::class;
+        $values['controllerAutoload'] ??= [];
+
+        foreach ($values['controllerAutoload'] as $namespace => $ctor_args) {
+            $values['controllerClass']::autoload($namespace, $ctor_args);
+        }
 
         $values['requestFactory'] ??= fn() => function ($query, $request, $attributes, $cookies, $files, $server, $content) {
             $requestClass = $this->requestClass;
