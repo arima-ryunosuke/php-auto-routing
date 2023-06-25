@@ -53,7 +53,7 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
 class Service implements HttpKernelInterface
 {
     /** @var string キャッシュバージョン。本体のバージョンと同期する必要はないがキャッシュ形式を変えたらアップする */
-    const CACHE_VERSION = '1.1.0';
+    const CACHE_VERSION = '1-1-0';
 
     private $values;
     private $frozen = [];
