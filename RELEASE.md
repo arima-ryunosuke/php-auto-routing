@@ -22,6 +22,11 @@
 - DefaultController::errorAction の廃止
 - タイプヒントの設定
 
+## 1.1.18
+
+- [change] キャッシュキーを変更
+- [feature] Constroller::autoload を設定レベルで指定できるように変更
+
 ## 1.1.17
 
 - [feature] logger の psr3 への変更とロギングの強化
