@@ -22,6 +22,12 @@
 - DefaultController::errorAction の廃止
 - タイプヒントの設定
 
+## 1.2.0
+
+- [feature] Resolver::current に現在パラメータ引数を追加
+- [feature] パスパラメータを無効化する parameterUseRFC3986 オプションを追加
+- [*change] エラーハンドリングを Exception から Throwable に変更
+
 ## 1.1.18
 
 - [change] キャッシュキーを変更

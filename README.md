@@ -153,6 +153,10 @@ $service->run();
     - パラメータ間の区切り文字を指定します
     - これを `/` などにすると `/controller/action/123/456` のような pathful な URL でアクセスできます
     - デフォルトは `&` です。 `/controller/action?123&456` のような URL でアクセスできます
+- parameterUseRFC3986: `bool`
+    - パスパラメータ機構の有効/無効を指定します
+    - これを `true` にすると `parameterDelimiter`, `parameterSeparator` が強制的に `?`, `&` に設定され、純粋に RFC3986 のクエリパラメータのみがパラメータとして渡ってきます
+    - デフォルトは `false` です。 `/controller/action?123&456` のような URL でアクセスするとアクションパラメータは `[123, 456]` になります
 - parameterArrayable: `bool`
     - パラメータに配列を許可するかを指定します
     - デフォルトは `false` です。明示されない限り `/controller/action?id[]=123` のような配列パラメータが 404 になります
@@ -278,7 +282,7 @@ $service->run();
 
 - request: route 直後。引数は Request
 - dispatch: dispatch 直前。引数は Controller
-- error: 例外キャッチ直後。引数は Exception
+- error: 例外キャッチ直後。引数は Throwable
 - response: レスポンス送出直前。引数は Response
 
 これらは必ず1回のみ呼ばれます。複数回は呼ばれません。
