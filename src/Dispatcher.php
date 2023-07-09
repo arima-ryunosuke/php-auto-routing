@@ -11,7 +11,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  * コントローラへの移譲を行う。
  *
  * @property-read Controller $dispatchedController
- * @property-read \Exception $lastException
+ * @property-read \Throwable $lastException
  */
 class Dispatcher
 {
@@ -25,7 +25,7 @@ class Dispatcher
     /** @var Controller ディスパッチされたコントローラ(存在するとは限らない) */
     private $dispatchedController;
 
-    /** @var \Exception */
+    /** @var \Throwable */
     private $lastException;
 
     public function __construct(Service $service)
@@ -58,12 +58,12 @@ class Dispatcher
         throw new HttpException(...$controller_action);
     }
 
-    public function error(\Exception $ex, Request $request)
+    public function error(\Throwable $t, Request $request)
     {
-        $this->lastException = $ex;
+        $this->lastException = $t;
 
-        if (!$ex instanceof HttpException) {
-            $this->service->logger->error('failed to request', ['exception' => $ex, 'request' => $request]);
+        if (!$t instanceof HttpException) {
+            $this->service->logger->error('failed to request', ['exception' => $t, 'request' => $request]);
         }
 
         // 下層から順繰りにエラーコントローラを探す
@@ -82,19 +82,19 @@ class Dispatcher
         }
 
         if ($controller === null) {
-            throw new \Exception('DefaultController is notfound.', 0, $ex);
+            throw new \Exception('DefaultController is notfound.', 0, $t);
         }
 
         try {
-            $response = $controller->dispatch([$ex], false);
+            $response = $controller->dispatch([$t], false);
             if (get_class($response) === Response::class) {
-                $status_code = ($ex instanceof HttpException) ? $ex->getStatusCode() : 500;
+                $status_code = ($t instanceof HttpException) ? $t->getStatusCode() : 500;
                 $response->setStatusCode($status_code);
             }
             return $response;
         }
-        catch (\Exception $e) {
-            throw new \Exception('DefaultController throws Exception.', 0, $e);
+        catch (\Throwable $t) {
+            throw new \Exception('DefaultController throws Exception.', 0, $t);
         }
     }
 

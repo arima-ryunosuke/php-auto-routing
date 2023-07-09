@@ -669,17 +669,17 @@ class Controller
 
             return $this->response;
         }
-        catch (\Exception $ex) {
+        catch (\Throwable $t) {
             // コントローラレベルの例外ハンドリング
             if ($error_handling) {
                 $this->service->logger->info(get_class($this) . " error");
-                $response = $this->error($ex);
+                $response = $this->error($t);
                 if ($response instanceof Response) {
                     return $this->response = $response;
                 }
                 throw new \RuntimeException('Controller#error is must be return Response.');
             }
-            throw $ex;
+            throw $t;
         }
     }
 
@@ -950,5 +950,5 @@ class Controller
 
     protected function finish() { }
 
-    protected function error(\Exception $ex) { }
+    protected function error(\Throwable $t) { }
 }

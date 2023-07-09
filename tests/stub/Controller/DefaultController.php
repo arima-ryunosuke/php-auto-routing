@@ -16,12 +16,12 @@ class DefaultController extends AbstractController
         return $this->location();
     }
 
-    public function errorAction(\Exception $ex)
+    public function errorAction(\Throwable $t)
     {
-        if ($ex instanceof \DomainException) {
-            throw $ex;
+        if ($t instanceof \DomainException) {
+            throw $t;
         }
 
-        return new Response(get_class($ex));
+        return new Response(get_class($t));
     }
 }

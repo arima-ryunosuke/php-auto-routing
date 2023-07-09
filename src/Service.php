@@ -199,11 +199,11 @@ class Service implements HttpKernelInterface
         try {
             $response = $this->trigger('request', $request) ?? $dispacher->dispatch($request);
         }
-        catch (\Exception $ex) {
+        catch (\Throwable $t) {
             if (!$catch) {
-                throw $ex;
+                throw $t;
             }
-            $response = $this->trigger('error', $ex) ?? $dispacher->error($ex, $request);
+            $response = $this->trigger('error', $t) ?? $dispacher->error($t, $request);
         }
         $response = $this->trigger('response', $response) ?? $dispacher->finish($response, $request);
 

@@ -14,7 +14,7 @@ class FooBarController extends \ryunosuke\Test\stub\Controller\AbstractControlle
 
     public function noAction() { }
 
-    public function error(\Exception $ex)
+    public function error(\Throwable $t)
     {
         return null;
     }

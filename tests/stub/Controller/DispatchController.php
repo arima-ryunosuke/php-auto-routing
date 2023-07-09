@@ -55,12 +55,12 @@ class DispatchController extends AbstractController
         throw new \Exception('uncatch');
     }
 
-    public function error(\Exception $ex)
+    public function error(\Throwable $t)
     {
-        if (!$ex instanceof \UnexpectedValueException) {
-            throw $ex;
+        if (!$t instanceof \UnexpectedValueException) {
+            throw $t;
         }
-        parent::error($ex);
+        parent::error($t);
         return new JsonResponse('error-response');
     }
 }

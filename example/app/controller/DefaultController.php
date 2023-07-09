@@ -7,12 +7,12 @@ use Symfony\Component\HttpFoundation\Response;
 #[\ryunosuke\microute\attribute\Scope('(?<pref_id>\d+)/')]
 class DefaultController extends AbstractController
 {
-    protected function error(\Exception $ex)
+    protected function error(\Throwable $t)
     {
-        if ($ex instanceof \DomainException) {
-            throw $ex;
+        if ($t instanceof \DomainException) {
+            throw $t;
         }
-        return new Response('これはコントローラ単位のエラーハンドリングでハンドリングされた例外メッセージです：' . $ex->getMessage());
+        return new Response('これはコントローラ単位のエラーハンドリングでハンドリングされた例外メッセージです：' . $t->getMessage());
     }
 
     public function errorAction(\Exception $ex)

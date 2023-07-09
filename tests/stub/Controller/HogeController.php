@@ -167,10 +167,10 @@ class HogeController extends AbstractController
     #[\ryunosuke\microute\attribute\Method('get')]
     public function action_throwAction() { throw new \UnexpectedValueException('ex'); }
 
-    public function error(\Exception $ex)
+    public function error(\Throwable $t)
     {
-        if (!$ex instanceof \UnexpectedValueException) {
-            throw $ex;
+        if (!$t instanceof \UnexpectedValueException) {
+            throw $t;
         }
         return new Response('error');
     }

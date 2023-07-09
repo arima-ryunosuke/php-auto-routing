@@ -11,7 +11,7 @@ class DefaultController extends \ryunosuke\Test\stub\Controller\AbstractControll
         return "index_action: $id";
     }
 
-    public function errorAction(\Exception $ex)
+    public function errorAction(\Throwable $t)
     {
         return new Response(__METHOD__);
     }
