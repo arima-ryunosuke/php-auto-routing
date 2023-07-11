@@ -149,6 +149,12 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
 
         $url = $resolver->current(['op' => 'y', 'appendix' => 'hoge']);
         $this->assertEquals('/resolver/current?id=123&op=y&appendix=hoge', $url);
+
+        $url = $resolver->current(['new' => 'z']);
+        $this->assertEquals('/resolver/current?id=123&op=x&new=z', $url);
+
+        $url = $resolver->current(['new' => 'z'], []);
+        $this->assertEquals('/resolver/current?new=z', $url);
     }
 
     function test_path()
@@ -255,6 +261,9 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
         ];
         $this->assertEquals('', $resolver->query([], []));
         $this->assertEquals('', $resolver->query($null, []));
+        $this->assertEquals('?new=789', $resolver->query([
+            'new' => 789,
+        ], []));
         $this->assertEquals('?new=789', $resolver->query([
                 'new' => 789,
             ] + $null, $current));

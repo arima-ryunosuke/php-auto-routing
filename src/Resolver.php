@@ -215,14 +215,15 @@ class Resolver
      * ただし、クエリパラメータを与えればクエリ部分は書き換えることができる。
      *
      * @param array $params クエリパラメータ
+     * @param ?array $current 現在パラメータ。null を与えると現在の物がそのまま適用される。空配列を渡すと完全にリセットされる
      * @return string URL
      */
-    public function current($params = [])
+    public function current($params = [], $current = null)
     {
         $basepath = rtrim($this->service->request->getBasePath(), '/');
         $currentpath = $this->service->request->getPathInfo();
 
-        return $basepath . $currentpath . $this->query($params);
+        return $basepath . $currentpath . $this->query($params, $current);
     }
 
     /**
@@ -301,10 +302,10 @@ class Resolver
      * null を与えるとパラメータから除去される。
      *
      * @param array $params 付与・除去するパラメータ
-     * @param array $current 元となるクエリパラメータ（デバッグ・テスト用）
+     * @param ?array $current 元となるクエリパラメータ（デバッグ・テスト用）
      * @return string クエリ文字列
      */
-    public function query($params, $current = [])
+    public function query($params, $current = null)
     {
         $is_hasharray = function ($array) {
             if (!is_array($array)) {
@@ -335,7 +336,7 @@ class Resolver
             return $array;
         };
 
-        $current = $main($current ?: $this->service->request->query->all(), $params);
+        $current = $main($current ?? $this->service->request->query->all(), $params);
         $query = preg_replace('#%5B\d+%5D=#', '%5B%5D=', http_build_query($current));
         if (!strlen($query)) {
             return '';
