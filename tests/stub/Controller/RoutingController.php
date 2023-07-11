@@ -36,6 +36,7 @@ class RoutingController extends AbstractController
     {
         return 'queryableTrue' . $param;
     }
+
     #[\ryunosuke\microute\attribute\Queryable(false)]
     public function queryableFalse(int $param)
     {

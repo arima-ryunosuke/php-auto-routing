@@ -9,68 +9,120 @@ class HogeController extends AbstractController
     public function noaction() { }
 
     #[\ryunosuke\microute\attribute\Method('get')]
-    public function defaultAction() { return 'default-action'; }
+    public function defaultAction()
+    {
+        return 'default-action';
+    }
 
     #[\ryunosuke\microute\attribute\Method('get')]
-    public function actionSimpleAction() { return 'simple-action'; }
+    public function actionSimpleAction()
+    {
+        return 'simple-action';
+    }
 
     #[\ryunosuke\microute\attribute\Method('get')]
-    public function actionRegexAction($arg1, $arg2) { return "$arg1/$arg2"; }
+    public function actionRegexAction($arg1, $arg2)
+    {
+        return "$arg1/$arg2";
+    }
 
     #[\ryunosuke\microute\attribute\Method('get')]
-    public function nopostAction() { }
+    public function nopostAction()
+    {
+    }
 
     #[\ryunosuke\microute\attribute\Origin('http://allowed1.host', 'http://allowed2.host:1234')]
     #[\ryunosuke\microute\attribute\Origin('http://*.allowed.host')]
-    public function action_originAction() { return 'origin'; }
+    public function action_originAction()
+    {
+        return 'origin';
+    }
 
     #[\ryunosuke\microute\attribute\Method('get')]
     #[\ryunosuke\microute\attribute\Ajaxable(400)]
-    public function action_ajaxAction() { return 'ajaxed'; }
+    public function action_ajaxAction()
+    {
+        return 'ajaxed';
+    }
 
     #[\ryunosuke\microute\attribute\Method('get')]
     #[\ryunosuke\microute\attribute\Context('json')]
-    public function action_contextAction() { return 'json_context'; }
+    public function action_contextAction()
+    {
+        return 'json_context';
+    }
 
     #[\ryunosuke\microute\attribute\Method('get')]
     #[\ryunosuke\microute\attribute\Context('', 'json')]
-    public function action_andcontextAction() { return 'and_context'; }
+    public function action_andcontextAction()
+    {
+        return 'and_context';
+    }
 
     #[\ryunosuke\microute\attribute\Method('get')]
     #[\ryunosuke\microute\attribute\Context('*')]
-    public function action_anycontextAction() { return 'any_context'; }
+    public function action_anycontextAction()
+    {
+        return 'any_context';
+    }
 
     #[\ryunosuke\microute\attribute\Method('get')]
     #[\ryunosuke\microute\attribute\Context()]
-    public function action_emptycontextAction() { return 'empty_context'; }
+    public function action_emptycontextAction()
+    {
+        return 'empty_context';
+    }
 
     #[\ryunosuke\microute\attribute\Method('get')]
-    public function action_nullAction() { return; }
+    public function action_nullAction()
+    {
+        return;
+    }
 
     #[\ryunosuke\microute\attribute\Method('get')]
-    public function action_rawAction() { return 'string'; }
+    public function action_rawAction()
+    {
+        return 'string';
+    }
 
     #[\ryunosuke\microute\attribute\Method('get')]
-    public function action_responseAction() { return new Response('response'); }
+    public function action_responseAction()
+    {
+        return new Response('response');
+    }
 
     #[\ryunosuke\microute\attribute\Method('get')]
-    public function action_unknownAction() { return ['unknown']; }
+    public function action_unknownAction()
+    {
+        return ['unknown'];
+    }
 
     #[\ryunosuke\microute\attribute\Method('get')]
-    public function actionAction() { }
+    public function actionAction()
+    {
+    }
 
     #[\ryunosuke\microute\attribute\Method('get')]
     #[\ryunosuke\microute\attribute\Queryable(false)]
-    public function actionIdAction(int $id) { }
+    public function actionIdAction(int $id)
+    {
+    }
 
     #[\ryunosuke\microute\attribute\Method('get')]
-    public function actionAAction(int $id) { }
+    public function actionAAction(int $id)
+    {
+    }
 
     #[\ryunosuke\microute\attribute\Method('get')]
-    public function actionBAction() { return 'forwarded'; }
+    public function actionBAction()
+    {
+        return 'forwarded';
+    }
 
     #[\ryunosuke\microute\attribute\Method('get')]
-    public function actionNoneViewAction() { }
+    public function actionNoneViewAction()
+    {
+    }
 
     #[\ryunosuke\microute\attribute\Method('get')]
     public function parameterAction(int $arg1, string $arg2, bool $arg3, float $arg4, array $arg5, \stdClass $arg6, ?string $arg7, $arg8, $argX = "defval", $argY = null)
@@ -88,7 +140,9 @@ class HogeController extends AbstractController
 
     #[\ryunosuke\microute\attribute\Method('get')]
     #[\ryunosuke\microute\attribute\Argument('get', 'cookie')]
-    public function argumentAction(string $arg, string $cval) { }
+    public function argumentAction(string $arg, string $cval)
+    {
+    }
 
     #[\ryunosuke\microute\attribute\Method('post')]
     public function argAction($arg)
@@ -98,7 +152,9 @@ class HogeController extends AbstractController
 
     #[\ryunosuke\microute\attribute\Method('get')]
     #[\ryunosuke\microute\attribute\Queryable(false)]
-    public function queryAction(int $p1, int $p2) { }
+    public function queryAction(int $p1, int $p2)
+    {
+    }
 
     public function nullAction($arg = null)
     {
@@ -112,7 +168,9 @@ class HogeController extends AbstractController
 
     #[\ryunosuke\microute\attribute\Method('get')]
     #[\ryunosuke\microute\attribute\Context('json')]
-    public function queryContextAction($arg) { }
+    public function queryContextAction($arg)
+    {
+    }
 
     public function annotationNone() { }
 
@@ -126,7 +184,10 @@ class HogeController extends AbstractController
      */
     #[\ryunosuke\microute\attribute\Method('get')]
     #[\ryunosuke\microute\attribute\BasicAuth('This page is required BASIC auth')]
-    public function basicAction() { return 'basic'; }
+    public function basicAction()
+    {
+        return 'basic';
+    }
 
     /**
      * @action get
@@ -134,7 +195,10 @@ class HogeController extends AbstractController
      */
     #[\ryunosuke\microute\attribute\Method('get')]
     #[\ryunosuke\microute\attribute\DigestAuth('This page is required DIGEST auth')]
-    public function digestAction() { return 'digest'; }
+    public function digestAction()
+    {
+        return 'digest';
+    }
 
     /**
      * @action get
@@ -142,7 +206,10 @@ class HogeController extends AbstractController
      */
     #[\ryunosuke\microute\attribute\Method('get')]
     #[\ryunosuke\microute\attribute\BasicAuth('This page is required "REALM" auth')]
-    public function realmAction() { return 'realm'; }
+    public function realmAction()
+    {
+        return 'realm';
+    }
 
     /**
      * @action get
@@ -152,7 +219,9 @@ class HogeController extends AbstractController
 
     #[\ryunosuke\microute\attribute\Method('get')]
     #[\ryunosuke\microute\attribute\Context('*')]
-    public function contextAction() { }
+    public function contextAction()
+    {
+    }
 
     /**
      * @aname
@@ -170,7 +239,10 @@ class HogeController extends AbstractController
     public function annotationTwo() { }
 
     #[\ryunosuke\microute\attribute\Method('get')]
-    public function action_throwAction() { throw new \UnexpectedValueException('ex'); }
+    public function action_throwAction()
+    {
+        throw new \UnexpectedValueException('ex');
+    }
 
     public function error(\Throwable $t)
     {

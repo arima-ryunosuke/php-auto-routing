@@ -12,7 +12,7 @@ class DispatchController extends AbstractController
 
         if ($this->request->attributes->get('init-response')) {
             return new JsonResponse('init-response');
-        };
+        }
     }
 
     public function before()
@@ -40,7 +40,7 @@ class DispatchController extends AbstractController
 
         if ($this->request->attributes->get('finish-response')) {
             return new JsonResponse('finish-response');
-        };
+        }
     }
 
     #[\ryunosuke\microute\attribute\Method('get')]

@@ -189,7 +189,7 @@ class ServiceTest extends \ryunosuke\Test\AbstractTestCase
                     throw new \TypeError();
                 };
             },
-            'logger' => function () use (&$logs) {
+            'logger'         => function () use (&$logs) {
                 return function ($t) use (&$logs) {
                     $logs[] = $t;
                 };

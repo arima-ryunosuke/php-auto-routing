@@ -1,7 +1,6 @@
 <?php
 namespace ryunosuke\Test;
 
-use ryunosuke\microute\example\controller\DefaultController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpKernel\HttpKernelBrowser;
 
