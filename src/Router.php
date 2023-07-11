@@ -186,6 +186,7 @@ class Router
     {
         $delimiter = $this->service->parameterDelimiter;
         $separator = $this->service->parameterSeparator;
+        $useRFC3986 = $this->service->parameterUseRFC3986;
 
         $context = pathinfo($path, PATHINFO_EXTENSION);
         $path = preg_replace('#\\.' . preg_quote($context) . '$#', '', $path);
@@ -218,6 +219,10 @@ class Router
                 $action_name = lcfirst(array_pop($parts));
                 $controller_name = implode('\\', array_map('ucfirst', $parts));
             }
+        }
+        // 完全なる RFC 的な区切りはパスパラメータとしては空
+        elseif ($useRFC3986) {
+            $parameters = [];
         }
         // delimiter が '?' の時もまるで異なる（? は RFC 的なクエリ区切りだから）
         elseif ($delimiter === '?' && strlen($query)) {

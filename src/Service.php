@@ -40,6 +40,7 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
  * @property-read callable[]              $requestTypes
  * @property-read SessionStorageInterface $sessionStorage
  * @property-read bool                    $defaultActionAsDirectory
+ * @property-read bool                    $parameterUseRFC3986
  * @property-read string                  $parameterDelimiter
  * @property-read string                  $parameterSeparator
  * @property-read bool                    $parameterArrayable
@@ -96,6 +97,11 @@ class Service implements HttpKernelInterface
         ];
         $values['sessionStorage'] ??= fn() => new NativeSessionStorage();
         $values['defaultActionAsDirectory'] ??= false; // for compatible
+        $values['parameterUseRFC3986'] ??= false;      // for compatible
+        if ($values['parameterUseRFC3986']) {
+            $values['parameterDelimiter'] = '?';
+            $values['parameterSeparator'] = '&';
+        }
         $values['parameterDelimiter'] ??= '?';
         $values['parameterSeparator'] ??= '&';
         $values['parameterArrayable'] ??= false;

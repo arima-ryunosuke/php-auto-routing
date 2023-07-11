@@ -140,6 +140,19 @@ class RouterTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals(['a', 'b'], $parsed['parameters']);
     }
 
+    function test_parse_rfc3986()
+    {
+        $service = $this->provideService([
+            'parameterUseRFC3986' => true,
+        ]);
+
+        $parsed = $service->router->parse('/hoge/query', 'a&b');
+        $this->assertEquals('Hoge', $parsed['controller']);
+        $this->assertEquals('query', $parsed['action']);
+        $this->assertEquals('', $parsed['context']);
+        $this->assertEquals([], $parsed['parameters']);
+    }
+
     function test_route()
     {
         $service = $this->service;

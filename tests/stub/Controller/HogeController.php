@@ -105,6 +105,11 @@ class HogeController extends AbstractController
         return json_encode($arg);
     }
 
+    public function queryableNullAction(?int $param1 = null, int $param2 = null)
+    {
+        return 'queryableNull:' . var_export($param1, true) . ', ' . var_export($param2, true);
+    }
+
     #[\ryunosuke\microute\attribute\Method('get')]
     #[\ryunosuke\microute\attribute\Context('json')]
     public function queryContextAction($arg) { }
