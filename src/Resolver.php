@@ -238,17 +238,25 @@ class Resolver
      * - "/"  から始まらない :hostname/base/path/controller/action/{$filename}
      *
      * @param string|null $filename 静的ファイル名
+     * @param array $minSuffixes 探す min ファイルサフィックス
      * @param string|array $query クエリパラメータ
      * @return string URL
      */
-    public function path($filename = null, $query = true)
+    public function path($filename = null, $minSuffixes = [], $query = [])
     {
         // for compatible
-        $appendmtime = true;
-        if (is_bool($query)) {
-            $appendmtime = $query;
-            $query = '';
-        }
+        [$minSuffixes, $query, $appendmtime] = (function ($minSuffixes, $query) {
+            // 第2引数が $appendmtime だった時代
+            if (is_bool($minSuffixes)) {
+                return [[], '', $minSuffixes];
+            }
+            // 第2引数が $query だった時代
+            if (is_array($minSuffixes) && array_values($minSuffixes) !== $minSuffixes) {
+                return [[], $minSuffixes, true];
+            }
+            // 現行は第2引数が $minSuffixes
+            return [$minSuffixes, $query, true];
+        })($minSuffixes, $query);
 
         if (is_array($query) || is_object($query)) {
             $query = preg_replace('#%5B\d+%5D=#', '%5B%5D=', http_build_query($query));
@@ -258,11 +266,24 @@ class Resolver
         $basepath = rtrim($this->service->request->getBasePath(), '/');
         $urlparts = parse_url($filename);
 
+        $suffix = function (&$filepath, $fullpather) use ($minSuffixes) {
+            $minSuffixes[] = '';
+            foreach ($minSuffixes as $suffix) {
+                $minfilename = preg_replace("@^(.+?)(\.[^.]+?(\?|#|$))@u", "$1$suffix$2", $filepath);
+                $fullpath = $fullpather($minfilename);
+                if (is_file($fullpath)) {
+                    $filepath = $minfilename;
+                    return $fullpath;
+                }
+            }
+            return null;
+        };
+
         // スキーム付き URL ならそのまま返す
         if (isset($urlparts['scheme'])) {
-            // 「同じリポジトリだけど静的ファイルは別ホストに分けている」という状況があるので更新日時付与も試みる
-            $fullpath = $docroot . $basepath . $urlparts['path'];
-            if (is_file($fullpath) && $appendmtime) {
+            // 「同じリポジトリだけど静的ファイルは別ホストに分けている」という状況があるので min 検出と更新日時付与も試みる
+            $fullpath = $suffix($filename, fn($path) => $docroot . $basepath . parse_url($path, PHP_URL_PATH));
+            if ($fullpath !== null && $appendmtime) {
                 $query = filemtime($fullpath) . (strlen($query) ? '&' : '') . $query;
             }
             return $filename . (strlen($query) ? (isset($urlparts['query']) ? '&' : '?') . $query : '');
@@ -286,8 +307,8 @@ class Resolver
             $filepath = $basepath . '/' . $currentpath . '/' . $filename;
         }
 
-        $fullpath = strstr($docroot . '/' . $filepath . '?', '?', true);
-        if (is_file($fullpath) && $appendmtime) {
+        $fullpath = $suffix($filepath, fn($path) => $docroot . '/' . strstr($path . '?', '?', true));
+        if ($fullpath !== null && $appendmtime) {
             $query = filemtime($fullpath) . (strlen($query) ? '&' : '') . $query;
         }
         return $filepath . (strlen($query) ? (isset($urlparts['query']) ? '&' : '?') . $query : '');

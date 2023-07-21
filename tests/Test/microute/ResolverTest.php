@@ -167,6 +167,8 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
         $resolver = $service->resolver;
 
         $style_css_mtime = filemtime(__DIR__ . '/../../stub/public/css/style.css');
+        $script_js_mtime = filemtime(__DIR__ . '/../../stub/public/js/script.js');
+        $script_min_js_mtime = filemtime(__DIR__ . '/../../stub/public/js/script.min.js');
 
         $url = $resolver->path('http://hostname:80/css/style.css');
         $this->assertEquals("http://hostname:80/css/style.css?$style_css_mtime", $url);
@@ -194,6 +196,15 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
 
         $url = $resolver->path('http://hostname:80/css/notdound.css?key=value', ['v' => 'V', 'a' => ['a' => 'A'], 'n' => null]);
         $this->assertEquals('http://hostname:80/css/notdound.css?key=value&v=V&a%5Ba%5D=A', $url);
+
+        $url = $resolver->path('http://hostname:80/js/script.js', ['.min'], ['v' => 'V', 'a' => ['a' => 'A'], 'n' => null]);
+        $this->assertEquals("http://hostname:80/js/script.min.js?$script_min_js_mtime&v=V&a%5Ba%5D=A", $url);
+
+        $url = $resolver->path('http://hostname:80/js/script.js?key=dummy.js', ['.min'], ['v' => 'V', 'a' => ['a' => 'A'], 'n' => null]);
+        $this->assertEquals("http://hostname:80/js/script.min.js?key=dummy.js&$script_min_js_mtime&v=V&a%5Ba%5D=A", $url);
+
+        $url = $resolver->path('http://hostname:80/js/script.js?key=dummy.js', ['.prd'], ['v' => 'V', 'a' => ['a' => 'A'], 'n' => null]);
+        $this->assertEquals("http://hostname:80/js/script.js?key=dummy.js&$script_js_mtime&v=V&a%5Ba%5D=A", $url);
 
         $url = $resolver->path();
         $this->assertEquals('/', $url);
@@ -229,6 +240,15 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
 
         $url = $resolver->path('//css/style.css?a=b', ['v' => 'V', 'a' => ['a' => 'A'], 'n' => null]);
         $this->assertEquals("/css/style.css?a=b&$style_css_mtime&v=V&a%5Ba%5D=A", $url);
+
+        $url = $resolver->path('//js/script.js', ['.min'], ['v' => 'V', 'a' => ['a' => 'A'], 'n' => null]);
+        $this->assertEquals("/js/script.min.js?$script_min_js_mtime&v=V&a%5Ba%5D=A", $url);
+
+        $url = $resolver->path('//js/script.js?a=b', ['.min'], ['v' => 'V', 'a' => ['a' => 'A'], 'n' => null]);
+        $this->assertEquals("/js/script.min.js?a=b&$script_min_js_mtime&v=V&a%5Ba%5D=A", $url);
+
+        $url = $resolver->path('//js/script.js?a=b', ['.prd'], ['v' => 'V', 'a' => ['a' => 'A'], 'n' => null]);
+        $this->assertEquals("/js/script.js?a=b&$script_js_mtime&v=V&a%5Ba%5D=A", $url);
     }
 
     function test_query()
