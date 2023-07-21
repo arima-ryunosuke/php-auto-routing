@@ -112,6 +112,9 @@ $service->run();
 - resolver: `\ryunosuke\microute\Resolver`
     - URL ヘルパーインスタンスを指定します
     - デフォルトは `\ryunosuke\microute\Resolver` です
+- routeAbbreviation: `bool`
+    - デフォルトルーティングで省略語（連続大文字）を大文字のままにします（e.g. GAMEManagerController -> game-manager）
+    - デフォルトは `false` です。このデフォルトは将来的に変更される可能性があります
 - controllerClass: string
     - Controller の基底クラス名を指定します
     - デフォルトは `\ryunosuke\microute\Controller::class` です

@@ -22,6 +22,12 @@
 - DefaultController::errorAction の廃止
 - タイプヒントの設定
 
+## 1.2.1
+
+- [feature] Request にユーティリティを追加（input/any/only/except）
+- [feature] 省略語の対応
+- [feature] Resolver::path で min ファイルを検出できる機能
+
 ## 1.2.0
 
 - [feature] Resolver::current に現在パラメータ引数を追加
