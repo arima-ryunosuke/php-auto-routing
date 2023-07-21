@@ -59,6 +59,8 @@ class Resolver
      */
     public function url($controller, $action = '', $params = [], $base = null)
     {
+        $chain_case_pattern = $this->service->routeAbbreviation ? '#(?<!/)[A-Z]([A-Z](?![a-z]))*#' : '#(?<!/)[A-Z]#';
+
         // コンテキストの切り離し
         $parts = pathinfo($action);
         $context = $parts['extension'] ?? '';
@@ -70,12 +72,12 @@ class Resolver
         if ($action === 'default') {
             $action = '';
         }
-        $action = strtolower(preg_replace('#([^/])([A-Z])#', '$1-$2', $action));
+        $action = ltrim(strtolower(preg_replace($chain_case_pattern, '-$0', $action)), '-');
 
         $controller = $this->service->dispatcher->resolveController($controller);
         $class_name = $this->service->dispatcher->shortenController($controller);
         $class_name = preg_replace('#\\\\?Default$#', '', $class_name);
-        $class_name = strtolower(preg_replace('#([^/])([A-Z])#', '$1-$2', str_replace('\\', '/', $class_name)));
+        $class_name = ltrim(strtolower(preg_replace($chain_case_pattern, '-$0', str_replace('\\', '/', $class_name))), '-');
 
         if ($base === '') {
             $base = '/' . $class_name;

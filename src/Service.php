@@ -27,6 +27,7 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
  * @property-read Router                  $router
  * @property-read Dispatcher              $dispatcher
  * @property-read Resolver                $resolver
+ * @property-read bool                    $routeAbbreviation
  * @property-read Controller              $controllerClass
  * @property-read string                  $controllerNamespace
  * @property-read string                  $controllerDirectory
@@ -71,6 +72,7 @@ class Service implements HttpKernelInterface
         $values['router'] ??= fn() => new Router($this);
         $values['dispatcher'] ??= fn() => new Dispatcher($this);
         $values['resolver'] ??= fn() => new Resolver($this);
+        $values['routeAbbreviation'] ??= false; // for compatible
         $values['controllerClass'] ??= Controller::class;
         $values['controllerAutoload'] ??= [];
 

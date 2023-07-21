@@ -3,6 +3,7 @@ namespace ryunosuke\Test\microute;
 
 use ryunosuke\Test\stub\Controller\DefaultController;
 use ryunosuke\Test\stub\Controller\HogeController;
+use ryunosuke\Test\stub\Controller\HTMLManagerController;
 use ryunosuke\Test\stub\Controller\ResolverController;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -65,6 +66,19 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
         ]);
         $resolver = $service->resolver;
         $this->assertEquals('/base/path/hoge/', $resolver->url(HogeController::class));
+    }
+
+    function test_url_abbr()
+    {
+        $service = $this->provideService([
+            'routeAbbreviation' => true,
+        ]);
+        $resolver = $service->resolver;
+        $this->assertEquals('/html-manager/download-csv-file', $resolver->url(HTMLManagerController::class, 'downloadCSVFile'));
+
+        $service = $this->service;
+        $resolver = $service->resolver;
+        $this->assertEquals('/h-t-m-l-manager/download-c-s-v-file', $resolver->url(HTMLManagerController::class, 'downloadCSVFile'));
     }
 
     function test_url_params()
