@@ -22,6 +22,10 @@
 - DefaultController::errorAction の廃止
 - タイプヒントの設定
 
+## 1.2.2
+
+- [feature] 投げられる Response を追加
+
 ## 1.2.1
 
 - [feature] Request にユーティリティを追加（input/any/only/except）
