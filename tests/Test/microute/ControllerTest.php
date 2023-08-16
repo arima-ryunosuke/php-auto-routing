@@ -545,6 +545,17 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals('finish-response', json_decode($response->getContent()));
     }
 
+    function test_dispatch_throw()
+    {
+        $request = Request::createFromGlobals();
+        $request->attributes->set('throw-response', true);
+        $controller = new DispatchController($this->service, 'main', $request);
+        $response = $controller->dispatch();
+
+        $this->assertInstanceOf(JsonResponse::class, $response);
+        $this->assertEquals('throw-response', json_decode($response->getContent()));
+    }
+
     function test_dispatch_error()
     {
         $request = Request::createFromGlobals();

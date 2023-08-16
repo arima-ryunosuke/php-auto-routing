@@ -2,6 +2,7 @@
 namespace ryunosuke\microute;
 
 use Psr\SimpleCache\CacheInterface;
+use ryunosuke\microute\http\ThrowableResponse;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -668,6 +669,10 @@ class Controller
             }
 
             return $this->response;
+        }
+        catch (ThrowableResponse $response) {
+            $this->service->logger->info(get_class($this) . " throw");
+            return $this->response = $response->response();
         }
         catch (\Throwable $t) {
             // コントローラレベルの例外ハンドリング

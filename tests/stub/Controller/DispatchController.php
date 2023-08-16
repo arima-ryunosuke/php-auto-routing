@@ -1,6 +1,7 @@
 <?php
 namespace ryunosuke\Test\stub\Controller;
 
+use ryunosuke\microute\http\ThrowableResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 class DispatchController extends AbstractController
@@ -12,6 +13,10 @@ class DispatchController extends AbstractController
 
         if ($this->request->attributes->get('init-response')) {
             return new JsonResponse('init-response');
+        }
+
+        if ($this->request->attributes->get('throw-response')) {
+            throw new ThrowableResponse(new JsonResponse('throw-response'));
         }
     }
 
