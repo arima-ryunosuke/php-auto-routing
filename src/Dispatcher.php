@@ -63,7 +63,7 @@ class Dispatcher
         $this->lastException = $t;
 
         if (!$t instanceof HttpException) {
-            $this->service->logger->error('failed to request', ['exception' => $t, 'request' => $request]);
+            $this->service->logger->error('failed to request {exception}', ['exception' => $t, 'request' => $request]);
         }
 
         // 下層から順繰りにエラーコントローラを探す

@@ -227,7 +227,7 @@ class Service implements HttpKernelInterface
             $response = $this->handle($request);
         }
         catch (\Throwable $t) {
-            $this->logger->critical('failed to run', ['exception' => $t, 'request' => $request ?? null]);
+            $this->logger->critical('failed to run {exception}', ['exception' => $t, 'request' => $request ?? null]);
             $response = new Response('', 400);
         }
         session_write_close();
