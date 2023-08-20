@@ -4,7 +4,7 @@ require_once __DIR__ . '/../../vendor/autoload.php';
 
 $service = new \ryunosuke\microute\Service([
     'debug'                => ($_SERVER['HTTP_CACHE_CONTROL'] ?? '') === 'no-cache',
-    'cacher'               => new \ryunosuke\microute\Cacher(sys_get_temp_dir() . '/microute/example'),
+    'cacher'               => new \Symfony\Component\Cache\Psr16Cache(new \Symfony\Component\Cache\Adapter\PhpFilesAdapter()),
     'logger'               => function () {
         return function (\Throwable $exception, \Symfony\Component\HttpFoundation\Request $request = null) {
             printf('これは "logger" でハンドリングされた例外メッセージです（%s）：%s<br>', $request === null ? 'NULL' : $request->getRequestUri(), $exception->getMessage());

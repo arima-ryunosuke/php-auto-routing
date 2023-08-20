@@ -63,7 +63,7 @@ class Service implements HttpKernelInterface
     public function __construct($values = [])
     {
         $values['debug'] ??= false;
-        $values['cacher'] ??= new Cacher();
+        $values['cacher'] ??= new class ( ) { public function __call($name, $arguments) { } }; // for compatible
         $values['logger'] ??= new NullLogger();
         $values['origin'] ??= [];
         $values['priority'] ??= [Router::ROUTE_REWRITE, Router::ROUTE_REDIRECT, Router::ROUTE_ALIAS, Router::ROUTE_REGEX, Router::ROUTE_SCOPE, Router::ROUTE_DEFAULT];
