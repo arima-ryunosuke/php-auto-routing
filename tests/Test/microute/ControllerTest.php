@@ -451,6 +451,7 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         $actual = ob_get_clean();
         $this->assertEquals('heavyheavyheavy', $actual);
 
+        $controller = new HogeController($this->service, 'action-a');
         $this->assertException(new \InvalidArgumentException('$filename must be not null.'), function () use ($controller) {
             $controller->download(function () { });
         });
@@ -459,10 +460,17 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
     function test_download_direct()
     {
         $controller = new HogeController($this->service, 'action-a');
+        $controller->response->setDisposition('hoge.txt');
+        $response = $controller->download('content');
+        $this->assertEquals('attachment; filename=hoge.txt', $response->headers->get('Content-Disposition'));
+        $this->assertEquals('content', $response->getContent());
+
+        $controller = new HogeController($this->service, 'action-a');
         $response = $controller->download('content', 'filename.txt');
         $this->assertEquals('attachment; filename=filename.txt', $response->headers->get('Content-Disposition'));
         $this->assertEquals('content', $response->getContent());
 
+        $controller = new HogeController($this->service, 'action-a');
         $this->assertException(new \InvalidArgumentException('$filename must be not null.'), function () use ($controller) {
             $controller->download('');
         });
@@ -828,5 +836,14 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
             $response = $controller->action([]);
             $this->assertStringContainsString('other_event', $response->getContent());
         });
+    }
+
+    function test_response()
+    {
+        $controller = new HogeController($this->service, 'header');
+        $response = $controller->action([]);
+        $this->assertEquals('"cors"', $response->getContent());
+        $this->assertEquals('*', $response->headers->get('Access-Control-Allow-Origin'));
+        $this->assertStringStartsWith('hoge=HOGE;', $response->headers->get('set-cookie'));
     }
 }

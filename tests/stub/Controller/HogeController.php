@@ -244,6 +244,19 @@ class HogeController extends AbstractController
         throw new \UnexpectedValueException('ex');
     }
 
+    public function headerAction()
+    {
+        $this->response->setCookie($this->cookie([
+            'name'  => 'hoge',
+            'value' => 'HOGE',
+        ]));
+        $this->response->setCors([
+            'origin'  => '*',
+            'methods' => 'GET',
+        ]);
+        return $this->json('cors');
+    }
+
     public function error(\Throwable $t)
     {
         if (!$t instanceof \UnexpectedValueException) {

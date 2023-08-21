@@ -393,7 +393,7 @@ class Controller
      */
     public function redirect($url, $status = 302)
     {
-        return new RedirectResponse($url, $status);
+        return $this->response(new RedirectResponse($url, $status));
     }
 
     /**
@@ -481,7 +481,7 @@ class Controller
     {
         // JsonResponse は後から setEncodingOptions を呼ぶと decode/encode が走るので注意すること
         $jsonData = json_encode($data, $jsonOptions);
-        return new JsonResponse($jsonData, 200, [], true);
+        return $this->response(new JsonResponse($jsonData, 200, [], true));
     }
 
     /**
@@ -506,7 +506,7 @@ class Controller
             $this->cache($response);
         }
 
-        return $response;
+        return $this->response($response);
     }
 
     /**
@@ -518,30 +518,35 @@ class Controller
      */
     public function download($eitherContentOrFileinfo, $filename = null)
     {
+        $attachment = function ($filename) {
+            if ($filename !== null) {
+                return $this->response->headers->makeDisposition('attachment', $filename);
+            }
+            $current = $this->response->headers->get('Content-Disposition');
+            if ($current == null) {
+                throw new \InvalidArgumentException('$filename must be not null.');
+            }
+            return $current;
+        };
+
         if ($eitherContentOrFileinfo instanceof \SplFileInfo) {
-            $response = new BinaryFileResponse($eitherContentOrFileinfo);
+            $response = new BinaryFileResponse($eitherContentOrFileinfo, $this->response->getStatusCode());
             $response->headers->set('Content-Type', 'application/octet-stream');
-            $response->headers->set('Content-Disposition', $response->headers->makeDisposition('attachment', $filename ?? $eitherContentOrFileinfo->getFilename()));
+            $response->headers->set('Content-Disposition', $attachment($filename ?? $eitherContentOrFileinfo->getFilename()));
         }
         elseif ($eitherContentOrFileinfo instanceof \Closure) {
-            if ($filename === null) {
-                throw new \InvalidArgumentException('$filename must be not null.');
-            }
-            $response = new StreamedResponse($eitherContentOrFileinfo);
+            $response = new StreamedResponse($eitherContentOrFileinfo, $this->response->getStatusCode());
             $response->headers->set('Content-Type', 'application/octet-stream');
-            $response->headers->set('Content-Disposition', $response->headers->makeDisposition('attachment', $filename));
+            $response->headers->set('Content-Disposition', $attachment($filename));
         }
         else {
-            if ($filename === null) {
-                throw new \InvalidArgumentException('$filename must be not null.');
-            }
-            $response = new Response($eitherContentOrFileinfo);
+            $response = new Response($eitherContentOrFileinfo, $this->response->getStatusCode());
             $response->headers->set('Content-Type', 'application/octet-stream');
-            $response->headers->set('Content-Disposition', $response->headers->makeDisposition('attachment', $filename));
+            $response->headers->set('Content-Disposition', $attachment($filename));
             $response->headers->set('Content-Length', strlen($eitherContentOrFileinfo));
         }
 
-        return $response;
+        return $this->response($response);
     }
 
     /**
@@ -611,12 +616,12 @@ class Controller
                     break;
                 }
             }
-        });
+        }, $this->response->getStatusCode());
         $response->headers->set('Content-Type', 'text/event-stream; charset=utf-8');
         $response->headers->set('Cach-Control', 'no-cache');
         $response->headers->set('X-Accel-Buffering', 'no');
 
-        return $response;
+        return $this->response($response);
     }
 
     public function dispatch($args = [], $error_handling = true)
@@ -647,7 +652,7 @@ class Controller
             $this->service->logger->info(get_class($this) . " init");
             $response = $this->init();
             if ($response instanceof Response) {
-                return $this->response = $response;
+                return $this->response($response);
             }
 
             // before は共通事前処理
@@ -656,7 +661,7 @@ class Controller
 
             // action はメイン処理
             $this->service->logger->info(get_class($this) . " action");
-            $this->response = $this->action($args);
+            $this->response($this->action($args));
 
             // after は共通事後処理
             $this->after();
@@ -665,14 +670,14 @@ class Controller
             $this->service->logger->info(get_class($this) . " finish");
             $response = $this->finish();
             if ($response instanceof Response) {
-                return $this->response = $response;
+                return $this->response($response);
             }
 
             return $this->response;
         }
         catch (ThrowableResponse $response) {
             $this->service->logger->info(get_class($this) . " throw");
-            return $this->response = $response->response();
+            return $this->response($response->response());
         }
         catch (\Throwable $t) {
             // コントローラレベルの例外ハンドリング
@@ -680,7 +685,7 @@ class Controller
                 $this->service->logger->info(get_class($this) . " error");
                 $response = $this->error($t);
                 if ($response instanceof Response) {
-                    return $this->response = $response;
+                    return $this->response($response);
                 }
                 throw new \RuntimeException('Controller#error is must be return Response.');
             }
@@ -691,8 +696,8 @@ class Controller
     public function action($args)
     {
         // pre-action
-        if ($this->dispatchEvent('pre')) {
-            return $this->response;
+        if (($result = $this->dispatchEvent('pre')) instanceof Response) {
+            return $this->response($result);
         }
 
         // アクション実行
@@ -704,16 +709,16 @@ class Controller
         }
         // 返り値が Respose オブジェクトなら置換(RedirectResponse とかのため)
         elseif ($result instanceof Response) {
-            $this->response = $result;
+            $this->response($result);
         }
         // それ以外は render に丸投げ
         else {
-            $this->response = $this->render($result);
+            $this->response($this->render($result));
         }
 
         // post-action
-        if ($this->dispatchEvent('post')) {
-            return $this->response;
+        if (($result = $this->dispatchEvent('post')) instanceof Response) {
+            return $this->response($result);
         }
 
         return $this->response;
@@ -730,8 +735,7 @@ class Controller
             }
             $result = $this->$eventMethod($phase, ...$eventargs);
             if ($result instanceof Response) {
-                $this->response = $result;
-                return true;
+                return $result;
             }
         }
     }
@@ -943,6 +947,38 @@ class Controller
                 return ob_get_clean();
             })('/path/to/view/' . $this->location() . '.phtml', $this->request->attributes->get('parameter', [])));
         }
+    }
+
+    /**
+     * 現在設定されている汎用的なヘッダ等を再設定して返す
+     *
+     * @template T of Response
+     * @param T $response
+     * @return T
+     */
+    protected function response(Response $response)
+    {
+        if ($this->response === $response) {
+            return $this->response;
+        }
+
+        if (!$response instanceof RedirectResponse && $response->getStatusCode() === 200) {
+            $response->setStatusCode($this->response->getStatusCode());
+        }
+
+        foreach ($this->response->headers->getCookies() as $cookie) {
+            $response->headers->setCookie($cookie);
+        }
+
+        foreach (["Allow-Origin", "Allow-Methods", "Allow-Headers", "Allow-Credentials", "Allow-Max-Age", "Expose-Headers"] as $key) {
+            $key = "Access-Control-$key";
+            $value = $this->response->headers->get($key);
+            if ($value !== null) {
+                $response->headers->set($key, $value);
+            }
+        }
+
+        return $this->response = $response;
     }
 
     protected function construct() { }
