@@ -22,6 +22,13 @@
 - DefaultController::errorAction の廃止
 - タイプヒントの設定
 
+## 1.2.3
+
+- [feature] 既に設定されていて使えそうなものは積極的に使う
+- [feature] 専用 Response を追加
+- [change] エラーログには exception キーを含めるべき
+- [change] Cacher を削除
+
 ## 1.2.2
 
 - [feature] 投げられる Response を追加

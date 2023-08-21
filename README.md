@@ -87,7 +87,7 @@ $service->run();
     - デフォルトは `false` です
 - **cacher**: `\Psr\SimpleCache\CacheInterface`
     - 内部で使用するキャッシュインスタンスを指定します
-    - デフォルトは var_export/include による素朴なキャッシュです。 `symfony/cache` `doctrine/cache` などのしっかりとした psr16 ライブラリを使用を推奨します
+    - デフォルトはキャッシュしません。将来的に必須パラメータに変更されます
 - **logger**: `callable`
     - 動作をログる psr3 LoggerInterface を指定します
     - 互換性担保のため callable も受け入れます。その場合未チャッチ例外のみがログられます
