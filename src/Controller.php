@@ -21,7 +21,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  * @property-read Service $service
  * @property-read SessionInterface $session
  * @property-read \ryunosuke\microute\http\Request $request
- * @property-read Response $response
+ * @property-read \ryunosuke\microute\http\Response $response
  * @property-read string $action
  */
 class Controller
@@ -293,7 +293,7 @@ class Controller
         $this->service = $service;
         $this->action = $action;
         $this->request = $request ?? $this->service->request;
-        $this->response = new Response();
+        $this->response = new \ryunosuke\microute\http\Response();
 
         $this->construct();
     }
