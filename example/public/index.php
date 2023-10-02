@@ -13,12 +13,12 @@ $service = new \ryunosuke\microute\Service([
     'priority'             => ['rewrite', 'redirect', 'alias', 'default', 'scope', 'regex'],
     'sessionStorage'       => function () {
         return new \Symfony\Component\HttpFoundation\Session\Storage\NativeSessionStorage([
-            'cache_limiter'   => 'nocache',
-            'cookie_lifetime' => 60,
+            'cache_limiter' => 'nocache',
         ], new \ryunosuke\microute\http\CookieSessionHandler([
             'privateKey' => 'secretkey',
             'storeName'  => 'SID',
             'chunkSize'  => 256,
+            'lifetime'   => 60,
         ]), new \Symfony\Component\HttpFoundation\Session\Storage\MetadataBag('_sf2_meta', PHP_INT_MAX));
     },
     'parameterDelimiter'   => '/',

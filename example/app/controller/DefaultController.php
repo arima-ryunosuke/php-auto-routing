@@ -63,6 +63,7 @@ class DefaultController extends AbstractController
         uksort($cookie, function ($a, $b) { return strnatcmp($a, $b); });
         return 'セッションデータです。'
             . '<p>セッションは cookie ストレージで、1分間継続、256バイト毎に分割されるように設定されています</p>'
+            . '<p>1分間継続は最後のアクセスから計測されます。かつセッションクッキーであり、ブラウザを閉じると削除されます</p>'
             . '<p>session.lazy_write が有効だと同じセッションデータの場合は set-cookie を発行しません（このサンプルだと5秒間クッキーを吐きません）</p>'
             . '<pre>'
             . "<strong>cookie data</strong>\n"
