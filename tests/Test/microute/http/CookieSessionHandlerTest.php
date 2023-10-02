@@ -21,7 +21,21 @@ class CookieSessionHandlerTest extends \ryunosuke\Test\AbstractTestCase
                 }
             },
         ];
-        $handler = new CookieSessionHandler($options);
+        $handler = new class($options) extends CookieSessionHandler {
+            protected function doWrite($sessionId, $data): bool
+            {
+                $return = parent::doWrite($sessionId, $data);
+                $this->close();
+                return $return;
+            }
+
+            protected function doDestroy($sessionId): bool
+            {
+                $return = parent::doDestroy($sessionId);
+                $this->close();
+                return $return;
+            }
+        };
         $handler->open('', 'sessname');
         return $handler;
     }
@@ -38,6 +52,7 @@ class CookieSessionHandlerTest extends \ryunosuke\Test\AbstractTestCase
 
         $cookies = [];
         $handler = $this->provideHandler($cookies);
+        $handler->read('sid');
         $handler->write('sid', $value);
         $this->assertEquals(json_encode([
             'length'  => 4,
@@ -56,6 +71,7 @@ class CookieSessionHandlerTest extends \ryunosuke\Test\AbstractTestCase
             'version' => 1,
         ]);
         $handler = $this->provideHandler($cookies);
+        $handler->read('sid');
         $handler->write('sid', $value);
         $this->assertEquals(json_encode([
             'length'  => 4,
@@ -90,6 +106,7 @@ class CookieSessionHandlerTest extends \ryunosuke\Test\AbstractTestCase
         $handler = $this->provideHandler($cookies, [
             'maxLength' => 2,
         ]);
+        $handler->read('sid');
         $handler->write('sid', $value);
         $this->assertEmpty($cookies);
 
@@ -129,6 +146,7 @@ class CookieSessionHandlerTest extends \ryunosuke\Test\AbstractTestCase
             'storeName' => 'hoge',
         ]);
         $this->assertArrayNotHasKey('hoge', $cookies);
+        $handler->read('sid');
         $handler->write('sid', 'hogera');
         $this->assertArrayHasKey('hoge', $cookies);
     }
@@ -137,6 +155,8 @@ class CookieSessionHandlerTest extends \ryunosuke\Test\AbstractTestCase
     {
         $cookies = [];
         $handler = $this->provideHandler($cookies);
+
+        $handler->read('sid');
         $handler->write('sid', 'hogera');
         $this->assertEquals(json_encode([
             'length'  => 1,
@@ -145,14 +165,9 @@ class CookieSessionHandlerTest extends \ryunosuke\Test\AbstractTestCase
             'atime'   => time(),
             'mtime'   => time(),
         ]), $cookies['sessname']);
+
         $this->assertTrue($handler->destroy('sessname'));
-        $this->assertEquals(json_encode([
-            'length'  => 0,
-            'version' => 1,
-            'ctime'   => time(),
-            'atime'   => time(),
-            'mtime'   => time(),
-        ]), $cookies['sessname']);
+        $this->assertArrayNotHasKey('sessname', $cookies);
     }
 
     function test_misc()
