@@ -42,6 +42,9 @@ class CookieSessionHandlerTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals(json_encode([
             'length'  => 4,
             'version' => 1,
+            'ctime'   => time(),
+            'atime'   => time(),
+            'mtime'   => time(),
         ]), $cookies['sessname']);
 
         $handler = $this->provideHandler($cookies);
@@ -57,6 +60,9 @@ class CookieSessionHandlerTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals(json_encode([
             'length'  => 4,
             'version' => 1,
+            'ctime'   => time(),
+            'atime'   => time(),
+            'mtime'   => time(),
         ]), $cookies['sessname']);
 
         $cookies['sessname'] = json_encode([
@@ -73,7 +79,7 @@ class CookieSessionHandlerTest extends \ryunosuke\Test\AbstractTestCase
         ]);
         $handler = $this->provideHandler($cookies);
         $actual = $handler->read('sid');
-        $this->assertEmpty('', $actual);
+        $this->assertEmpty($actual);
     }
 
     function test_edgecase()
@@ -110,6 +116,9 @@ class CookieSessionHandlerTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals(json_encode([
             'length'  => 2,
             'version' => 1,
+            'ctime'   => time(),
+            'atime'   => time(),
+            'mtime'   => time(),
         ]), $v0cookies['sessname']);
     }
 
@@ -129,9 +138,21 @@ class CookieSessionHandlerTest extends \ryunosuke\Test\AbstractTestCase
         $cookies = [];
         $handler = $this->provideHandler($cookies);
         $handler->write('sid', 'hogera');
-        $this->assertEquals('{"length":1,"version":1}', $cookies['sessname']);
+        $this->assertEquals(json_encode([
+            'length'  => 1,
+            'version' => 1,
+            'ctime'   => time(),
+            'atime'   => time(),
+            'mtime'   => time(),
+        ]), $cookies['sessname']);
         $this->assertTrue($handler->destroy('sessname'));
-        $this->assertEquals('{"length":0,"version":1}', $cookies['sessname']);
+        $this->assertEquals(json_encode([
+            'length'  => 0,
+            'version' => 1,
+            'ctime'   => time(),
+            'atime'   => time(),
+            'mtime'   => time(),
+        ]), $cookies['sessname']);
     }
 
     function test_misc()

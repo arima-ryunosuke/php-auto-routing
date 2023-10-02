@@ -63,6 +63,9 @@ class CookieSessionHandler extends AbstractSessionHandler
 
         $this->metadata['length'] = (int) min($this->metadata['length'] ?? 0, $this->maxLength);
         $this->metadata['version'] = (int) ($this->metadata['version'] ?? 1);
+        $this->metadata['ctime'] = (int) ($this->metadata['ctime'] ?? time());
+        $this->metadata['atime'] = (int) ($this->metadata['atime'] ?? time());
+        $this->metadata['mtime'] = (int) ($this->metadata['mtime'] ?? time());
 
         return parent::open($savePath, $this->storeName);
     }
@@ -206,6 +209,9 @@ class CookieSessionHandler extends AbstractSessionHandler
         $chunks[''] = json_encode([
             'length'  => $length,
             'version' => 1,
+            'ctime'   => $this->metadata['ctime'],
+            'atime'   => time(),
+            'mtime'   => time(),
         ]);
 
         foreach ($chunks as $i => $v) {
