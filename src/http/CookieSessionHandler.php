@@ -5,6 +5,8 @@ use Symfony\Component\HttpFoundation\Session\Storage\Handler\AbstractSessionHand
 
 class CookieSessionHandler extends AbstractSessionHandler
 {
+    private const VERSION = 2;
+
     /** @var string */
     private $privateKey;
 
@@ -72,8 +74,8 @@ class CookieSessionHandler extends AbstractSessionHandler
         }
 
         $this->metadata = json_decode($metadata, true);
+        $this->metadata['version'] = (int) ($this->metadata['version'] ?? self::VERSION);
         $this->metadata['length'] = (int) min($this->metadata['length'] ?? 0, $this->maxLength);
-        $this->metadata['version'] = (int) ($this->metadata['version'] ?? 1);
         $this->metadata['ctime'] = (int) ($this->metadata['ctime'] ?? time());
         $this->metadata['atime'] = (int) ($this->metadata['atime'] ?? time());
         $this->metadata['mtime'] = (int) ($this->metadata['mtime'] ?? time());
@@ -108,8 +110,8 @@ class CookieSessionHandler extends AbstractSessionHandler
         }
 
         $this->cookieOutput[$this->storeName] = json_encode(array_replace($this->metadata, [
+            'version' => self::VERSION,
             'length'  => $length,
-            'version' => 1,
             'atime'   => time(),
             'mtime'   => time(),
         ]));
@@ -177,22 +179,18 @@ class CookieSessionHandler extends AbstractSessionHandler
 
     private function encode($decrypted_data)
     {
-        // Set a random salt
-        $salt = random_bytes(16);
+        $algo = 'aes-256-gcm';
+        $taglen = 16;
 
-        $salted = '';
-        $dx = '';
-        // Salt the key(32) and iv(16) = 48
-        while (strlen($salted) < 48) {
-            $dx = hash('sha256', $dx . $this->privateKey . $salt, true);
-            $salted .= $dx;
-        }
+        $keylen = 256 / 8;// openssl_cipher_key_length($algo);
+        $key = hash_hkdf('sha256', $this->privateKey, $keylen);
 
-        $key = substr($salted, 0, 32);
-        $iv = substr($salted, 32, 16);
+        $ivlen = openssl_cipher_iv_length($algo);
+        $iv = random_bytes($ivlen);
 
-        $encrypted_data = openssl_encrypt(gzdeflate($decrypted_data, 9), 'AES-256-CBC', $key, 0, $iv);
-        return strtr(base64_encode($salt . $encrypted_data), [
+        $ciphertext = openssl_encrypt(gzdeflate($decrypted_data, 9), $algo, $key, OPENSSL_RAW_DATA, $iv, $tag, '', $taglen);
+
+        return strtr(base64_encode($tag . $iv . $ciphertext), [
             '/' => '_',
             '+' => '-',
         ]);
@@ -206,29 +204,45 @@ class CookieSessionHandler extends AbstractSessionHandler
         ]));
 
         // for compatible
-        if ($this->metadata['version'] === 0) {
-            $data = gzuncompress($data);
+        if ($this->metadata['version'] < self::VERSION) {
+            if ($this->metadata['version'] === 0) {
+                $data = gzuncompress($data);
+            }
+
+            $salt = substr($data, 0, 16);
+            $ct = substr($data, 16);
+
+            $rounds = 3; // depends on key length
+            $data00 = $this->privateKey . $salt;
+            $hash = [];
+            $hash[0] = hash('sha256', $data00, true);
+            $result = $hash[0];
+            for ($i = 1; $i < $rounds; $i++) {
+                $hash[$i] = hash('sha256', $hash[$i - 1] . $data00, true);
+                $result .= $hash[$i];
+            }
+            $key = substr($result, 0, 32);
+            $iv = substr($result, 32, 16);
+
+            $decrypted_data = openssl_decrypt($ct, 'AES-256-CBC', $key, 0, $iv) ?: '';
+            if ($this->metadata['version'] === 0) {
+                return $decrypted_data;
+            }
+            return (string) gzinflate($decrypted_data);
         }
 
-        $salt = substr($data, 0, 16);
-        $ct = substr($data, 16);
+        $algo = 'aes-256-gcm';
+        $taglen = 16;
 
-        $rounds = 3; // depends on key length
-        $data00 = $this->privateKey . $salt;
-        $hash = [];
-        $hash[0] = hash('sha256', $data00, true);
-        $result = $hash[0];
-        for ($i = 1; $i < $rounds; $i++) {
-            $hash[$i] = hash('sha256', $hash[$i - 1] . $data00, true);
-            $result .= $hash[$i];
-        }
-        $key = substr($result, 0, 32);
-        $iv = substr($result, 32, 16);
+        $tag = substr($data, 0, $taglen);
 
-        $decrypted_data = openssl_decrypt($ct, 'AES-256-CBC', $key, 0, $iv) ?: '';
-        if ($this->metadata['version'] === 0) {
-            return $decrypted_data;
-        }
+        $keylen = 256 / 8;// openssl_cipher_key_length($algo);
+        $key = hash_hkdf('sha256', $this->privateKey, $keylen);
+
+        $ivlen = openssl_cipher_iv_length($algo);
+        $iv = substr($data, $taglen, $ivlen);
+
+        $decrypted_data = openssl_decrypt(substr($data, $taglen + $ivlen), $algo, $key, OPENSSL_RAW_DATA, $iv, $tag);
         return (string) gzinflate($decrypted_data);
     }
 }

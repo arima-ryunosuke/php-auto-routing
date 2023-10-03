@@ -48,19 +48,19 @@ class CookieSessionHandlerTest extends \ryunosuke\Test\AbstractTestCase
 
     function test_IO()
     {
-        $value = $this->generateLongString(50);
+        $value = $this->generateLongString(64);
 
         $cookies = [];
         $handler = $this->provideHandler($cookies);
         $handler->read('sid');
         $handler->write('sid', $value);
-        $this->assertEquals(json_encode([
+        $this->assertJsonStringEquals([
+            'version' => 2,
             'length'  => 4,
-            'version' => 1,
             'ctime'   => time(),
             'atime'   => time(),
             'mtime'   => time(),
-        ]), $cookies['sessname']);
+        ], $cookies['sessname']);
 
         $handler = $this->provideHandler($cookies);
         $actual = $handler->read('sid');
@@ -73,13 +73,13 @@ class CookieSessionHandlerTest extends \ryunosuke\Test\AbstractTestCase
         $handler = $this->provideHandler($cookies);
         $handler->read('sid');
         $handler->write('sid', $value);
-        $this->assertEquals(json_encode([
+        $this->assertJsonStringEquals([
+            'version' => 2,
             'length'  => 4,
-            'version' => 1,
             'ctime'   => time(),
             'atime'   => time(),
             'mtime'   => time(),
-        ]), $cookies['sessname']);
+        ], $cookies['sessname']);
 
         $cookies['sessname'] = json_encode([
             'length'  => 3,
@@ -88,13 +88,13 @@ class CookieSessionHandlerTest extends \ryunosuke\Test\AbstractTestCase
         $handler = $this->provideHandler($cookies, ['lifetime' => 1]);
         $handler->read('sid');
         $handler->write('sid', $value);
-        $this->assertEquals(json_encode([
+        $this->assertJsonStringEquals([
+            'version' => 2,
             'length'  => 4,
-            'version' => 1,
             'ctime'   => time(),
             'atime'   => time(),
             'mtime'   => time(),
-        ]), $cookies['sessname']);
+        ], $cookies['sessname']);
 
         $handler = $this->provideHandler($cookies, ['lifetime' => 10]);
         $actual = $handler->read('sid');
@@ -103,22 +103,6 @@ class CookieSessionHandlerTest extends \ryunosuke\Test\AbstractTestCase
         sleep(2);
 
         $handler = $this->provideHandler($cookies, ['lifetime' => 1]);
-        $actual = $handler->read('sid');
-        $this->assertEmpty($actual);
-
-        $cookies['sessname'] = json_encode([
-            'length'  => 10,
-            'version' => 1,
-        ]);
-        $handler = $this->provideHandler($cookies);
-        $actual = $handler->read('sid');
-        $this->assertEquals($value, $actual);
-
-        $cookies['sessname'] = json_encode([
-            'length'  => 3,
-            'version' => 1,
-        ]);
-        $handler = $this->provideHandler($cookies);
         $actual = $handler->read('sid');
         $this->assertEmpty($actual);
     }
@@ -140,28 +124,64 @@ class CookieSessionHandlerTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals('', $actual);
     }
 
+    function test_cookie()
+    {
+        $cookies = [
+            'sessname'  => json_encode(['version' => 2, 'length' => 4]),
+            'sessname0' => 'hoge',
+            'sessname1' => 'fuga',
+            'sessname2' => 'piyo',
+        ];
+        $handler = $this->provideHandler($cookies);
+        $handler->read('sid');
+        $handler->write('sid', 'session data');
+        $this->assertArrayHasKey('sessname', $cookies);
+        $this->assertArrayHasKey('sessname0', $cookies);
+        $this->assertArrayNotHasKey('sessname1', $cookies);
+        $this->assertArrayNotHasKey('sessname2', $cookies);
+    }
+
     function test_regression()
     {
+        // v0 も読み込み可能
         $v0cookies = [
             'sessname'  => 2,
             'sessname0' => 'eNrbvNl5R42pf-LWU0HutQ9UFrobRRlpl5bmBFb6hWf7VVSW6me6ROXmBweFJaU4-lTmZaflhDuXRFimeeVWVGWFBlcVBhoGGhukeYXnhLsk-xhVlXlYpOZX-qQUFBYG-xk4hfoHGTuampl4euWY-_inFwZ6RpZVppea-acFhQan5LtlhgJt8TEoMM1ISg8',
             'sessname1' => 'JiEgCAIMPNEQ=',
         ];
-
-        // v0 (no version) も読み込み可能
         $handler = $this->provideHandler($v0cookies);
         $actual = $handler->read('sid');
         $this->assertEquals('this is v0 cookie data. and other data:[[1,2,3,4,5,6,7,8,9,0],"a","b","c","d","e","f"]', $actual);
 
-        // 書き込むとマイグレーションされて v1 になる
+        // 書き込むとマイグレーションされて v2 になる
         $handler->write('sid', "append-$actual");
-        $this->assertEquals(json_encode([
-            'length'  => 2,
-            'version' => 1,
+        $this->assertJsonStringEquals([
+            'version' => 2,
+            'length'  => 1,
             'ctime'   => time(),
             'atime'   => time(),
             'mtime'   => time(),
-        ]), $v0cookies['sessname']);
+        ], $v0cookies['sessname']);
+
+        // v1 も読み込み可能
+        $v1cookies = [
+            'sessname'  => json_encode(['version' => 1, 'length' => 2]),
+            'sessname0' => 'D4nuo82eyCm2Rz8tqB3QEzN6SkpXVlBwcHV4UlVBdzhEekVvajRaWVBNc0hjVy9kMXJodFlDQXI2SloydlFza2NmUTVuUz',
+            'sessname1' => 'NaYTJ5SkJQcjJiVXc5d3Z6WHlYS0k2YUduNm1RMGpoS1NYWTdscHcvQ3V5UnlkM2ZSUjdJPQ==',
+        ];
+        $handler = $this->provideHandler($v1cookies);
+        $actual = $handler->read('sid');
+        $this->assertEquals('this is v1 cookie data. and other data:[[1,2,3,4,5,6,7,8,9,0],"a","b","c","d","e","f"]', $actual);
+
+        // 書き込むとマイグレーションされて v2 になる
+        $handler->write('sid', "append-$actual");
+        $this->assertJsonStringEquals([
+            'version' => 2,
+            'length'  => 1,
+            'ctime'   => time(),
+            'atime'   => time(),
+            'mtime'   => time(),
+        ], $v1cookies['sessname']);
     }
 
     function test_open()
@@ -183,13 +203,13 @@ class CookieSessionHandlerTest extends \ryunosuke\Test\AbstractTestCase
 
         $handler->read('sid');
         $handler->write('sid', 'hogera');
-        $this->assertEquals(json_encode([
+        $this->assertJsonStringEquals([
+            'version' => 2,
             'length'  => 1,
-            'version' => 1,
             'ctime'   => time(),
             'atime'   => time(),
             'mtime'   => time(),
-        ]), $cookies['sessname']);
+        ], $cookies['sessname']);
 
         $this->assertTrue($handler->destroy('sessname'));
         $this->assertArrayNotHasKey('sessname', $cookies);

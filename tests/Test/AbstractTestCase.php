@@ -33,6 +33,11 @@ abstract class AbstractTestCase extends TestCase
         return new Service($options + $defaults);
     }
 
+    public static function assertJsonStringEquals($expected, string $actualJson, string $message = ''): void
+    {
+        static::assertJsonStringEqualsJsonString($actualJson, json_encode($expected), $message);
+    }
+
     public static function assertException($e, $callback)
     {
         if (is_string($e)) {
