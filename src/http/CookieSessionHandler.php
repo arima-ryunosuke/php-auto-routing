@@ -17,6 +17,9 @@ class CookieSessionHandler extends AbstractSessionHandler
     /** @var int */
     private $maxLength;
 
+    /** @var int */
+    private $lifetime;
+
     /** @var array */
     private $cookieInput, $cookieOutput;
 
@@ -34,6 +37,7 @@ class CookieSessionHandler extends AbstractSessionHandler
         $this->initialStoreName = (string) ($options['storeName'] ?? '');
         $this->initialChunkSize = (int) ($options['chunkSize'] ?? 4095); // ブラウザの最小サイズは 4095 byte
         $this->maxLength = (int) ($options['maxLength'] ?? 19);          // RFC 的には 20 個。ただし個数クッキーで1つ使うので -1
+        $this->lifetime = (int) ($options['lifetime'] ?? 0);             // セッションの lifetime とは別（セッションクッキー＋有効期限）
 
         $this->cookieInput = $options['cookie'] ?? $_COOKIE;
         $this->setcookie = \Closure::fromCallable($options['setcookie'] ?? '\setcookie');
@@ -76,6 +80,13 @@ class CookieSessionHandler extends AbstractSessionHandler
 
         if ($this->metadata['length'] <= 0) {
             return '';
+        }
+
+        if ($this->lifetime !== 0) {
+            if ($this->lifetime <= (time() - $this->metadata['atime'])) {
+                return '';
+            }
+            $this->cookieOutput[$this->storeName] = json_encode(array_replace($this->metadata, ['atime' => time()]));
         }
 
         $data = '';

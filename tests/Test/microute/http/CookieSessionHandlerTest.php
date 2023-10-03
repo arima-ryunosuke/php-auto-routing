@@ -82,6 +82,31 @@ class CookieSessionHandlerTest extends \ryunosuke\Test\AbstractTestCase
         ]), $cookies['sessname']);
 
         $cookies['sessname'] = json_encode([
+            'length'  => 3,
+            'version' => 1,
+        ]);
+        $handler = $this->provideHandler($cookies, ['lifetime' => 1]);
+        $handler->read('sid');
+        $handler->write('sid', $value);
+        $this->assertEquals(json_encode([
+            'length'  => 4,
+            'version' => 1,
+            'ctime'   => time(),
+            'atime'   => time(),
+            'mtime'   => time(),
+        ]), $cookies['sessname']);
+
+        $handler = $this->provideHandler($cookies, ['lifetime' => 10]);
+        $actual = $handler->read('sid');
+        $this->assertNotEmpty($actual);
+
+        sleep(2);
+
+        $handler = $this->provideHandler($cookies, ['lifetime' => 1]);
+        $actual = $handler->read('sid');
+        $this->assertEmpty($actual);
+
+        $cookies['sessname'] = json_encode([
             'length'  => 10,
             'version' => 1,
         ]);
