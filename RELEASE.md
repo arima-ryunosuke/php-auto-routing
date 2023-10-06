@@ -22,6 +22,13 @@
 - DefaultController::errorAction の廃止
 - タイプヒントの設定
 
+## 1.2.4
+
+- [change] 暗号化を GCM に変更
+- [feature] セッションクッキーかつ最終アクセス制限はよくあるので機能として組み込み
+- [fixbug] close が考慮されておらず、複数のクッキーが吐かれていた不具合を修正
+- [feature] time 3兄弟を metadata に含める
+
 ## 1.2.3
 
 - [feature] 既に設定されていて使えそうなものは積極的に使う
