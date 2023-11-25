@@ -257,7 +257,7 @@ class HogeController extends AbstractController
         return $this->json('cors');
     }
 
-    public function error(\Throwable $t)
+    public function catch(\Throwable $t)
     {
         if (!$t instanceof \UnexpectedValueException) {
             throw $t;

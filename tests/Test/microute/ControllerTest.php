@@ -564,7 +564,7 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals('throw-response', json_decode($response->getContent()));
     }
 
-    function test_dispatch_error()
+    function test_dispatch_catch()
     {
         $request = Request::createFromGlobals();
         $controller = new DispatchController($this->service, 'thrown1', $request);
@@ -576,6 +576,21 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertException(new \RuntimeException('catch'), function () use ($controller) {
             $controller->dispatch([], false);
         });
+    }
+
+    function test_dispatch_finally()
+    {
+        $request = Request::createFromGlobals();
+
+        $controller = new DispatchController($this->service, 'main', $request);
+        $response = $controller->dispatch();
+        $this->assertEquals('mainafterfinish', $response->getContent());
+        $this->assertEquals('finally', $response->headers->get('X-Custom-Header'));
+
+        $controller = new DispatchController($this->service, 'thrown1', $request);
+        $response = $controller->dispatch();
+        $this->assertEquals('"error-response"', $response->getContent());
+        $this->assertEquals('finally', $response->headers->get('X-Custom-Header'));
     }
 
     function test_dispatch_noresponse()
