@@ -22,6 +22,10 @@
 - DefaultController::errorAction の廃止
 - タイプヒントの設定
 
+## 1.2.5
+
+- [feature] 成否に関わらず通過する finally メソッドを追加
+
 ## 1.2.4
 
 - [change] 暗号化を GCM に変更
