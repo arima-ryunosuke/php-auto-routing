@@ -22,6 +22,11 @@
 - DefaultController::errorAction の廃止
 - タイプヒントの設定
 
+## 1.2.6
+
+- [refactor] polyfill-attribute ドロップの対処
+- [composer] polyfill-attribute を dev へ移動
+
 ## 1.2.5
 
 - [feature] 成否に関わらず通過する finally メソッドを追加
