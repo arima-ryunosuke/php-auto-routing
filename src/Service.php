@@ -5,7 +5,6 @@ use Psr\Log\AbstractLogger;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Psr\SimpleCache\CacheInterface;
-use ryunosuke\polyfill\attribute\Provider;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Session\Session;
@@ -137,7 +136,6 @@ class Service implements HttpKernelInterface
 
         Request::setFactory($this->requestFactory);
         Controller::$enabledAttribute = !($values['controllerAnnotation'] ?? true);
-        Provider::setCacheConfig($this->cacher);
 
         if ($this->debug) {
             $this->cacher->clear();
