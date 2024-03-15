@@ -8,6 +8,7 @@ use ryunosuke\Test\stub\Controller\SubSub;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
 {
@@ -196,6 +197,13 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
             $service->dispatcher->error(new \DomainException('unhandling-ex'), $request);
         });
         $this->assertEquals("unhandling-ex\n", ob_get_clean());
+    }
+
+    function test_error_http()
+    {
+        $response = $this->service->dispatcher->error(new HttpException(404, '', null, ['X-Custom' => 123]), new Request());
+        $this->assertEquals(404, $response->getStatusCode());
+        $this->assertEquals('123', $response->headers->get('X-Custom'));
     }
 
     function test_error_top()

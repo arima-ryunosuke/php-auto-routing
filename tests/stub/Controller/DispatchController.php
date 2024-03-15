@@ -4,6 +4,7 @@ namespace ryunosuke\Test\stub\Controller;
 use ryunosuke\microute\http\ThrowableResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class DispatchController extends AbstractController
 {
@@ -61,13 +62,18 @@ class DispatchController extends AbstractController
         throw new \Exception('uncatch');
     }
 
+    public function thrown3Action()
+    {
+        throw new HttpException(404, '', null, ['X-Custom' => 123]);
+    }
+
     public function catch(\Throwable $t)
     {
-        if (!$t instanceof \UnexpectedValueException) {
-            throw $t;
+        if ($t instanceof \UnexpectedValueException || $t instanceof HttpException) {
+            parent::error($t);
+            return new JsonResponse('error-response');
         }
-        parent::error($t);
-        return new JsonResponse('error-response');
+        throw $t;
     }
 
     public function finally(Response $response)

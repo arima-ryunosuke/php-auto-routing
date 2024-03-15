@@ -578,6 +578,17 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         });
     }
 
+    function test_dispatch_catch_http()
+    {
+        $request = Request::createFromGlobals();
+        $controller = new DispatchController($this->service, 'thrown3', $request);
+        $response = $controller->dispatch();
+
+        $this->assertInstanceOf(JsonResponse::class, $response);
+        $this->assertEquals('error-response', json_decode($response->getContent()));
+        $this->assertEquals('123', $response->headers->get('X-Custom'));
+    }
+
     function test_dispatch_finally()
     {
         $request = Request::createFromGlobals();

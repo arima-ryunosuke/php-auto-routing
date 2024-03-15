@@ -87,9 +87,14 @@ class Dispatcher
 
         try {
             $response = $controller->dispatch([$t], false);
-            if (in_array(get_class($response), [Request::class, \ryunosuke\microute\http\Response::class], true)) {
-                $status_code = ($t instanceof HttpException) ? $t->getStatusCode() : 500;
-                $response->setStatusCode($status_code);
+            if (in_array(get_class($response), [Response::class, \ryunosuke\microute\http\Response::class], true)) {
+                if ($t instanceof HttpException) {
+                    $response->setStatusCode($t->getStatusCode());
+                    $response->headers->add($t->getHeaders());
+                }
+                else {
+                    $response->setStatusCode(500);
+                }
             }
             return $response;
         }

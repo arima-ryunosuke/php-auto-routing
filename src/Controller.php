@@ -685,6 +685,9 @@ class Controller
                 $this->service->logger->info(get_class($this) . " error");
                 $response = $this->catch($t);
                 if ($response instanceof Response) {
+                    if ($t instanceof HttpException) {
+                        $response->headers->add($t->getHeaders());
+                    }
                     return $this->response($response);
                 }
                 throw new \RuntimeException('Controller#error is must be return Response.');
