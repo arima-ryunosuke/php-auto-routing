@@ -71,10 +71,10 @@ abstract class AbstractTestCase extends TestCase
         self::fail(get_class($e) . ' is not thrown.' . $message);
     }
 
-    public static function assertStatusCode($expectedCode, $callback)
+    public static function assertStatusCode($expectedCode, $callback, ...$args)
     {
         try {
-            call_user_func($callback);
+            call_user_func($callback, ...$args);
             self::fail('HttpException is not thrown.');
         }
         catch (HttpException $hx) {
@@ -87,6 +87,7 @@ abstract class AbstractTestCase extends TestCase
             else {
                 self::assertEquals($expectedCode, $hx->getStatusCode());
             }
+            return $hx;
         }
     }
 }

@@ -5,6 +5,7 @@ use Psr\SimpleCache\CacheInterface;
 use ryunosuke\microute\http\ThrowableResponse;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Cookie;
+use Symfony\Component\HttpFoundation\IpUtils;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -114,6 +115,7 @@ class Controller
                         '@origin'        => attribute\Origin::by($action),
                         '@ajaxable'      => attribute\Ajaxable::by($action)[0] ?? null,
                         '@queryable'     => attribute\Queryable::by($action)[0] ?? true,
+                        '@ratelimit'     => attribute\RateLimit::by($action) ?? [],
                         // パラメータ系
                         '@context'       => attribute\Context::by($action) ?: [''],
                         'parameters'     => array_map(function (\ReflectionParameter $parameter) {
@@ -199,6 +201,7 @@ class Controller
                         '@origin'         => static::getAnnotationAsList('origin', ',', $aname, []),
                         '@ajaxable'       => static::getAnnotationAsInt('ajaxable', $aname, null),
                         '@queryable'      => static::getAnnotationAsBool('queryable', $aname, true),
+                        '@ratelimit'      => [],
                         // パラメータ系
                         '@context'        => static::getAnnotationAsList('context', ',', $aname, ['']),
                         'parameters'      => array_map(function (\ReflectionParameter $parameter) use ($paramannotations) {
@@ -701,6 +704,9 @@ class Controller
 
     public function action($args)
     {
+        // RateLimit はログイン前提なことがあるので action 内でやるしかない（IP だけならもっと早い段階で弾けるが…）
+        $this->ratelimit();
+
         // pre-action
         if (($result = $this->dispatchEvent('pre')) instanceof Response) {
             return $this->response($result);
@@ -827,6 +833,44 @@ class Controller
             return null;
         }
         return $username;
+    }
+
+    protected function ratelimit()
+    {
+        $ratelimits = static::metadata($this->service->cacher)['actions'][$this->action]['@ratelimit'];
+        foreach ($ratelimits as $ratelimit) {
+            $keys = [];
+            foreach ($ratelimit['request_keys'] as [$request, $key]) {
+                if ($request === 'ip') {
+                    $value = $this->request->getClientIp();
+                    $break = $key !== '' && $key !== '*' && !IpUtils::checkIp($value, $key);
+                }
+                else {
+                    $value = $this->request->{$request}->get($key);
+                    $break = !is_scalar($value) || strlen($value) > 64;
+                }
+                if ($break) {
+                    continue 2;
+                }
+                $keys["$request:$key"] = $value;
+            }
+
+            $cachekey = self::CACHE_KEY . '.ratelimit.' . strtr(static::class, ['\\' => '%']) . sha1(json_encode($keys));
+
+            $now = microtime(true);
+            $times = $this->service->cacher->get($cachekey, []);
+            $times[] = $now;
+            $count = count($times);
+
+            if (($now - $times[0]) <= $ratelimit['second'] && $count > $ratelimit['count']) {
+                throw new HttpException(429, '', null, [
+                    'Retry-After' => intval($ratelimit['second'] - ($now - $times[0])) + 1,
+                ]);
+            }
+
+            $this->service->cacher->set($cachekey, array_slice($times, max(0, $count - $ratelimit['count'])));
+            break;
+        }
     }
 
     /**

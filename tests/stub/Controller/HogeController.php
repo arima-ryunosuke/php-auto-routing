@@ -211,6 +211,19 @@ class HogeController extends AbstractController
         return 'realm';
     }
 
+    #[\ryunosuke\microute\attribute\RateLimit(2, 2, 'attributes:id')]
+    #[\ryunosuke\microute\attribute\RateLimit(1, 1, 'ip')]
+    public function ratelimitAction()
+    {
+        return 'OK';
+    }
+
+    #[\ryunosuke\microute\attribute\RateLimit(5, 1, ['ip', 'post:id'])]
+    public function loginAction()
+    {
+        return 'OK';
+    }
+
     /**
      * @action get
      * @authentication hogera This page is required HOGERA auth

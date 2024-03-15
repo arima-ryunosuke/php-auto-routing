@@ -612,6 +612,68 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         });
     }
 
+    function test_ratelimit()
+    {
+        $request = Request::createFromGlobals();
+        $controller = new HogeController($this->service, 'ratelimit', $request);
+
+        // 認証しないと 1req/1sec なので1回は成功する
+        $request->server->set('REMOTE_ADDR', '127.0.0.1');
+        $this->assertEquals('OK', $controller->action([])->getContent());
+        $hx = $this->assertStatusCode(429, [$controller, 'action'], []);
+        $this->assertEquals(1, $hx->getHeaders()['Retry-After']);
+
+        // IP 単位で別管理
+        $request->server->set('REMOTE_ADDR', '127.0.0.2');
+        $this->assertEquals('OK', $controller->action([])->getContent());
+        $hx = $this->assertStatusCode(429, [$controller, 'action'], []);
+        $this->assertEquals(1, $hx->getHeaders()['Retry-After']);
+
+        // 同じ IP でも認証すると 2req/2sec なので2回は成功する
+        $request->server->set('REMOTE_ADDR', '127.0.0.1');
+        $request->attributes->set('id', 123);
+        $this->assertEquals('OK', $controller->action([])->getContent());
+        $this->assertEquals('OK', $controller->action([])->getContent());
+        $hx = $this->assertStatusCode(429, [$controller, 'action'], []);
+        $this->assertEquals(2, $hx->getHeaders()['Retry-After']);
+
+        // id 単位で別管理
+        $request->server->set('REMOTE_ADDR', '127.0.0.1');
+        $request->attributes->set('id', 456);
+        $this->assertEquals('OK', $controller->action([])->getContent());
+        $this->assertEquals('OK', $controller->action([])->getContent());
+        $hx = $this->assertStatusCode(429, [$controller, 'action'], []);
+        $this->assertEquals(2, $hx->getHeaders()['Retry-After']);
+    }
+
+    function test_ratelimit_login()
+    {
+        // Throttle 的な使い方
+
+        $request = Request::createFromGlobals();
+        $controller = new HogeController($this->service, 'login', $request);
+
+        // ログイン試行（キーがなければいくらでも）
+        $request->server->set('REMOTE_ADDR', '127.0.0.1');
+        for ($i = 0; $i < 10; $i++) {
+            $this->assertEquals('OK', $controller->action([])->getContent());
+        }
+
+        // キーがあると制限される
+        $request->request->set('id', 'hoge');
+        for ($i = 0; $i < 5; $i++) {
+            $this->assertEquals('OK', $controller->action([])->getContent());
+        }
+        $hx = $this->assertStatusCode(429, [$controller, 'action'], []);
+        $this->assertEquals(1, $hx->getHeaders()['Retry-After']);
+
+        // IP 単位で別管理
+        $request->server->set('REMOTE_ADDR', '127.0.0.2');
+        for ($i = 0; $i < 5; $i++) {
+            $this->assertEquals('OK', $controller->action([])->getContent());
+        }
+    }
+
     function test_action_ajax()
     {
         $request = Request::createFromGlobals();
