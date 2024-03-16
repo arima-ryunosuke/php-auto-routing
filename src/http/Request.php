@@ -13,7 +13,7 @@ class Request extends \Symfony\Component\HttpFoundation\Request
     public $get;
 
     /** @var InputBag alias for $this->>request */
-    public $post;
+    public $post, $body;
 
     /** @var InputBag alias by Request Method */
     public $input;
@@ -24,6 +24,7 @@ class Request extends \Symfony\Component\HttpFoundation\Request
 
         $this->get = $this->query;
         $this->post = $this->request;
+        $this->body = $this->request;
         $this->input = $this->isMethod('GET') ? $this->query : $this->request;
     }
 
@@ -119,4 +120,97 @@ class Request extends \Symfony\Component\HttpFoundation\Request
     {
         return $this->headers->get('REFERER');
     }
+
+    public function getClientHints($raw = false, string $alternativeCookie = 'client_hints')
+    {
+        // @see https://developer.mozilla.org/ja/docs/Web/HTTP/Headers/Accept-CH
+        $hints = [
+            'Content-DPR'                => 'decimal',
+            'DPR'                        => 'decimal',
+            'Device-Memory'              => 'decimal',
+            'Viewport-Width'             => 'integer',
+            'Width'                      => 'integer',
+            'Sec-CH-UA'                  => 'string@string[]',
+            'Sec-CH-UA-Arch'             => 'string',
+            'Sec-CH-UA-Full-Version'     => 'string',
+            'Sec-CH-UA-Mobile'           => 'boolean',
+            'Sec-CH-UA-Model'            => 'string',
+            'Sec-CH-UA-Platform'         => 'string',
+            'Sec-CH-UA-Platform-Version' => 'string',
+        ];
+
+        if (strlen($alternativeCookie)) {
+            $cookieHints = json_decode($this->cookies->get($alternativeCookie, '{}'), true);
+        }
+
+        $result = [];
+        foreach ($hints as $hint => $type) {
+            $value = $this->headers->get($hint) ?? $cookieHints[$hint] ?? null;
+
+            if ($raw) {
+                $result[$hint] = $value;
+                continue;
+            }
+
+            if (isset($value)) {
+                if (str_ends_with($type, '[]')) {
+                    [$vtype, $ptype] = explode('@', substr($type, 0, -2)) + [1 => null];
+                    foreach ($this->_parseStructuredFieldValue('list', $value) as $item) {
+                        $key = $this->_parseStructuredFieldValue($vtype, $item['value']);
+                        $params = array_map(fn($param) => $this->_parseStructuredFieldValue($ptype, $param), $item['params']);
+                        $result[$hint][$key] = $params;
+                    }
+                }
+                else {
+                    $result[$hint] = $this->_parseStructuredFieldValue($type, $value);
+                }
+            }
+        }
+        return $result;
+    }
+
+    private function _parseStructuredFieldValue(string $type, string $sfv)
+    {
+        // @todo 真面目にはやってられないので CH に必要なもののみ（まぁ自前実装より専用のライブラリを使った方がいい）
+
+        if ($type === 'boolean') {
+            return boolval(substr($sfv, 1));
+        }
+        if ($type === 'integer') {
+            return intval($sfv);
+        }
+        if ($type === 'decimal') {
+            return floatval($sfv);
+        }
+        if ($type === 'string') {
+            return trim($sfv, '"');
+        }
+        if ($type === 'bytes') {
+            assert($type); // @codeCoverageIgnore
+        }
+        if ($type === 'item') {
+            $parts = explode(';', $sfv);
+            $value = trim(array_shift($parts));
+            $params = [];
+            foreach ($parts as $param) {
+                $param = trim($param);
+                if (strlen($param)) {
+                    [$k, $v] = explode('=', $param, 2) + [1 => '?1'];
+                    $params[trim($k)] = trim($v);
+                }
+            }
+
+            return ['value' => $value, 'params' => $params];
+        }
+        if ($type === 'list') {
+            $items = [];
+            foreach (explode(',', $sfv) as $item) {
+                $item = trim($item);
+                if (strlen($item)) {
+                    $items[] = $this->_parseStructuredFieldValue('item', $item);
+                }
+            }
+            return $items;
+        }
+    } // @codeCoverageIgnore
 }

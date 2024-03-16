@@ -118,4 +118,88 @@ class RequestTest extends \ryunosuke\Test\AbstractTestCase
 
         $this->assertEquals('referrer', $request->getReferer());
     }
+
+    function test_getClientHints()
+    {
+        $request = new Request([], [], [], [
+            'client_hints' => json_encode([
+                'Content-DPR'                => 2,
+                'DPR'                        => 2,
+                'Device-Memory'              => 32,
+                'Viewport-Width'             => 1920,
+                'Width'                      => 2000,
+                'Sec-CH-UA'                  => '"Dummy";v="100", "Not(A:Brand";v="10"',
+                'Sec-CH-UA-Arch'             => '"x86"',
+                'Sec-CH-UA-Full-Version'     => '"123.7.8.9"',
+                'Sec-CH-UA-Mobile'           => '?1',
+                'Sec-CH-UA-Model'            => '""',
+                'Sec-CH-UA-Platform'         => '"Linux"',
+                'Sec-CH-UA-Platform-Version' => '"6.8.1"',
+            ]),
+        ], [], [
+            'HTTP_DPR'                        => '1',
+            'HTTP_DEVICE_MEMORY'              => '0.5',
+            'HTTP_SEC_CH_UA_MODEL'            => '"Machine"',
+            'HTTP_SEC_CH_UA_PLATFORM_VERSION' => '"10.0.0"',
+            'HTTP_SEC_CH_UA_PLATFORM'         => '"Windows"',
+            'HTTP_SEC_CH_UA_ARCH'             => '"x86"',
+            'HTTP_SEC_CH_UA_FULL_VERSION'     => '"100.1.2.3"',
+            'HTTP_SEC_CH_UA_MOBILE'           => '?0',
+            'HTTP_SEC_CH_UA'                  => '"Chromium";v="100", "Not(A:Brand";v="10", "Google Chrome";v="100"',
+            'HTTP_VIEWPORT_WIDTH'             => '1280',
+        ]);
+
+        $this->assertEquals([
+            'Content-DPR'                => 2.0,
+            'DPR'                        => 1.0,
+            'Device-Memory'              => 0.5,
+            'Viewport-Width'             => 1280,
+            'Width'                      => 2000,
+            'Sec-CH-UA'                  => [
+                'Chromium'      => ['v' => '100'],
+                'Not(A:Brand'   => ['v' => '10'],
+                'Google Chrome' => ['v' => '100'],
+            ],
+            'Sec-CH-UA-Arch'             => 'x86',
+            'Sec-CH-UA-Full-Version'     => '100.1.2.3',
+            'Sec-CH-UA-Mobile'           => false,
+            'Sec-CH-UA-Model'            => 'Machine',
+            'Sec-CH-UA-Platform'         => 'Windows',
+            'Sec-CH-UA-Platform-Version' => '10.0.0',
+        ], $request->getClientHints());
+
+        $this->assertEquals([
+            'Content-DPR'                => null,
+            'DPR'                        => '1',
+            'Device-Memory'              => '0.5',
+            'Viewport-Width'             => '1280',
+            'Width'                      => null,
+            'Sec-CH-UA'                  => '"Chromium";v="100", "Not(A:Brand";v="10", "Google Chrome";v="100"',
+            'Sec-CH-UA-Arch'             => '"x86"',
+            'Sec-CH-UA-Full-Version'     => '"100.1.2.3"',
+            'Sec-CH-UA-Mobile'           => '?0',
+            'Sec-CH-UA-Model'            => '"Machine"',
+            'Sec-CH-UA-Platform'         => '"Windows"',
+            'Sec-CH-UA-Platform-Version' => '"10.0.0"',
+        ], $request->getClientHints(true, ''));
+
+        $request->headers->replace([]);
+        $this->assertEquals([
+            'Content-DPR'                => 2.0,
+            'DPR'                        => 2.0,
+            'Device-Memory'              => 32.0,
+            'Viewport-Width'             => 1920,
+            'Width'                      => 2000,
+            'Sec-CH-UA'                  => [
+                'Dummy'       => ['v' => '100'],
+                'Not(A:Brand' => ['v' => '10'],
+            ],
+            'Sec-CH-UA-Arch'             => 'x86',
+            'Sec-CH-UA-Full-Version'     => '123.7.8.9',
+            'Sec-CH-UA-Mobile'           => true,
+            'Sec-CH-UA-Model'            => '',
+            'Sec-CH-UA-Platform'         => 'Linux',
+            'Sec-CH-UA-Platform-Version' => '6.8.1',
+        ], $request->getClientHints(false, 'client_hints'));
+    }
 }

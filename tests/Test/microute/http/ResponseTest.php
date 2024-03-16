@@ -71,4 +71,45 @@ class ResponseTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals('true', $response->headers->get('Access-Control-Allow-Credentials'));
         $this->assertEquals('3600', $response->headers->get('Access-Control-Allow-Max-Age'));
     }
+
+    function test_setAcceptClientHints()
+    {
+        $response = new Response();
+        $response->setAcceptClientHints('*');
+        $this->assertContains('Device-Memory', $response->headers->all('Accept-CH'));
+        $this->assertNotContains('Device-Memory', $response->headers->all('Critical-CH'));
+        $this->assertContains('Viewport-Width', $response->headers->all('Vary'));
+        $this->assertEquals(null, $response->headers->get('Accept-CH-Lifetime'));
+
+        $response = new Response();
+        $response->setAcceptClientHints('DPR', 10, false);
+        $this->assertContains('DPR', $response->headers->all('Accept-CH'));
+        $this->assertNotContains('DPR', $response->headers->all('Critical-CH'));
+        $this->assertNotContains('Device-Memory', $response->headers->all('Accept-CH'));
+        $this->assertEquals([], $response->headers->all('Vary'));
+        $this->assertEquals(10_000, $response->headers->get('Accept-CH-Lifetime'));
+
+        $response = new Response();
+        $response->setAcceptClientHints(['DPR' => true], 10, false);
+        $this->assertContains('DPR', $response->headers->all('Accept-CH'));
+        $this->assertContains('DPR', $response->headers->all('Critical-CH'));
+        $this->assertNotContains('Device-Memory', $response->headers->all('Accept-CH'));
+        $this->assertEquals([], $response->headers->all('Vary'));
+        $this->assertEquals(10_000, $response->headers->get('Accept-CH-Lifetime'));
+    }
+
+    function test_setAlternativeCookieHints()
+    {
+        $response = new Response();
+        $response->setAlternativeCookieHints(0);
+        $this->assertEmpty($response->headers->get('expires'));
+        $this->assertEquals('text/javascript', $response->headers->get('content-type'));
+        $this->assertStringContainsString('document.cookie', $response->getContent());
+
+        $response = new Response();
+        $response->setAlternativeCookieHints(60, 'hogera');
+        $this->assertNotEmpty($response->headers->get('expires'));
+        $this->assertEquals('text/javascript', $response->headers->get('content-type'));
+        $this->assertStringContainsString('hogera=', $response->getContent());
+    }
 }

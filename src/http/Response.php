@@ -58,4 +58,83 @@ class Response extends HttpFoundation\Response
 
         return $this;
     }
+
+    public function setAcceptClientHints($hints, int $lifetime = 0, bool $withVary = true)
+    {
+        // @see https://developer.mozilla.org/ja/docs/Web/HTTP/Headers/Accept-CH
+        if ($hints === '*') {
+            $hints = [
+                'Content-DPR'                => false,
+                'DPR'                        => false,
+                'Device-Memory'              => false,
+                'Viewport-Width'             => false,
+                'Width'                      => false,
+                'Sec-CH-UA'                  => false,
+                'Sec-CH-UA-Arch'             => false,
+                'Sec-CH-UA-Full-Version'     => false,
+                'Sec-CH-UA-Mobile'           => false,
+                'Sec-CH-UA-Model'            => false,
+                'Sec-CH-UA-Platform'         => false,
+                'Sec-CH-UA-Platform-Version' => false,
+            ];
+        }
+        if (is_string($hints)) {
+            $hints = [$hints => false];
+        }
+
+        foreach ($hints as $hint => $entropy) {
+            $this->headers->set('Accept-CH', $hint, false);
+
+            if ($entropy) {
+                $this->headers->set('Critical-CH', $hint, false);
+            }
+
+            if ($withVary) {
+                $this->headers->set('Vary', $hint, false);
+            }
+        }
+
+        if ($lifetime) {
+            $this->headers->set('Accept-CH-Lifetime', $lifetime * 1000);
+        }
+
+        return $this;
+    }
+
+    public function setAlternativeCookieHints(int $expire = 60 * 60 * 24, string $cookiName = 'client_hints')
+    {
+        if ($expire) {
+            $this->setExpires(new \DateTime("+$expire seconds"));
+            $this->setCache([
+                'max_age'       => $expire,
+                'last_modified' => new \DateTime(),
+            ]);
+        }
+
+        $this->headers->set('content-type', 'text/javascript');
+        $this->setContent(<<<JS
+        (function () {
+            const oscpu = (navigator.oscpu ?? "").toLowerCase();
+            const uaversion = navigator.userAgent.match(/(firefox)\/((\\d+)\\.\\d+)/i);
+            const winversion = oscpu.match(/(ce|nt)\\s*(\\d+\\.\\d+)/);
+            const macversion = oscpu.match(/mac\\s*(version)?\\s*(\\d+\\.\\d+)/);
+            document.cookie = "$cookiName=" + encodeURIComponent(JSON.stringify({
+                "Content-DPR": window.devicePixelRatio ,
+                "DPR": window.devicePixelRatio ,
+                "Device-Memory": navigator.deviceMemory,
+                "Viewport-Width": window.innerWidth,
+                "Width": window.outerWidth,
+                "Sec-CH-UA": [...uaversion ? [`"\${uaversion[1]}";v="\${uaversion[3]}"`] : [], `"Not(A:Brand";v="0"`].join(','),
+                "Sec-CH-UA-Arch": `"\${oscpu.includes("windows") ? "x86" : ""}"`,
+                "Sec-CH-UA-Full-Version": `"\${uaversion ? uaversion[2] : ""}"`,
+                "Sec-CH-UA-Mobile": !!('ontouchstart' in window || navigator.maxTouchPoints),
+                "Sec-CH-UA-Model": `""`,
+                "Sec-CH-UA-Platform": `"\${oscpu.includes("windows") ? "Windows" : oscpu.includes("mac") ? "MacOS" : navigator.platform}"`,
+                "Sec-CH-UA-Platform-Version": `"\${winversion ? winversion[2] : macversion ? macversion[2] : ""}"`,
+            })) + ";path=/;samesite=lax";
+        })();
+        JS,);
+
+        return $this;
+    }
 }
