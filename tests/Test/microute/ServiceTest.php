@@ -60,6 +60,50 @@ class ServiceTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertIsCallable($this->service->requestFactory);
     }
 
+    function test_trustedProxies()
+    {
+        $localfile = tempnam(sys_get_temp_dir(), 'tp') . '.json';
+        file_put_contents($localfile, json_encode(['100.100.102.0/24']));
+
+        $service = $this->provideService([
+            'trustedProxies' => [
+                'mynetwork',
+                'private',
+                '100.100.101.0/24',
+                $localfile,
+                'cloudfront' => [
+                    'url'    => constant('CLOUDFRONT_IPS'),
+                    'filter' => fn($contents) => array_merge($contents['CLOUDFRONT_GLOBAL_IP_LIST'], $contents['CLOUDFRONT_REGIONAL_EDGE_IP_LIST']),
+                ],
+            ],
+            'request'        => new Request([], [], [], [], [], [
+                'SERVER_ADDR' => '127.0.0.1',
+                'REMOTE_ADDR' => '127.0.0.9',
+            ]),
+        ]);
+
+        $proxies = $service->request->getTrustedProxies();
+        $this->assertContains('127.0.0.1/8', $proxies);         // by mynetwork true
+        $this->assertContains('10.0.0.0/8', $proxies);          // by private true
+        $this->assertContains('172.16.0.0/12', $proxies);       // by private true
+        $this->assertContains('192.168.0.0/16', $proxies);      // by private true
+        $this->assertContains('100.100.101.0/24', $proxies);    // by cidr true
+        $this->assertContains('100.100.102.0/24', $proxies);    // by localfile
+        $this->assertContains('120.52.22.96/27', $proxies);     // by cloudfront
+
+        $service->request->headers->set('x-forwarded-for', "1.1.1.1, 120.52.22.96, 100.100.101.1");
+        $this->assertEquals('1.1.1.1', $service->request->getClientIp());
+
+        $service->request->headers->set('x-forwarded-for', "1.1.1.1, 1.1.1.2, 120.52.22.96, 100.100.101.1");
+        $this->assertEquals('1.1.1.2', $service->request->getClientIp());
+
+        $service->request->headers->set('x-forwarded-for', "1.1.1.1, 120.52.22.96, 1.1.1.3, 100.100.101.1");
+        $this->assertEquals('1.1.1.3', $service->request->getClientIp());
+
+        $service->request->headers->set('x-forwarded-for', "1.1.1.1, 120.52.22.96, 100.100.101.1, 1.1.1.4");
+        $this->assertEquals('1.1.1.4', $service->request->getClientIp());
+    }
+
     function test_handle()
     {
         $service = $this->service;

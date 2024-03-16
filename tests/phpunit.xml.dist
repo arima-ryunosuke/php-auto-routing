@@ -6,6 +6,10 @@
         </testsuite>
     </testsuites>
 
+    <php>
+        <const name="CLOUDFRONT_IPS" value="http://d7uri8nf7uskq.cloudfront.net/tools/list-cloudfront-ips"/>
+    </php>
+
     <filter>
         <whitelist>
             <directory suffix=".php">../src/</directory>

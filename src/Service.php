@@ -26,6 +26,7 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
  * @property-read Router                  $router
  * @property-read Dispatcher              $dispatcher
  * @property-read Resolver                $resolver
+ * @property-read array                   $trustedProxies
  * @property-read bool                    $routeAbbreviation
  * @property-read Controller              $controllerClass
  * @property-read string                  $controllerNamespace
@@ -55,6 +56,7 @@ class Service implements HttpKernelInterface
 {
     /** @var string キャッシュバージョン。本体のバージョンと同期する必要はないがキャッシュ形式を変えたらアップする */
     const CACHE_VERSION = '1-1-0';
+    const CACHE_KEY     = 'Service' . Service::CACHE_VERSION;
 
     private $values;
     private $frozen = [];
@@ -71,6 +73,7 @@ class Service implements HttpKernelInterface
         $values['router'] ??= fn() => new Router($this);
         $values['dispatcher'] ??= fn() => new Dispatcher($this);
         $values['resolver'] ??= fn() => new Resolver($this);
+        $values['trustedProxies'] ??= [];
         $values['routeAbbreviation'] ??= false; // for compatible
         $values['controllerClass'] ??= Controller::class;
         $values['controllerAutoload'] ??= [];
@@ -136,6 +139,54 @@ class Service implements HttpKernelInterface
 
         Request::setFactory($this->requestFactory);
         Controller::$enabledAttribute = !($values['controllerAnnotation'] ?? true);
+
+        if ($this->trustedProxies) {
+            $proxies = [];
+            foreach ($this->trustedProxies as $key => $proxy) {
+                if ($proxy === 'mynetwork') {
+                    $selfaddr = $this->request->server->get('SERVER_ADDR', '');
+                    $addrmap = array_column(array_merge(...array_column(net_get_interfaces(), 'unicast')), 'netmask', 'address');
+                    if (isset($addrmap[$selfaddr])) {
+                        $netmask = strspn(decbin(ip2long($addrmap[$selfaddr])), '1');
+                        $proxies[] = "$selfaddr/$netmask";
+                    }
+                }
+                elseif ($proxy === 'private') {
+                    $proxies[] = "10.0.0.0/8";
+                    $proxies[] = "172.16.0.0/12";
+                    $proxies[] = "192.168.0.0/16";
+                }
+                elseif (is_string($proxy) && filter_var(explode('/', $proxy, 2)[0], FILTER_VALIDATE_IP)) {
+                    $proxies[] = $proxy;
+                }
+                elseif (is_string($proxy) || is_array($proxy)) {
+                    $proxy = array_replace([
+                        'ttl'    => 60 * 60 * 24,
+                        'filter' => fn($v) => $v,
+                    ], is_string($proxy) ? ['url' => $proxy] : $proxy);
+
+                    $cachekey = self::CACHE_KEY . '.trustedProxy.' . $key;
+                    $list = $this->cacher->get($cachekey, $this);
+                    if ($list === $this) {
+                        $this->cacher->set($cachekey, $list = (function () use ($proxy) {
+                            $contents = file_get_contents($proxy['url']);
+
+                            $ext = pathinfo($proxy['url'], PATHINFO_EXTENSION);
+                            if (!strlen($ext)) {
+                                $http_response_header ??= ["content-type:" . mime_content_type($proxy['url'])];
+                                $ctypes = preg_filter('#^content-type:\s*(.*)#i', '$1', $http_response_header);
+                                $ext = (string) $this->request->getFormat(end($ctypes));
+                            }
+                            $conv = $this->requestTypes[strtolower($ext ?: 'json')] ?? fn() => null;
+                            $list = $conv($contents);
+                            return $list ? $proxy['filter']($list) : [];
+                        })(), $proxy['ttl']);
+                    }
+                    $proxies = array_merge($proxies, $list);
+                }
+            }
+            Request::setTrustedProxies(array_merge(Request::getTrustedProxies(), $proxies), Request::getTrustedHeaderSet());
+        }
 
         if ($this->debug) {
             $this->cacher->clear();
