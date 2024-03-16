@@ -112,6 +112,15 @@ $service->run();
 - resolver: `\ryunosuke\microute\Resolver`
     - URL ヘルパーインスタンスを指定します
     - デフォルトは `\ryunosuke\microute\Resolver` です
+- trustedProxies: array
+    - 信頼済みプロキシを自動登録します。原則として Request::setTrustedProxies に渡る CIDR ですが、一部特殊な表記が使えます
+        - cidr: 指定CIDRを登録します
+        - mynetwork: 自セグメントを登録します
+        - private: いわゆるプライベートネットワークを登録します
+        - url: URL にアクセスしてその結果を登録します。 URL は file/http のみの対応です
+        - name => [url => string, ttl => int, filter => callable]: フィルタ条件や TTL を指定しつつ URL にアクセスしてその結果を登録します
+    - キー（name）はキャッシュキーとして使用されます。URL 指定以外では意味を持ちません
+    - デフォルトは `[]` です
 - routeAbbreviation: `bool`
     - デフォルトルーティングで省略語（連続大文字）を大文字のままにします（e.g. GAMEManagerController -> game-manager）
     - デフォルトは `false` です。このデフォルトは将来的に変更される可能性があります
@@ -354,6 +363,15 @@ $service->run();
         - 生成時の指定であって、false にしたからといってクエリストリングアクセスが無効になるわけでもその逆でもありません
     - 未指定時は通常のクエリストリングです（e.g. `/controller/action?id=123`）
     - 値省略時は true です
+- `#[RateLimit]`
+    - 一定秒間のリクエスト数を制限します
+    - `#[RateLimit(30, 10)]` とすると「10秒間に30リクエストまで」となります。この場合は IP をキーとして使用します
+    - `#[RateLimit(180, 60, 'atteirbutes:id')]` とすると「60秒間に180リクエストまで」となります。この場合は Request の attribute の id  をキーとして使用します
+    - キー指定は配列指定で複合できます。 `#[RateLimit(30, 10, ['ip', 'atteirbutes:id'])]` とすると IP と Request の attribute の id を使用します
+    - 複数の属性が付与されている場合は定義順に処理します。その時、指定キーが存在しない場合は無視されます
+        - `#[RateLimit(9, 9, 'get:id')]` と `#[RateLimit(3, 3, 'ip')]` が同時付与されている場合、get:id があれば適用されます。ない場合 ip にフォールバックするような動作です（「IP がない」という状況はあり得ないため、順番を間違えると get:id が処理されることは決してなくなります）
+    - 未指定時は無制限レートです
+    - 値省略時は IP です
 - `#[Context]`
     - 受け付けるコンテキスト（要するに拡張子）を指定します
     - `#[Context('json', 'xml')]` とすると `controller/action.json` や `controller/action.xml` でアクションメソッドがコールされるようになります

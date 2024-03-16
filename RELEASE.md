@@ -21,6 +21,14 @@
 - psr15(middleware) に対応する？
 - DefaultController::errorAction の廃止
 - タイプヒントの設定
+- php8 対応が済んだら Attribute 自体に処理を持たせたい
+
+## 1.2.7
+
+- [feature] 信頼済みプロキシを自動設定する trustedProxies オプションを追加
+- [feature] Request/Response 改善
+- [feature] RateLimit を追加
+- [fixbug] HttpException に設定したヘッダーがレスポンスに反映されない不具合を修正
 
 ## 1.2.6
 
