@@ -123,6 +123,27 @@ class ExampleTest extends AbstractTestCase
         $this->assertStringContainsString('/regex/123-hoge', $crawler->html());
     }
 
+    function test_ratelimit()
+    {
+        $client = new HttpKernelBrowser($this->service);
+
+        for ($i = 0; $i < 5; $i++) {
+            $client->request('GET', '/ratelimit');
+        }
+        $this->assertEquals(200, $client->getResponse()->getStatusCode());
+
+        $client->request('GET', '/ratelimit');
+        $this->assertEquals(429, $client->getResponse()->getStatusCode());
+
+        for ($i = 0; $i < 10; $i++) {
+            $client->request('GET', '/ratelimit?id=123');
+        }
+        $this->assertEquals(200, $client->getResponse()->getStatusCode());
+
+        $client->request('GET', '/ratelimit?id=123');
+        $this->assertEquals(429, $client->getResponse()->getStatusCode());
+    }
+
     function test_context()
     {
         $client = new HttpKernelBrowser($this->service);

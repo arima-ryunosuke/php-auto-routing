@@ -102,12 +102,28 @@
         <td><a href="<?php echo $resolver->path() ?>public.html">public</a></td>
     </tr>
     <tr>
+        <th>レート制限（IP）ページです。5リクエスト/10秒間に制限されます</th>
+        <td><a href="<?php echo $resolver->path() ?>ratelimit">ratelimit-ip</a></td>
+    </tr>
+    <tr>
+        <th>レート制限（ID）ページです。10リクエスト/20秒間に制限されます</th>
+        <td><a href="<?php echo $resolver->path() ?>ratelimit?id=123">ratelimit-id</a></td>
+    </tr>
+    <tr>
         <th>SSE ページです。3秒ごとにサーバー側から送信されます</th>
         <td><a href="<?php echo $resolver->path() ?>push">push</a></td>
     </tr>
     <tr>
         <th>resolver のサンプルページです</th>
         <td><a href="<?php echo $resolver->path() ?>13/resolver?param1=123&amp;param2=456">13/resolver?param1=123&amp;param2=456</a></td>
+    </tr>
+    <tr>
+        <th>trustedProxies の確認ページです</th>
+        <td><a href="<?php echo $resolver->path() ?>proxies">proxies</a></td>
+    </tr>
+    <tr>
+        <th>$_SERVER の確認ページです</th>
+        <td><a href="<?php echo $resolver->path() ?>server">server</a></td>
     </tr>
     <tr>
         <th>例外を投げます。コントローラレベルで補足されます</th>

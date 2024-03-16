@@ -2,6 +2,7 @@
 namespace ryunosuke\microute\example\controller;
 
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 #[\ryunosuke\microute\attribute\Alias('/alias')]
 #[\ryunosuke\microute\attribute\Scope('(?<pref_id>\d+)/')]
@@ -12,7 +13,13 @@ class DefaultController extends AbstractController
         if ($t instanceof \DomainException) {
             throw $t;
         }
-        return new Response('これはコントローラ単位のエラーハンドリングでハンドリングされた例外メッセージです：' . $t->getMessage());
+        $statusCode = 200;
+        $headers = [];
+        if ($t instanceof HttpException) {
+            $statusCode = $t->getStatusCode();
+            $headers = $t->getHeaders();
+        }
+        return new Response('これはコントローラ単位のエラーハンドリングでハンドリングされた例外メッセージです：' . $t->getMessage(), $statusCode, $headers);
     }
 
     public function errorAction(\Exception $ex)
@@ -200,8 +207,32 @@ class DefaultController extends AbstractController
         return 'このレスポンスは初回以降 php ではなく web サーバーが返しています';
     }
 
+    #[\ryunosuke\microute\attribute\RateLimit(10, 20, 'get:id')]
+    #[\ryunosuke\microute\attribute\RateLimit(5, 10, 'ip')]
+    public function ratelimitAction()
+    {
+        return 'まだレート制限に達してません';
+    }
+
     public function resolverAction($pref_id)
     {
+    }
+
+    public function proxiesAction()
+    {
+        return '<pre>' . var_export($this->request->getTrustedProxies(), true) . '</pre>';
+    }
+
+    public function alternativeClientHintsAction()
+    {
+        return $this->response->setAlternativeCookieHints();
+    }
+
+    public function serverAction()
+    {
+        $this->view->server = $this->request->server->all();
+        $this->view->clientHints = $this->request->getClientHints();
+        $this->response->setAcceptClientHints('*');
     }
 
     public function throwRuntimeAction()

@@ -1,0 +1,15 @@
+<?php
+ob_start(); ?>
+
+<pre>
+    <h3>Server</h3>
+<?php var_dump($server) ?>
+</pre>
+
+<pre>
+    <h3>ClientHints</h3>
+<?php var_dump($clientHints) ?>
+</pre>
+
+<?php $contents = ob_get_clean(); ?>
+<?php include __DIR__ . '/../layout.phtml'; ?>

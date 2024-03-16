@@ -11,6 +11,17 @@ $service = new \ryunosuke\microute\Service([
         };
     },
     'priority'             => ['rewrite', 'redirect', 'alias', 'default', 'scope', 'regex'],
+    'trustedProxies'       => [
+        'mynetwork',        // 自セグメントを登録します
+        'private',          // プライベートネットワークを登録します
+        '100.100.101.0/24', // CIDR を登録します
+        // URL は3つのオプションを指定できます
+        'cloudfront' => [
+            'url'    => 'http://d7uri8nf7uskq.cloudfront.net/tools/list-cloudfront-ips', // この URL に取りに行きます
+            'ttl'    => 60 * 60 * 24 * 365,                                              // 再取得の有効期限です
+            'filter' => fn($contents) => array_merge(...array_values($contents)),        // フィルターコールバックです
+        ],
+    ],
     'sessionStorage'       => function () {
         return new \Symfony\Component\HttpFoundation\Session\Storage\NativeSessionStorage([
             'cache_limiter' => 'nocache',
