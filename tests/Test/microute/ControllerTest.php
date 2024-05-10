@@ -250,6 +250,7 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         $controller = new HogeController($service, 'realm', new Request());
         $this->assertException(new \DomainException('realm should not be contains'), [$controller, 'dispatch']);
 
+        $metadata->setValue([]);
     }
 
     function test_session()

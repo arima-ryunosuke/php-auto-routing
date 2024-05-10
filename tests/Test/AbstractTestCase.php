@@ -3,8 +3,7 @@ namespace ryunosuke\Test;
 
 use PHPUnit\Framework\TestCase;
 use ryunosuke\microute\Service;
-use Symfony\Component\Cache\Adapter\ArrayAdapter;
-use Symfony\Component\Cache\Psr16Cache;
+use ryunosuke\SimpleCache\StreamCache;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 abstract class AbstractTestCase extends TestCase
@@ -23,7 +22,7 @@ abstract class AbstractTestCase extends TestCase
     function provideService($options = [])
     {
         $defaults = [
-            'cacher'                   => new Psr16Cache(new ArrayAdapter()),
+            'cacher'                   => new StreamCache(sys_get_temp_dir() . '/microute'),
             'controllerLocation'       => [
                 '\\ryunosuke\\Test\\stub\\Controller\\' => __DIR__ . '/../stub/Controller/',
             ],
