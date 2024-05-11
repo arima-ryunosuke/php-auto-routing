@@ -1,7 +1,6 @@
 <?php
 namespace ryunosuke\microute;
 
-use Psr\Log\AbstractLogger;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Psr\SimpleCache\CacheInterface;
@@ -27,12 +26,10 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
  * @property-read Dispatcher              $dispatcher
  * @property-read Resolver                $resolver
  * @property-read array                   $trustedProxies
- * @property-read bool                    $routeAbbreviation
  * @property-read Controller              $controllerClass
  * @property-read string                  $controllerNamespace
  * @property-read string                  $controllerDirectory
  * @property-read array|Controller        $controllerLocation
- * @property-read bool                    $controllerAnnotation
  * @property-read array                   $controllerAutoload
  *
  * @property-read callable                $requestFactory
@@ -40,11 +37,6 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
  * @property-read Request                 $request
  * @property-read callable[]              $requestTypes
  * @property-read SessionStorageInterface $sessionStorage
- * @property-read bool                    $defaultActionAsDirectory
- * @property-read bool                    $parameterUseRFC3986
- * @property-read string                  $parameterDelimiter
- * @property-read string                  $parameterSeparator
- * @property-read bool                    $parameterArrayable
  * @property-read array|\Closure          $parameterContexts
  *
  * @property-read array|\Closure          $authenticationProvider
@@ -63,8 +55,9 @@ class Service implements HttpKernelInterface
 
     public function __construct($values = [])
     {
+        assert(($values['cacher'] ?? null) instanceof \Psr\SimpleCache\CacheInterface, 'requires cacher(\\Psr\\SimpleCache\\CacheInterface)');
+
         $values['debug'] ??= false;
-        $values['cacher'] ??= new class ( ) { public function __call($name, $arguments) { } }; // for compatible
         $values['logger'] ??= new NullLogger();
         $values['origin'] ??= [];
         $values['priority'] ??= [Router::ROUTE_REWRITE, Router::ROUTE_REDIRECT, Router::ROUTE_ALIAS, Router::ROUTE_REGEX, Router::ROUTE_SCOPE, Router::ROUTE_DEFAULT];
@@ -74,7 +67,6 @@ class Service implements HttpKernelInterface
         $values['dispatcher'] ??= fn() => new Dispatcher($this);
         $values['resolver'] ??= fn() => new Resolver($this);
         $values['trustedProxies'] ??= [];
-        $values['routeAbbreviation'] ??= false; // for compatible
         $values['controllerClass'] ??= Controller::class;
         $values['controllerAutoload'] ??= [];
 
@@ -100,15 +92,6 @@ class Service implements HttpKernelInterface
             'json' => fn($content) => json_decode($content, true),
         ];
         $values['sessionStorage'] ??= fn() => new NativeSessionStorage();
-        $values['defaultActionAsDirectory'] ??= false; // for compatible
-        $values['parameterUseRFC3986'] ??= false;      // for compatible
-        if ($values['parameterUseRFC3986']) {
-            $values['parameterDelimiter'] = '?';
-            $values['parameterSeparator'] = '&';
-        }
-        $values['parameterDelimiter'] ??= '?';
-        $values['parameterSeparator'] ??= '&';
-        $values['parameterArrayable'] ??= false;
         $values['parameterContexts'] ??= [];
 
         $values['authenticationProvider'] ??= [];
@@ -138,7 +121,6 @@ class Service implements HttpKernelInterface
         $this->values = $values;
 
         Request::setFactory($this->requestFactory);
-        Controller::$enabledAttribute = !($values['controllerAnnotation'] ?? true);
 
         if ($this->trustedProxies) {
             $proxies = [];
@@ -205,25 +187,6 @@ class Service implements HttpKernelInterface
         if (!(isset($this->frozen[$name]) || array_key_exists($name, $this->frozen))) {
             $value = $this->values[$name];
             $this->frozen[$name] = $value instanceof \Closure ? $value($this) : $value;
-
-            // for compatible
-            if ($name === 'logger' && $this->frozen[$name] instanceof \Closure) {
-                $this->frozen[$name] = new class($this->frozen[$name]) extends AbstractLogger {
-                    private \Closure $closure;
-
-                    public function __construct($closure)
-                    {
-                        $this->closure = $closure;
-                    }
-
-                    public function log($level, $message, array $context = [])
-                    {
-                        if (isset($context['exception'])) {
-                            ($this->closure)($context['exception'], $context['request'] ?? null);
-                        }
-                    }
-                };
-            }
         }
         return $this->frozen[$name];
     }

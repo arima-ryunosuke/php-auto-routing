@@ -8,7 +8,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 #[\ryunosuke\microute\attribute\Scope('(?<pref_id>\d+)/')]
 class DefaultController extends AbstractController
 {
-    protected function error(\Throwable $t)
+    protected function catch(\Throwable $t)
     {
         if ($t instanceof \DomainException) {
             throw $t;
@@ -108,16 +108,6 @@ class DefaultController extends AbstractController
             ], true);
     }
 
-    #[\ryunosuke\microute\attribute\Queryable(false)]
-    #[\ryunosuke\microute\attribute\Context('', 'json')]
-    public function pathfulAction($id)
-    {
-        return '/ 区切りでアクションメソッドの引数に渡ってきます<pre>' . var_export([
-                'url'       => $this->request->getRequestUri(),
-                'parameter' => ['id' => $id, 'context' => $this->request->attributes->get('context')],
-            ], true);
-    }
-
     #[\ryunosuke\microute\attribute\Argument('file')]
     public function uploadAction($file = null)
     {
@@ -155,7 +145,6 @@ class DefaultController extends AbstractController
     }
 
     #[\ryunosuke\microute\attribute\Context('json', 'xml')]
-    #[\ryunosuke\microute\attribute\Queryable(false)]
     public function contextAction(int $id)
     {
         return '@context するとパスの最後に拡張子をつけてもこのアクションに到達します<pre>' . var_export([

@@ -73,11 +73,28 @@ class Router
 
     public function match(Request $request)
     {
+        $parse = function (string $path) {
+            $context = pathinfo($path, PATHINFO_EXTENSION);
+            $path = preg_replace('#\\.' . preg_quote($context) . '$#', '', $path);
+
+            // constroller/action に分解
+            $paths = strtr(ucwords($path, " \t\r\n\f\v-"), ['-' => '']);
+            $parts = array_filter(explode('/', $paths), 'strlen');
+            $action_name = lcfirst(array_pop($parts));
+            $controller_name = implode('\\', array_map('ucfirst', $parts));
+
+            return [
+                'controller' => $controller_name,
+                'action'     => $action_name,
+                'context'    => $context,
+                'parameters' => [],
+            ];
+        };
+
         $path = $request->getPathInfo();
-        $query = $request->server->get('QUERY_STRING'); // getQueryString は正規化されてるので使ってはならない
 
         $parentpath = rtrim(preg_replace('#((.+)/)+(.*)#', '$1', preg_replace('#\\.[^/.]*$#', '', $path)), '/');
-        $parsed = $this->parse($path, $query);
+        $parsed = $parse($path);
         $parsed['route'] = null;
         $request->attributes->set('context', $parsed['context']);
 
@@ -103,7 +120,7 @@ class Router
                             }
                             $path = preg_replace("#$from#", $controller, $path);
                             $parentpath = rtrim(preg_replace('#((.+)/)+(.*)#', '$1', preg_replace('#\\.[^/.]*$#', '', $path)), '/');
-                            $parsed = $this->parse($path, $query);
+                            $parsed = $parse($path);
                             $parsed['route'] = self::ROUTE_REWRITE;
                             break;
                         }
@@ -140,7 +157,7 @@ class Router
                         if (preg_match("#^$regex#u", $path, $matches)) {
                             $this->service->logger->info("match " . self::ROUTE_SCOPE . "($regex): $path");
                             $path2 = preg_replace("#^$regex#u", '', $path, 1, $count);
-                            $parsed2 = $this->parse($path2);
+                            $parsed2 = $parse($path2);
                             $parsed['controller'] = $this->service->dispatcher->shortenController($routing);
                             $parsed['action'] = $parsed2['action'];
                             if (strlen($parsed['action']) === 0) {
@@ -173,73 +190,6 @@ class Router
         }
 
         return $parsed;
-    }
-
-    /**
-     * url を controller, action, context, parameters に分解
-     *
-     * @param string $path URL のパス部分
-     * @param string|null $query URL のクエリ部分
-     * @return array controller/action/context/parameters を含む配列
-     */
-    public function parse($path, $query = null)
-    {
-        $delimiter = $this->service->parameterDelimiter;
-        $separator = $this->service->parameterSeparator;
-        $useRFC3986 = $this->service->parameterUseRFC3986;
-
-        $context = pathinfo($path, PATHINFO_EXTENSION);
-        $path = preg_replace('#\\.' . preg_quote($context) . '$#', '', $path);
-
-        // constroller/action に分解
-        $paths = strtr(ucwords($path, " \t\r\n\f\v-"), ['-' => '']);
-        $parts = array_filter(explode('/', $paths), 'strlen');
-        $action_name = lcfirst(array_pop($parts));
-        $controller_name = implode('\\', array_map('ucfirst', $parts));
-        $parameters = [];
-
-        // delimiter が '/' の時は挙動がまるで異なる（もともとパス区切りだから）
-        if ($delimiter === '/') {
-            if ($separator === '/') {
-                $dispatcher = $this->service->dispatcher;
-                // コントローラ/アクションが見つからない時、パラメータ指定とみなして左にずらして再検索
-                while (true) {
-                    if (is_string(($ca = $dispatcher->findController($controller_name, $action_name))[0])) {
-                        [$controller_name, $action_name] = $ca;
-                        $controller_name = $dispatcher->shortenController($controller_name);
-                        break;
-                    }
-                    array_unshift($parameters, $action_name);
-                    $action_name = lcfirst(array_pop($parts));
-                    $controller_name = implode('\\', array_map('ucfirst', $parts));
-                }
-            }
-            elseif ($parts) {
-                $parameters = explode($separator, $action_name);
-                $action_name = lcfirst(array_pop($parts));
-                $controller_name = implode('\\', array_map('ucfirst', $parts));
-            }
-        }
-        // 完全なる RFC 的な区切りはパスパラメータとしては空
-        elseif ($useRFC3986) {
-            $parameters = [];
-        }
-        // delimiter が '?' の時もまるで異なる（? は RFC 的なクエリ区切りだから）
-        elseif ($delimiter === '?' && strlen($query)) {
-            $parameters = explode($separator, $query);
-        }
-        // 上記以外は $action_name を分割すれば良い
-        elseif (count($parts = explode($delimiter, $action_name, 2)) === 2) {
-            $action_name = $parts[0];
-            $parameters = explode($separator, $parts[1]);
-        }
-
-        return [
-            'controller' => $controller_name,
-            'action'     => $action_name,
-            'context'    => $context,
-            'parameters' => $parameters,
-        ];
     }
 
     /**
@@ -447,7 +397,6 @@ class Router
             $action_data = $controller::metadata($this->service->cacher)['actions'][$action];
             $target = "$controller::$action";
             $rname = array_search([$controller, $action], $this->routings[self::ROUTE_ROUTE]);
-            $queryable = $action_data['@queryable'];
 
             // スコープルートのベースパラメータは差っ引いておく必要がある
             if ($route === self::ROUTE_SCOPE) {
@@ -457,14 +406,6 @@ class Router
             // パラメータ（regex はルート自体がパラメータ付きのようなものなので除外）
             $pathinfo = '';
             if ($action_data['parameters'] && $route !== self::ROUTE_REGEX) {
-                if ($queryable) {
-                    $delimiter = '?';
-                    $separator = '&';
-                }
-                else {
-                    $delimiter = $this->service->parameterDelimiter;
-                    $separator = $this->service->parameterSeparator;
-                }
                 $args = [];
                 foreach ($action_data['parameters'] as $param) {
                     $name = $param['name'];
@@ -473,26 +414,20 @@ class Router
                         $type[] = $tn . ($param['defaultable'] ? '(' . json_encode($param['default']) . ')' : '');
                     }
                     $type = implode('|', $type) ?: 'mixed';
-                    $args[] = $queryable ? "$name=$type" : "\$$name@$type";
+                    $args[] = "$name=$type";
                 }
-                $pathinfo = $delimiter . implode($separator, $args);
+                $pathinfo = '?' . implode('&', $args);
             }
 
             $contexts = $action_data['@context'];
             foreach ($contexts as $context) {
                 $context = $context === '' ? '' : '.' . $context;
-                $contexturl = $url;
-                if (($pathinfo[0] ?? '') === '/') {
-                    $contexturl .= $pathinfo . $context;
-                }
-                else {
-                    $contexturl .= $context . $pathinfo;
-                }
+                $contexturl = $url . $context . $pathinfo;
                 $receiver[$contexturl] = [
                     'route'  => $route,
                     'name'   => $rname ?: $target,
                     'target' => $target . $controller::ACTION_SUFFIX,
-                    'method' => $action_data['@action'],
+                    'method' => $action_data['@method'],
                 ];
             }
         };
@@ -559,13 +494,5 @@ class Router
             $controllers[] = $class_name;
         }
         return $controllers;
-    }
-
-    private function actionMethodToAction($action)
-    {
-        if ($action === 'default') {
-            return '';
-        }
-        return strtolower(preg_replace('#([^/])([A-Z])#', '$1-$2', $action));
     }
 }

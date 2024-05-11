@@ -84,25 +84,6 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
         });
     }
 
-    function test_dispatch_rfc3986()
-    {
-        $service = $this->provideService([
-            'parameterUseRFC3986' => true,
-        ]);
-
-        $response = $service->dispatcher->dispatch(Request::create('hoge/queryable-null'));
-        $this->assertEquals('queryableNull:NULL, NULL', $response->getContent());
-
-        $response = $service->dispatcher->dispatch(Request::create('hoge/queryable-null?param1=1&param2=2'));
-        $this->assertEquals('queryableNull:1, 2', $response->getContent());
-
-        $response = $service->dispatcher->dispatch(Request::create('hoge/queryable-null?param1=1'));
-        $this->assertEquals('queryableNull:1, NULL', $response->getContent());
-
-        $response = $service->dispatcher->dispatch(Request::create('hoge/queryable-null?param2=2'));
-        $this->assertEquals('queryableNull:NULL, 2', $response->getContent());
-    }
-
     function test_dispatch_scope()
     {
         $response = $this->service->dispatcher->dispatch(Request::create('/sub-sub/99/index'));

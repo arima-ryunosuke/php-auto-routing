@@ -3,15 +3,18 @@
 require_once __DIR__ . '/../../vendor/autoload.php';
 
 $service = new \ryunosuke\microute\Service([
-    'debug'                => ($_SERVER['HTTP_CACHE_CONTROL'] ?? '') === 'no-cache',
-    'cacher'               => new \ryunosuke\SimpleCache\StreamCache(sys_get_temp_dir() . '/microute-example'),
-    'logger'               => function () {
-        return function (\Throwable $exception, \Symfony\Component\HttpFoundation\Request $request = null) {
-            printf('これは "logger" でハンドリングされた例外メッセージです（%s）：%s<br>', $request === null ? 'NULL' : $request->getRequestUri(), $exception->getMessage());
-        };
+    'debug'              => ($_SERVER['HTTP_CACHE_CONTROL'] ?? '') === 'no-cache',
+    'cacher'             => new \ryunosuke\SimpleCache\StreamCache(sys_get_temp_dir() . '/microute-example'),
+    'logger'             => new class extends \Psr\Log\AbstractLogger {
+        public function log($level, $message, array $context = [])
+        {
+            if (isset($context['exception'])) {
+                printf('これは "logger" でハンドリングされた例外メッセージです（%s:%s）', $message, $context['exception']);
+            }
+        }
     },
-    'priority'             => ['rewrite', 'redirect', 'alias', 'default', 'scope', 'regex'],
-    'trustedProxies'       => [
+    'priority'           => ['rewrite', 'redirect', 'alias', 'default', 'scope', 'regex'],
+    'trustedProxies'     => [
         'mynetwork',        // 自セグメントを登録します
         'private',          // プライベートネットワークを登録します
         '100.100.101.0/24', // CIDR を登録します
@@ -22,7 +25,7 @@ $service = new \ryunosuke\microute\Service([
             'filter' => fn($contents) => array_merge(...array_values($contents)),        // フィルターコールバックです
         ],
     ],
-    'sessionStorage'       => function () {
+    'sessionStorage'     => function () {
         return new \Symfony\Component\HttpFoundation\Session\Storage\NativeSessionStorage([
             'cache_limiter' => 'nocache',
         ], new \ryunosuke\microute\http\CookieSessionHandler([
@@ -32,12 +35,9 @@ $service = new \ryunosuke\microute\Service([
             'lifetime'   => 60,
         ]), new \Symfony\Component\HttpFoundation\Session\Storage\MetadataBag('_sf2_meta', PHP_INT_MAX));
     },
-    'parameterDelimiter'   => '/',
-    'parameterSeparator'   => '&',
-    'controllerLocation'   => [
+    'controllerLocation' => [
         'ryunosuke\\microute\\example\\controller\\' => __DIR__ . '/../app/controller/',
     ],
-    'controllerAnnotation' => false,
 ]);
 
 // /external アクセスで外部サイトにリダイレクトするようにします

@@ -64,16 +64,7 @@ class CookieSessionHandler extends AbstractSessionHandler
      */
     protected function doRead($sessionId): string
     {
-        // for compatible
-        $metadata = $this->cookieInput[$this->storeName] ?? '{}';
-        if (ctype_digit((string) $metadata)) {
-            $metadata = json_encode([
-                'length'  => $metadata,
-                'version' => 0,
-            ]);
-        }
-
-        $this->metadata = json_decode($metadata, true);
+        $this->metadata = (array) json_decode($this->cookieInput[$this->storeName] ?? '{}', true);
         $this->metadata['version'] = (int) ($this->metadata['version'] ?? self::VERSION);
         $this->metadata['length'] = (int) min($this->metadata['length'] ?? 0, $this->maxLength);
         $this->metadata['ctime'] = (int) ($this->metadata['ctime'] ?? time());
@@ -202,34 +193,6 @@ class CookieSessionHandler extends AbstractSessionHandler
             '_' => '/',
             '-' => '+',
         ]));
-
-        // for compatible
-        if ($this->metadata['version'] < self::VERSION) {
-            if ($this->metadata['version'] === 0) {
-                $data = gzuncompress($data);
-            }
-
-            $salt = substr($data, 0, 16);
-            $ct = substr($data, 16);
-
-            $rounds = 3; // depends on key length
-            $data00 = $this->privateKey . $salt;
-            $hash = [];
-            $hash[0] = hash('sha256', $data00, true);
-            $result = $hash[0];
-            for ($i = 1; $i < $rounds; $i++) {
-                $hash[$i] = hash('sha256', $hash[$i - 1] . $data00, true);
-                $result .= $hash[$i];
-            }
-            $key = substr($result, 0, 32);
-            $iv = substr($result, 32, 16);
-
-            $decrypted_data = openssl_decrypt($ct, 'AES-256-CBC', $key, 0, $iv) ?: '';
-            if ($this->metadata['version'] === 0) {
-                return $decrypted_data;
-            }
-            return (string) gzinflate($decrypted_data);
-        }
 
         $algo = 'aes-256-gcm';
         $taglen = 16;

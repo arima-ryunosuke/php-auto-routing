@@ -63,15 +63,6 @@ class ExampleTest extends AbstractTestCase
         $this->assertStringContainsString('/argument?id=1&amp;name=hoge', $crawler->html());
     }
 
-    function test_pathful()
-    {
-        $client = new HttpKernelBrowser($this->service);
-        $crawler = $client->request('GET', '/pathful/1.json');
-
-        $this->assertEquals(200, $client->getResponse()->getStatusCode());
-        $this->assertStringContainsString('/pathful/1.json', $crawler->html());
-    }
-
     function test_upload()
     {
         $client = new HttpKernelBrowser($this->service);
@@ -168,7 +159,7 @@ class ExampleTest extends AbstractTestCase
         $crawler = $client->request('GET', '/13/resolver');
 
         $this->assertEquals(200, $client->getResponse()->getStatusCode());
-        $this->assertEquals('/context/123.json', $crawler->filter('code')->eq(1)->text());
+        $this->assertEquals('/context.json?id=123', $crawler->filter('code')->eq(1)->text());
     }
 
     function test_throw_runtime()

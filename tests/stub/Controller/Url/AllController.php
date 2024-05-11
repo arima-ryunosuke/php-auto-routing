@@ -24,11 +24,6 @@ class AllController extends AbstractController
 
     public function parameterAction(string $arg1, array $arg2) { }
 
-    #[\ryunosuke\microute\attribute\Queryable(false)]
-    public function queryableAction(int $arg1, array $arg2)
-    {
-    }
-
     #[\ryunosuke\microute\attribute\Redirect('/mapping/redirect1', 301)]
     #[\ryunosuke\microute\attribute\Redirect('/mapping/redirect2', 302)]
     #[\ryunosuke\microute\attribute\Redirect('/mapping/redirect3')]

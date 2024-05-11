@@ -18,10 +18,6 @@ Resolver のサンプルです。結果しか表示していないので「何�
         <td><code><?php echo $resolver->action(DefaultController::class, 'argument', ['id' => 123, 'name' => 'hoge']) ?></code></td>
     </tr>
     <tr>
-        <th>URL 生成（通常の action [クエリマップ]）</th>
-        <td><code><?php echo $resolver->action(DefaultController::class, 'pathful', ['id' => 123, 'name' => 'hoge']) ?></code></td>
-    </tr>
-    <tr>
         <th>URL 生成（短縮コントローラ名）</th>
         <td><code><?php echo $resolver->action('Default', 'argument', ['id' => 123, 'name' => 'hoge']) ?></code></td>
     </tr>
@@ -43,8 +39,8 @@ Resolver のサンプルです。結果しか表示していないので「何�
     <tr>
         <th>URL 生成（静的ファイル）</th>
         <td>
-            <code><?php echo $resolver->path("/jquery-3.0.0.min.js", true) ?></code>（更新日時付与あり）<br>
-            <code><?php echo $resolver->path("/jquery-3.0.0.min.js", false) ?></code>（更新日時付与なし）<br>
+            <code><?php echo $resolver->path("/jquery-3.0.0.min.js", 'v') ?></code>（更新日時付与あり）<br>
+            <code><?php echo $resolver->path("/jquery-3.0.0.min.js", []) ?></code>（更新日時付与なし）<br>
         </td>
     </tr>
     <tr>

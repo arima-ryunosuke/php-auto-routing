@@ -2,7 +2,6 @@
 namespace ryunosuke\Test\stub\Controller;
 
 #[\ryunosuke\microute\attribute\DefaultRoute(false)]
-#[\ryunosuke\microute\attribute\Queryable(false)]
 class RoutingController extends AbstractController
 {
     #[\ryunosuke\microute\attribute\Method('get')]
@@ -29,17 +28,5 @@ class RoutingController extends AbstractController
     public function queryableDefault(int $param)
     {
         return 'queryableDefault' . $param;
-    }
-
-    #[\ryunosuke\microute\attribute\Queryable(true)]
-    public function queryableTrue(int $param)
-    {
-        return 'queryableTrue' . $param;
-    }
-
-    #[\ryunosuke\microute\attribute\Queryable(false)]
-    public function queryableFalse(int $param)
-    {
-        return 'queryableFalse' . $param;
     }
 }

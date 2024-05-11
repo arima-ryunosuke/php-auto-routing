@@ -111,46 +111,43 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
 
     function test_authenticate_basic()
     {
-        foreach ([true, false] as $bool) {
-            $service = $this->provideService([
-                'authenticationProvider'   => ['user' => password_hash('pass', PASSWORD_DEFAULT)],
-                'authenticationComparator' => function () {
-                    return function ($valid_password, $password) { return password_verify($password, $valid_password); };
-                },
-                'controllerAnnotation'     => $bool, // for compatible
-            ]);
-            $service->cacher->clear();
-            $metadata = new \ReflectionProperty(Controller::class, 'metadata');
-            $metadata->setAccessible(true);
-            $metadata->setValue([]);
+        $service = $this->provideService([
+            'authenticationProvider'   => ['user' => password_hash('pass', PASSWORD_DEFAULT)],
+            'authenticationComparator' => function () {
+                return function ($valid_password, $password) { return password_verify($password, $valid_password); };
+            },
+        ]);
+        $service->cacher->clear();
+        $metadata = new \ReflectionProperty(Controller::class, 'metadata');
+        $metadata->setAccessible(true);
+        $metadata->setValue([]);
 
-            $request = new Request();
+        $request = new Request();
 
-            $controller = new HogeController($service, 'basic', $request);
-            $response = $controller->dispatch();
-            $this->assertEquals(null, $request->attributes->get('authname'));
-            $this->assertEquals('Basic realm="This page is required BASIC auth"', $response->headers->get('www-authenticate'));
-            $this->assertEquals(401, $response->getStatusCode());
-            $this->assertEquals('', $response->getContent());
+        $controller = new HogeController($service, 'basic', $request);
+        $response = $controller->dispatch();
+        $this->assertEquals(null, $request->attributes->get('authname'));
+        $this->assertEquals('Basic realm="This page is required BASIC auth"', $response->headers->get('www-authenticate'));
+        $this->assertEquals(401, $response->getStatusCode());
+        $this->assertEquals('', $response->getContent());
 
-            $request->server->set('PHP_AUTH_USER', 'dummy');
-            $request->server->set('PHP_AUTH_PW', 'dummy');
-            $controller = new HogeController($service, 'basic', $request);
-            $response = $controller->dispatch();
-            $this->assertEquals(null, $request->attributes->get('authname'));
-            $this->assertEquals('Basic realm="This page is required BASIC auth"', $response->headers->get('www-authenticate'));
-            $this->assertEquals(401, $response->getStatusCode());
-            $this->assertEquals('', $response->getContent());
+        $request->server->set('PHP_AUTH_USER', 'dummy');
+        $request->server->set('PHP_AUTH_PW', 'dummy');
+        $controller = new HogeController($service, 'basic', $request);
+        $response = $controller->dispatch();
+        $this->assertEquals(null, $request->attributes->get('authname'));
+        $this->assertEquals('Basic realm="This page is required BASIC auth"', $response->headers->get('www-authenticate'));
+        $this->assertEquals(401, $response->getStatusCode());
+        $this->assertEquals('', $response->getContent());
 
-            $request->server->set('PHP_AUTH_USER', 'user');
-            $request->server->set('PHP_AUTH_PW', 'pass');
-            $controller = new HogeController($service, 'basic', $request);
-            $response = $controller->dispatch();
-            $this->assertEquals('user', $request->attributes->get('authname'));
-            $this->assertEquals(null, $response->headers->get('www-authenticate'));
-            $this->assertEquals(200, $response->getStatusCode());
-            $this->assertEquals('basic', $response->getContent());
-        }
+        $request->server->set('PHP_AUTH_USER', 'user');
+        $request->server->set('PHP_AUTH_PW', 'pass');
+        $controller = new HogeController($service, 'basic', $request);
+        $response = $controller->dispatch();
+        $this->assertEquals('user', $request->attributes->get('authname'));
+        $this->assertEquals(null, $response->headers->get('www-authenticate'));
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('basic', $response->getContent());
     }
 
     function test_authenticate_digest()
@@ -185,72 +182,47 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
             ]);
         };
 
-        foreach ([true, false] as $bool) {
-            $service = $this->provideService([
-                'authenticationProvider' => function () {
-                    return function ($username) { return strtoupper($username); };
-                },
-                'controllerAnnotation'   => $bool,
-            ]);
-            $service->cacher->clear();
-            $metadata = new \ReflectionProperty(Controller::class, 'metadata');
-            $metadata->setAccessible(true);
-            $metadata->setValue([]);
+        $service = $this->provideService([
+            'authenticationProvider' => function () {
+                return function ($username) { return strtoupper($username); };
+            },
+        ]);
+        $service->cacher->clear();
+        $metadata = new \ReflectionProperty(Controller::class, 'metadata');
+        $metadata->setAccessible(true);
+        $metadata->setValue([]);
 
-            $request = new Request();
-            $request->server->set('REQUEST_URI', '/path');
+        $request = new Request();
+        $request->server->set('REQUEST_URI', '/path');
 
-            $controller = new HogeController($service, 'digest', $request);
-            $response = $controller->dispatch();
-            $this->assertEquals(null, $request->attributes->get('authname'));
-            $this->assertStringStartsWith('Digest realm="This page is required DIGEST auth"', $response->headers->get('www-authenticate'));
-            $this->assertEquals(401, $response->getStatusCode());
-            $this->assertEquals('', $response->getContent());
+        $controller = new HogeController($service, 'digest', $request);
+        $response = $controller->dispatch();
+        $this->assertEquals(null, $request->attributes->get('authname'));
+        $this->assertStringStartsWith('Digest realm="This page is required DIGEST auth"', $response->headers->get('www-authenticate'));
+        $this->assertEquals(401, $response->getStatusCode());
+        $this->assertEquals('', $response->getContent());
 
-            $request->server->set('PHP_AUTH_DIGEST', $digest($response->headers->get('www-authenticate'), 'hoge', 'fuga'));
-            $controller = new HogeController($service, 'digest', $request);
-            $response = $controller->dispatch();
-            $this->assertEquals(null, $request->attributes->get('authname'));
-            $this->assertStringStartsWith('Digest realm="This page is required DIGEST auth"', $response->headers->get('www-authenticate'));
-            $this->assertEquals(401, $response->getStatusCode());
-            $this->assertEquals('', $response->getContent());
+        $request->server->set('PHP_AUTH_DIGEST', $digest($response->headers->get('www-authenticate'), 'hoge', 'fuga'));
+        $controller = new HogeController($service, 'digest', $request);
+        $response = $controller->dispatch();
+        $this->assertEquals(null, $request->attributes->get('authname'));
+        $this->assertStringStartsWith('Digest realm="This page is required DIGEST auth"', $response->headers->get('www-authenticate'));
+        $this->assertEquals(401, $response->getStatusCode());
+        $this->assertEquals('', $response->getContent());
 
-            $request->server->set('PHP_AUTH_DIGEST', $digest($response->headers->get('www-authenticate'), 'aaa', 'AAA'));
-            $controller = new HogeController($service, 'digest', $request);
-            $response = $controller->dispatch();
-            $this->assertEquals('aaa', $request->attributes->get('authname'));
-            $this->assertEquals(null, $response->headers->get('www-authenticate'));
-            $this->assertEquals(200, $response->getStatusCode());
-            $this->assertEquals('digest', $response->getContent());
-        }
+        $request->server->set('PHP_AUTH_DIGEST', $digest($response->headers->get('www-authenticate'), 'aaa', 'AAA'));
+        $controller = new HogeController($service, 'digest', $request);
+        $response = $controller->dispatch();
+        $this->assertEquals('aaa', $request->attributes->get('authname'));
+        $this->assertEquals(null, $response->headers->get('www-authenticate'));
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('digest', $response->getContent());
     }
 
     function test_authenticate_misc()
     {
-        $metadata = new \ReflectionProperty(Controller::class, 'metadata');
-        $metadata->setAccessible(true);
-        $metadata->setValue([]);
-
-        $service = $this->provideService([
-            'controllerAnnotation' => true,
-        ]);
-        $controller = new HogeController($service, 'realm', new Request());
+        $controller = new HogeController($this->service, 'realm', new Request());
         $this->assertException(new \DomainException('realm should not be contains'), [$controller, 'dispatch']);
-
-        $controller = new HogeController($service, 'hogera', new Request());
-        $this->assertException(new \DomainException('hogera is not supported'), [$controller, 'dispatch']);
-
-        $metadata = new \ReflectionProperty(Controller::class, 'metadata');
-        $metadata->setAccessible(true);
-        $metadata->setValue([]);
-
-        $service = $this->provideService([
-            'controllerAnnotation' => false,
-        ]);
-        $controller = new HogeController($service, 'realm', new Request());
-        $this->assertException(new \DomainException('realm should not be contains'), [$controller, 'dispatch']);
-
-        $metadata->setValue([]);
     }
 
     function test_session()

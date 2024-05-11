@@ -54,7 +54,7 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals('/hoge/', $resolver->url(HogeController::class));
         $this->assertEquals('/hoge/', $resolver->url(HogeController::class, 'default'));
         $this->assertEquals('/hoge/action', $resolver->url(HogeController::class, 'action'));
-        $this->assertEquals('/hoge/action-id?123&name=hoge', $resolver->url(HogeController::class, 'actionId', ['id' => 123, 'name' => 'hoge']));
+        $this->assertEquals('/hoge/action-id?id=123&name=hoge', $resolver->url(HogeController::class, 'actionId', ['id' => 123, 'name' => 'hoge']));
 
         $resuest->attributes->set('parameter', ['id' => 123]);
         $this->assertEquals('/sub-sub/123/index', $resolver->url(\ryunosuke\Test\stub\Controller\SubSub\DefaultController::class, 'index'));
@@ -70,40 +70,9 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
 
     function test_url_abbr()
     {
-        $service = $this->provideService([
-            'routeAbbreviation' => true,
-        ]);
+        $service = $this->service;
         $resolver = $service->resolver;
         $this->assertEquals('/html-manager/download-csv-file', $resolver->url(HTMLManagerController::class, 'downloadCSVFile'));
-
-        $service = $this->service;
-        $resolver = $service->resolver;
-        $this->assertEquals('/h-t-m-l-manager/download-c-s-v-file', $resolver->url(HTMLManagerController::class, 'downloadCSVFile'));
-    }
-
-    function test_url_params()
-    {
-        $service = $this->service;
-        $resolver = $service->resolver;
-        $this->assertEquals('/hoge/query?12&34', $resolver->url(HogeController::class, 'query', [12, 34]));
-        $this->assertEquals('/hoge/query?12&34', $resolver->url(HogeController::class, 'query', ['p2' => 34, 'p1' => 12]));
-        $this->assertEquals('/hoge/query?12&34', $resolver->url(HogeController::class, 'query', [999, 999, 'p2' => 34, 'p1' => 12]));
-    }
-
-    function test_url_params_query()
-    {
-        $service = $this->provideService([
-            'parameterDelimiter' => '?',
-            'parameterSeparator' => '&',
-        ]);
-        $resolver = $service->resolver;
-        $this->assertEquals('/hoge/query', $resolver->url(HogeController::class, 'query', []));
-        $this->assertEquals('/hoge/query?a%26b', $resolver->url(HogeController::class, 'query', ['a&b']));
-        $this->assertEquals('/hoge/query?12&34', $resolver->url(HogeController::class, 'query', [12, 34]));
-        $this->assertEquals('/hoge/query?12&34', $resolver->url(HogeController::class, 'query', ['p2' => 34, 'p1' => 12]));
-        $this->assertEquals('/hoge/query?999&34&p3=56&p4=78', $resolver->url(HogeController::class, 'query', [999, 999, 'p2' => 34, 'p3' => 56, 'p4' => 78]));
-        $this->assertEquals('/hoge/query-context.json?arg=123', $resolver->url(HogeController::class, 'queryContext.json', [123]));
-        $this->assertEquals('/hoge/query-context.json?arg=123', $resolver->url(HogeController::class, 'queryContext.json', ['arg' => 123]));
     }
 
     function test_url_alias()
@@ -132,7 +101,7 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
     function test_action()
     {
         $service = $this->service;
-        $service->dispatcher->dispatch(Request::create('/resolver/action1?123'));
+        $service->dispatcher->dispatch(Request::create('/resolver/action1?id=123'));
         $resolver = $service->resolver;
 
         $url = $resolver->action('Resolver', 'action1', ['id' => 123, 'op' => 'x']);
@@ -141,8 +110,8 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
         $url = $resolver->action('Resolver', 'action1');
         $this->assertEquals('/resolver/action1', $url);
 
-        $url = $resolver->action('action2', ['id' => 123, 'op' => 'x']);
-        $this->assertEquals('/resolver/action2?123&op=x', $url);
+        $url = $resolver->action('action1', ['id' => 123, 'op' => 'x']);
+        $this->assertEquals('/resolver/action1?id=123&op=x', $url);
 
         $url = $resolver->action(['id' => 123, 'op' => 'x']);
         $this->assertEquals('/resolver/action1?id=123&op=x', $url);
@@ -181,26 +150,25 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
         $resolver = $service->resolver;
 
         $style_css_mtime = filemtime(__DIR__ . '/../../stub/public/css/style.css');
-        $script_js_mtime = filemtime(__DIR__ . '/../../stub/public/js/script.js');
-        $script_min_js_mtime = filemtime(__DIR__ . '/../../stub/public/js/script.min.js');
+        $script_js_sha1 = sha1_file(__DIR__ . '/../../stub/public/js/script.js');
 
         $url = $resolver->path('http://hostname:80/css/style.css');
-        $this->assertEquals("http://hostname:80/css/style.css?$style_css_mtime", $url);
+        $this->assertEquals("http://hostname:80/css/style.css?v=$style_css_mtime", $url);
 
-        $url = $resolver->path('http://hostname:80/css/style.css', false);
+        $url = $resolver->path('http://hostname:80/css/style.css', []);
         $this->assertEquals('http://hostname:80/css/style.css', $url);
 
         $url = $resolver->path('http://hostname:80/css/style.css?key=value');
-        $this->assertEquals("http://hostname:80/css/style.css?key=value&$style_css_mtime", $url);
+        $this->assertEquals("http://hostname:80/css/style.css?key=value&v=$style_css_mtime", $url);
 
-        $url = $resolver->path('http://hostname:80/css/style.css?key=value', false);
+        $url = $resolver->path('http://hostname:80/css/style.css?key=value', []);
         $this->assertEquals('http://hostname:80/css/style.css?key=value', $url);
 
         $url = $resolver->path('http://hostname:80/css/notdound.css?key=value');
         $this->assertEquals('http://hostname:80/css/notdound.css?key=value', $url);
 
-        $url = $resolver->path('http://hostname:80/css/style.css?key=value', []);
-        $this->assertEquals("http://hostname:80/css/style.css?key=value&$style_css_mtime", $url);
+        $url = $resolver->path('http://hostname:80/css/style.css?key=value', 'vv');
+        $this->assertEquals("http://hostname:80/css/style.css?key=value&vv=$style_css_mtime", $url);
 
         $url = $resolver->path('http://hostname:80/css/notdound.css?key=value', []);
         $this->assertEquals('http://hostname:80/css/notdound.css?key=value', $url);
@@ -208,17 +176,11 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
         $url = $resolver->path('http://hostname:80/css/notdound.css', ['v' => 'V', 'a' => ['a' => 'A'], 'n' => null]);
         $this->assertEquals('http://hostname:80/css/notdound.css?v=V&a%5Ba%5D=A', $url);
 
-        $url = $resolver->path('http://hostname:80/css/notdound.css?key=value', ['v' => 'V', 'a' => ['a' => 'A'], 'n' => null]);
-        $this->assertEquals('http://hostname:80/css/notdound.css?key=value&v=V&a%5Ba%5D=A', $url);
+        $url = $resolver->path('http://hostname:80/css/notdound.css?key=value', ['vv' => fn() => 'v', 'v' => 'V', 'a' => ['a' => 'A'], 'n' => null]);
+        $this->assertEquals('http://hostname:80/css/notdound.css?key=value&vv=v&v=V&a%5Ba%5D=A', $url);
 
-        $url = $resolver->path('http://hostname:80/js/script.js', ['.min'], ['v' => 'V', 'a' => ['a' => 'A'], 'n' => null]);
-        $this->assertEquals("http://hostname:80/js/script.min.js?$script_min_js_mtime&v=V&a%5Ba%5D=A", $url);
-
-        $url = $resolver->path('http://hostname:80/js/script.js?key=dummy.js', ['.min'], ['v' => 'V', 'a' => ['a' => 'A'], 'n' => null]);
-        $this->assertEquals("http://hostname:80/js/script.min.js?key=dummy.js&$script_min_js_mtime&v=V&a%5Ba%5D=A", $url);
-
-        $url = $resolver->path('http://hostname:80/js/script.js?key=dummy.js', ['.prd'], ['v' => 'V', 'a' => ['a' => 'A'], 'n' => null]);
-        $this->assertEquals("http://hostname:80/js/script.js?key=dummy.js&$script_js_mtime&v=V&a%5Ba%5D=A", $url);
+        $url = $resolver->path('http://hostname:80/js/script.js?key=dummy.js', ['v' => fn($v) => sha1_file($v), 'a' => ['a' => 'A'], 'n' => null]);
+        $this->assertEquals("http://hostname:80/js/script.js?key=dummy.js&v=$script_js_sha1&a%5Ba%5D=A", $url);
 
         $url = $resolver->path();
         $this->assertEquals('/', $url);
@@ -240,29 +202,20 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
         $url = $resolver->path('/css/notfound.css');
         $this->assertEquals('/foobar/css/notfound.css', $url);
 
-        $url = $resolver->path('//css/style.css', false);
-        $this->assertEquals('/css/style.css', $url);
+        $url = $resolver->path('//css/style.css', 'version');
+        $this->assertEquals("/css/style.css?version=$style_css_mtime", $url);
 
         $url = $resolver->path('//css/style.css');
-        $this->assertEquals("/css/style.css?$style_css_mtime", $url);
+        $this->assertEquals("/css/style.css?v=$style_css_mtime", $url);
 
         $url = $resolver->path('//css/style.css?a=b', []);
-        $this->assertEquals("/css/style.css?a=b&$style_css_mtime", $url);
-
-        $url = $resolver->path('//css/style.css', ['v' => 'V', 'a' => ['a' => 'A'], 'n' => null]);
-        $this->assertEquals("/css/style.css?$style_css_mtime&v=V&a%5Ba%5D=A", $url);
+        $this->assertEquals("/css/style.css?a=b", $url);
 
         $url = $resolver->path('//css/style.css?a=b', ['v' => 'V', 'a' => ['a' => 'A'], 'n' => null]);
-        $this->assertEquals("/css/style.css?a=b&$style_css_mtime&v=V&a%5Ba%5D=A", $url);
+        $this->assertEquals("/css/style.css?a=b&v=V&a%5Ba%5D=A", $url);
 
-        $url = $resolver->path('//js/script.js', ['.min'], ['v' => 'V', 'a' => ['a' => 'A'], 'n' => null]);
-        $this->assertEquals("/js/script.min.js?$script_min_js_mtime&v=V&a%5Ba%5D=A", $url);
-
-        $url = $resolver->path('//js/script.js?a=b', ['.min'], ['v' => 'V', 'a' => ['a' => 'A'], 'n' => null]);
-        $this->assertEquals("/js/script.min.js?a=b&$script_min_js_mtime&v=V&a%5Ba%5D=A", $url);
-
-        $url = $resolver->path('//js/script.js?a=b', ['.prd'], ['v' => 'V', 'a' => ['a' => 'A'], 'n' => null]);
-        $this->assertEquals("/js/script.js?a=b&$script_js_mtime&v=V&a%5Ba%5D=A", $url);
+        $url = $resolver->path('//js/script.js?a=b', ['v' => fn($v) => sha1_file($v), 'a' => ['a' => 'A'], 'n' => null]);
+        $this->assertEquals("/js/script.js?a=b&v=$script_js_sha1&a%5Ba%5D=A", $url);
     }
 
     function test_query()

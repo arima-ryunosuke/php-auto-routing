@@ -30,7 +30,6 @@ class Controller
     use mixin\Accessable {
         mixin\Accessable::__get as Accessable__get;
     }
-    use mixin\Annotatable;
 
     const CACHE_KEY = 'Controller' . Service::CACHE_VERSION;
 
@@ -39,9 +38,6 @@ class Controller
 
     /** @var string アクションメソッドのサフィックス */
     const ACTION_SUFFIX = 'Action';
-
-    /** @internal delete in future scope */
-    public static $enabledAttribute;
 
     /** @var array メタデータ */
     private static $metadata = [];
@@ -76,195 +72,91 @@ class Controller
             return self::$metadata[static::class] = $metadata;
         }
 
-        if (static::$enabledAttribute) {
-            $refclass = new \ReflectionClass(static::class);
-            $actions = [];
-            foreach (get_class_methods(static::class) as $method) {
-                if (preg_match("#(.+)" . static::ACTION_SUFFIX . "$#", $method, $m)) {
-                    $actions[$m[1]] = new \ReflectionMethod(static::class, $method);
-                }
+        $refclass = new \ReflectionClass(static::class);
+        $actions = [];
+        foreach (get_class_methods(static::class) as $method) {
+            if (preg_match("#(.+)" . static::ACTION_SUFFIX . "$#", $method, $m)) {
+                $actions[$m[1]] = new \ReflectionMethod(static::class, $method);
             }
-            $metadata = [
-                '@alias'   => attribute\Alias::by($refclass),
-                '@scope'   => attribute\Scope::by($refclass),
-                'abstract' => $refclass->isAbstract(),
-                'actions'  => array_map(function (\ReflectionMethod $action) {
-                    $events = attribute\Event::by($action);
-                    $cache = attribute\Cache::by($action);
-                    if ($cache) {
-                        $events['cache'] = $cache;
-                    }
-                    $public = attribute\WebCache::by($action);
-                    if ($public) {
-                        $events['public'] = $public;
-                    }
-                    return [
-                        // ルーティング系
-                        '@default-route' => attribute\DefaultRoute::by($action)[0] ?? true,
-                        '@route'         => attribute\Route::by($action),
-                        '@redirect'      => attribute\Redirect::by($action),
-                        '@rewrite'       => attribute\Rewrite::by($action),
-                        '@regex'         => attribute\Regex::by($action),
-                        // アクション系
-                        '@events'        => $events,
-                        '@action'        => attribute\Method::by($action),
-                        '@argument'      => attribute\Argument::by($action),
-                        // メタデータ系
-                        '@basic-auth'    => attribute\BasicAuth::by($action)[0] ?? null,
-                        '@digest-auth'   => attribute\DigestAuth::by($action)[0] ?? null,
-                        '@origin'        => attribute\Origin::by($action),
-                        '@ajaxable'      => attribute\Ajaxable::by($action)[0] ?? null,
-                        '@queryable'     => attribute\Queryable::by($action)[0] ?? true,
-                        '@ratelimit'     => attribute\RateLimit::by($action) ?? [],
-                        // パラメータ系
-                        '@context'       => attribute\Context::by($action) ?: [''],
-                        'parameters'     => array_map(function (\ReflectionParameter $parameter) {
-                            $typemap = [
-                                'bool'    => 'boolean',
-                                'boolean' => 'boolean',
-                                'int'     => 'integer',
-                                'integer' => 'integer',
-                                'float'   => 'double',
-                                'double'  => 'double',
-                                'null'    => 'null',
-                            ];
-                            $pname = $parameter->name;
-                            $types = [];
-                            $defaultable = $parameter->isDefaultValueAvailable();
-                            $default = $defaultable ? $parameter->getDefaultValue() : null;
-
-                            // タイプヒントから
-                            if ($parameter->hasType()) {
-                                $type = $parameter->getType();
-                                $tname = $type instanceof \ReflectionNamedType ? $type->getName() : (string) $type;
-                                $types[$typemap[strtolower($tname)] ?? $tname] = 'typehint';
-                                if ($parameter->allowsNull()) {
-                                    $types['null'] = 'typehint';
-                                }
-                            }
-                            // デフォルト値があるならその型を加える
-                            if ($defaultable) {
-                                $tname = gettype($default);
-                                $types[$typemap[strtolower($tname)] ?? $tname] = 'typehint';
-                            }
-                            // 後始末（NULL は特殊すぎるので後ろに持っていく）
-                            if (array_key_exists('null', $types)) {
-                                $tmp = $types['null'];
-                                unset($types['null']);
-                                $types['null'] = $tmp;
-                            }
-                            return [
-                                'name'        => $pname,
-                                'type'        => $types,
-                                'defaultable' => $defaultable,
-                                'default'     => $default,
-                            ];
-                        }, $action->getParameters()),
-                    ];
-                }, $actions),
-            ];
         }
-        else {
-            // @codeCoverageIgnoreStart
-            $metadata = [
-                '@alias'   => static::getAnnotationAsHash('alias', [null, 'comment'], null, []),
-                '@scope'   => static::getAnnotationAsHash('scope', [null, 'comment'], null, []),
-                'abstract' => static::reflect()->isAbstract(),
-                'actions'  => array_map(function (\ReflectionMethod $action) {
-                    $aname = $action->name;
+        $metadata = [
+            '@alias'   => attribute\Alias::by($refclass),
+            '@scope'   => attribute\Scope::by($refclass),
+            'abstract' => $refclass->isAbstract(),
+            'actions'  => array_map(function (\ReflectionMethod $action) {
+                $events = attribute\Event::by($action);
+                $cache = attribute\Cache::by($action);
+                if ($cache) {
+                    $events['cache'] = $cache;
+                }
+                $public = attribute\WebCache::by($action);
+                if ($public) {
+                    $events['public'] = $public;
+                }
+                return [
+                    // ルーティング系
+                    '@default-route' => attribute\DefaultRoute::by($action)[0] ?? true,
+                    '@route'         => attribute\Route::by($action),
+                    '@redirect'      => attribute\Redirect::by($action),
+                    '@rewrite'       => attribute\Rewrite::by($action),
+                    '@regex'         => attribute\Regex::by($action),
+                    // アクション系
+                    '@events'        => $events,
+                    '@method'        => attribute\Method::by($action),
+                    '@argument'      => attribute\Argument::by($action),
+                    // メタデータ系
+                    '@basic-auth'    => attribute\BasicAuth::by($action)[0] ?? null,
+                    '@digest-auth'   => attribute\DigestAuth::by($action)[0] ?? null,
+                    '@origin'        => attribute\Origin::by($action),
+                    '@ajaxable'      => attribute\Ajaxable::by($action)[0] ?? null,
+                    '@ratelimit'     => attribute\RateLimit::by($action) ?? [],
+                    // パラメータ系
+                    '@context'       => attribute\Context::by($action) ?: [''],
+                    'parameters'     => array_map(function (\ReflectionParameter $parameter) {
+                        $typemap = [
+                            'bool'    => 'boolean',
+                            'boolean' => 'boolean',
+                            'int'     => 'integer',
+                            'integer' => 'integer',
+                            'float'   => 'double',
+                            'double'  => 'double',
+                            'null'    => 'null',
+                        ];
+                        $pname = $parameter->name;
+                        $types = [];
+                        $defaultable = $parameter->isDefaultValueAvailable();
+                        $default = $defaultable ? $parameter->getDefaultValue() : null;
 
-                    $events = static::getAnnotationAsHash('event:', [null, 'args'], $aname, []);
-                    $cache = static::getAnnotationAsString('cache', $aname, null);
-                    if ($cache !== null) {
-                        // アノテーション由来だしキャッシュされるしなので eval でも問題はない
-                        $events['cache'] = ['args' => $cache ? eval("return $cache;") : '60'];
-                    }
-                    $public = static::getAnnotationAsString('public', $aname, null);
-                    if ($public !== null) {
-                        // アノテーション由来だしキャッシュされるしなので eval でも問題はない
-                        $events['public'] = ['args' => $public ? eval("return $public;") : '60'];
-                    }
-                    $paramannotations = static::getAnnotationAsHash('param', ['type', null, 'comment'], $aname, []);
-                    return [
-                        // ルーティング系
-                        '@default-route'  => static::getAnnotationAsBool('default-route', $aname, true),
-                        '@route'          => static::getAnnotationAsHash('route', [null, 'comment'], $aname, []),
-                        '@redirect'       => static::getAnnotationAsHash('redirect', [null, 'status', 'comment'], $aname, []),
-                        '@rewrite'        => static::getAnnotationAsHash('rewrite', [null, 'comment'], $aname, []),
-                        '@regex'          => static::getAnnotationAsHash('regex', [null, 'comment'], $aname, []),
-                        // アクション系
-                        '@events'         => array_map(fn($v) => preg_split('#\s*,\s*#', $v['args']), $events),
-                        '@action'         => array_map('strtoupper', static::getAnnotationAsList('action', ',', $aname, [])),
-                        '@argument'       => array_map('strtoupper', static::getAnnotationAsList('argument', ',', $aname, [])),
-                        // メタデータ系
-                        '@authentication' => static::getAnnotationAsString('authentication', $aname, null),
-                        '@origin'         => static::getAnnotationAsList('origin', ',', $aname, []),
-                        '@ajaxable'       => static::getAnnotationAsInt('ajaxable', $aname, null),
-                        '@queryable'      => static::getAnnotationAsBool('queryable', $aname, true),
-                        '@ratelimit'      => [],
-                        // パラメータ系
-                        '@context'        => static::getAnnotationAsList('context', ',', $aname, ['']),
-                        'parameters'      => array_map(function (\ReflectionParameter $parameter) use ($paramannotations) {
-                            $typemap = [
-                                'bool'    => 'boolean',
-                                'boolean' => 'boolean',
-                                'int'     => 'integer',
-                                'integer' => 'integer',
-                                'float'   => 'double',
-                                'double'  => 'double',
-                                'null'    => 'null',
-                            ];
-                            $pname = $parameter->name;
-                            $types = [];
-                            $defaultable = $parameter->isDefaultValueAvailable();
-                            $default = $defaultable ? $parameter->getDefaultValue() : null;
-
-                            // アノテーションから
-                            if (isset($paramannotations["\$$pname"])) {
-                                foreach (explode('|', strtolower($paramannotations["\$$pname"]['type'])) as $tname) {
-                                    $types[$typemap[strtolower($tname)] ?? $tname] = 'annotation';
-                                }
+                        // タイプヒントから
+                        if ($parameter->hasType()) {
+                            $type = $parameter->getType();
+                            $tname = $type instanceof \ReflectionNamedType ? $type->getName() : (string) $type;
+                            $types[$typemap[strtolower($tname)] ?? $tname] = 'typehint';
+                            if ($parameter->allowsNull()) {
+                                $types['null'] = 'typehint';
                             }
-                            // タイプヒントから
-                            if ($parameter->hasType()) {
-                                $type = $parameter->getType();
-                                $tname = $type instanceof \ReflectionNamedType ? $type->getName() : (string) $type;
-                                $types[$typemap[strtolower($tname)] ?? $tname] = 'typehint';
-                                if ($parameter->allowsNull()) {
-                                    $types['null'] = 'typehint';
-                                }
-                            }
-                            // デフォルト値があるならその型を加える
-                            if ($defaultable) {
-                                $tname = gettype($default);
-                                $types[$typemap[strtolower($tname)] ?? $tname] = 'typehint';
-                            }
-                            // 後始末（NULL は特殊すぎるので後ろに持っていく）
-                            if (array_key_exists('null', $types)) {
-                                $tmp = $types['null'];
-                                unset($types['null']);
-                                $types['null'] = $tmp;
-                            }
-                            return [
-                                'name'        => $pname,
-                                'type'        => $types,
-                                'defaultable' => $defaultable,
-                                'default'     => $default,
-                            ];
-                        }, $action->getParameters()),
-                    ];
-                }, (function () {
-                    $actions = [];
-                    foreach (get_class_methods(static::class) as $method) {
-                        if (preg_match("#(.+)" . static::ACTION_SUFFIX . "$#", $method, $m)) {
-                            $actions[$m[1]] = static::reflect($method);
                         }
-                    }
-                    return $actions;
-                })()),
-            ];
-            // @codeCoverageIgnoreEnd
-        }
+                        // デフォルト値があるならその型を加える
+                        if ($defaultable) {
+                            $tname = gettype($default);
+                            $types[$typemap[strtolower($tname)] ?? $tname] = 'typehint';
+                        }
+                        // 後始末（NULL は特殊すぎるので後ろに持っていく）
+                        if (array_key_exists('null', $types)) {
+                            $tmp = $types['null'];
+                            unset($types['null']);
+                            $types['null'] = $tmp;
+                        }
+                        return [
+                            'name'        => $pname,
+                            'type'        => $types,
+                            'defaultable' => $defaultable,
+                            'default'     => $default,
+                        ];
+                    }, $action->getParameters()),
+                ];
+            }, $actions),
+        ];
 
         if ($cacher) {
             $cacher->set($cachekey, $metadata);
@@ -632,11 +524,9 @@ class Controller
         $metadata = static::metadata($this->service->cacher);
 
         // 認証
-        [$authmethod, $realm] = explode(' ', $metadata['actions'][$this->action]['@authentication'] ?? '', 2) + [1 => 'Enter username and password'];
         $authentications = [
-            'basic'                       => $metadata['actions'][$this->action]['@basic-auth'] ?? null,
-            'digest'                      => $metadata['actions'][$this->action]['@digest-auth'] ?? null,
-            strtolower(trim($authmethod)) => ['realm' => trim($realm)], // for compatible
+            'basic'  => $metadata['actions'][$this->action]['@basic-auth'] ?? null,
+            'digest' => $metadata['actions'][$this->action]['@digest-auth'] ?? null,
         ];
         foreach ($authentications as $authmethod => $option) {
             if (strlen($authmethod) && $option) {
@@ -821,10 +711,6 @@ class Controller
                 },
             ],
         ];
-
-        if (!isset($methods[$method])) {
-            throw new \DomainException("$method is not supported.");
-        }
 
         $username = $methods[$method]['verify']();
         if (!strlen($username)) {
@@ -1041,13 +927,7 @@ class Controller
 
     protected function finish() { }
 
-    protected function error(\Throwable $t) { } // delete in future scope
-
-    protected function catch(\Throwable $t)
-    {
-        // for compatible
-        return $this->error($t); // @codeCoverageIgnore
-    }
+    protected function catch(\Throwable $t) { }
 
     protected function finally(Response $response) { }
 }

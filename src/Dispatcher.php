@@ -264,7 +264,7 @@ class Dispatcher
 
         if (!$is_error) {
             $method = $request->getMethod();
-            $allows = $action_data['@action'];
+            $allows = $action_data['@method'];
             if ($allows && !preg_grep('#^' . $method . '$#i', $allows)) {
                 throw new HttpException(405, "$action_name doesn't allow $method method.");
             }
@@ -303,7 +303,7 @@ class Dispatcher
                 $datasources += $request->$source->all();
             }
         }
-        // @action に基いて見るべきパラメータを導出
+        // @method に基いて見るべきパラメータを導出
         $actionmap = [
             'GET'    => ['query', 'attributes'],                     // GET で普通は body は来ない
             'POST'   => ['request', 'files', 'query', 'attributes'], // POST はかなり汎用的なのですべて見る
@@ -311,14 +311,13 @@ class Dispatcher
             'DELETE' => ['query', 'attributes'],                     // DELETE で普通は body は来ない
             '*'      => ['query', 'request', 'files', 'attributes'], // 全部
         ];
-        foreach ($metadata['actions'][$action_name]['@action'] ?: ['*'] as $action) {
+        foreach ($metadata['actions'][$action_name]['@method'] ?: ['*'] as $action) {
             foreach ($actionmap[$action] ?? [] as $source) {
                 $datasources += $request->$source->all();
             }
         }
 
         // ReflectionParameter に基いてパラメータを確定
-        $arrayable = $this->service->parameterArrayable;
         $parameters = [];
         foreach ($metadata['actions'][$action_name]['parameters'] as $i => $parameter) {
             $name = $parameter['name'];
@@ -347,7 +346,7 @@ class Dispatcher
             $type = $parameter['type'];
             if ($type) {
                 $firsttype = array_key_first($type);
-                if (!$arrayable && !isset($type['array']) && is_array($value)) {
+                if (!isset($type['array']) && is_array($value)) {
                     throw new HttpException(404, 'parameter is not match type.');
                 }
                 if ($firsttype !== "null" && !isset($type[strtolower(gettype($value))]) && !class_exists($firsttype)) {
@@ -355,7 +354,7 @@ class Dispatcher
                 }
             }
             // 型指定が存在しないかつ配列が来たら 404
-            elseif (!$arrayable && is_array($value)) {
+            elseif (is_array($value)) {
                 throw new HttpException(404, 'parameter is not match type.');
             }
 

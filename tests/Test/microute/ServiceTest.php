@@ -223,23 +223,4 @@ class ServiceTest extends \ryunosuke\Test\AbstractTestCase
         $service->run();
         $this->assertInstanceOf(\Throwable::class, $logs[0]);
     }
-
-    function test_logger_compatible()
-    {
-        $logs = [];
-        $service = $this->provideService([
-            'requestFactory' => function () {
-                return function ($query, $request, $attributes, $cookies, $files, $server, $content) {
-                    throw new \TypeError();
-                };
-            },
-            'logger'         => function () use (&$logs) {
-                return function ($t) use (&$logs) {
-                    $logs[] = $t;
-                };
-            },
-        ]);
-        $service->run();
-        $this->assertInstanceOf(\Throwable::class, $logs[0]);
-    }
 }

@@ -59,25 +59,18 @@ class Resolver
      */
     public function url($controller, $action = '', $params = [], $base = null)
     {
-        $chain_case_pattern = $this->service->routeAbbreviation ? '#(?<!/)[A-Z]([A-Z](?![a-z]))*#' : '#(?<!/)[A-Z]#';
-
         // コンテキストの切り離し
         $parts = pathinfo($action);
         $context = $parts['extension'] ?? '';
         $action = $parts['filename'] ?? '';
 
         $maction = lcfirst(strtr(ucwords($action, " \t\r\n\f\v-"), ['-' => '']));
-
-        // default アクションはアクションなしと等価（設定レベルではなく規約レベル）
-        if ($action === 'default') {
-            $action = '';
-        }
-        $action = ltrim(strtolower(preg_replace($chain_case_pattern, '-$0', $action)), '-');
+        $action = $this->actionMethodToAction($action);
 
         $controller = $this->service->dispatcher->resolveController($controller);
         $class_name = $this->service->dispatcher->shortenController($controller);
         $class_name = preg_replace('#\\\\?Default$#', '', $class_name);
-        $class_name = ltrim(strtolower(preg_replace($chain_case_pattern, '-$0', str_replace('\\', '/', $class_name))), '-');
+        $class_name = ltrim(strtolower(preg_replace('#(?<!/)[A-Z]([A-Z](?![a-z]))*#', '-$0', str_replace('\\', '/', $class_name))), '-');
 
         if ($base === '') {
             $base = '/' . $class_name;
@@ -103,58 +96,10 @@ class Resolver
         }
 
         if (strlen($maction)) {
-            $action_data = $metadata['actions'][$maction];
-            $parameters = $action_data['parameters'];
-            $pathinfo = '';
-            if ($action_data['@queryable']) {
-                // 起動パラメータとして渡ってくることがあるので読み替えなければならない
-                $newparams = [];
-                foreach ($params as $key => $value) {
-                    if (is_int($key)) {
-                        $key = $parameters[$key]['name'];
-                    }
-                    $newparams[$key] = $value;
-                }
-                $params = $newparams;
-            }
-            else {
-                $querymap = [];
-
-                // 起動パラメータとして検索（起動パラメータなのでただの配列のときのみ）
-                foreach ($params as $key => $value) {
-                    if (is_int($key)) {
-                        $querymap[] = rawurlencode($params[$key]);
-                        unset($params[$key]);
-                    }
-                }
-
-                // パラメータ名として検索（名前が一致するもの）
-                foreach ($parameters as $n => $parameter) {
-                    $name = $parameter['name'];
-                    if (array_key_exists($name, $params)) {
-                        $querymap[$n] = rawurlencode($params[$name]);
-                        unset($params[$name]);
-                    }
-                }
-
-                // すべてデフォルト引数持ちで引数なしもありうるのでチェック
-                if (count($querymap)) {
-                    $delimiter = $this->service->parameterDelimiter;
-                    $separator = $this->service->parameterSeparator;
-                    $pathinfo = $delimiter . implode($separator, $querymap);
-                }
-            }
-
-            $querysep = ($pathinfo[0] ?? '') === '?' ? '&' : '?';
-            $action .= $pathinfo . (strlen($context) ? ".$context" : '') . ($params ? $querysep . http_build_query($params) : '');
+            $action .= (strlen($context) ? ".$context" : '') . ($params ? '?' . http_build_query($params) : '');
         }
 
-        if ($this->service->defaultActionAsDirectory) {
-            $url = rtrim($base, '/') . "/$action";
-        }
-        else {
-            $url = rtrim($base, '/') . (strlen($action) ? '/' . $action : '');
-        }
+        $url = rtrim($base, '/') . "/$action";
         return strlen($url) ? $url : '/';
     }
 
@@ -237,83 +182,63 @@ class Resolver
      * - スキーム付き完全URL :指定された $filename
      * - "//" から始まる     :hostname/{$filename}
      * - "/"  から始まる     :hostname/base/path/{$filename}
-     * - "/"  から始まらない :hostname/base/path/controller/action/{$filename}
+     * - "/"  から始まらない :hostname/base/path/controller/{$filename}
      *
-     * @param string|null $filename 静的ファイル名
-     * @param array $minSuffixes 探す min ファイルサフィックス
-     * @param string|array $query クエリパラメータ
+     * $query に文字列を渡すと更新日時クエリのキーとして付与される。
+     *
+     * @param string $filename 静的ファイル名
+     * @param array|string $query クエリパラメータ
      * @return string URL
      */
-    public function path($filename = null, $minSuffixes = [], $query = [])
+    public function path($filename = '', $query = 'v')
     {
-        // for compatible
-        [$minSuffixes, $query, $appendmtime] = (function ($minSuffixes, $query) {
-            // 第2引数が $appendmtime だった時代
-            if (is_bool($minSuffixes)) {
-                return [[], '', $minSuffixes];
-            }
-            // 第2引数が $query だった時代
-            if (is_array($minSuffixes) && array_values($minSuffixes) !== $minSuffixes) {
-                return [[], $minSuffixes, true];
-            }
-            // 現行は第2引数が $minSuffixes
-            return [$minSuffixes, $query, true];
-        })($minSuffixes, $query);
-
-        if (is_array($query) || is_object($query)) {
-            $query = preg_replace('#%5B\d+%5D=#', '%5B%5D=', http_build_query($query));
-        }
-
         $docroot = rtrim($this->service->request->server->get('DOCUMENT_ROOT'), '/');
-        $basepath = rtrim($this->service->request->getBasePath(), '/');
+        $basepath = trim($this->service->request->getBasePath(), '/');
+        $pathinfo = trim(preg_replace('#(^.+)(/.*)$#', '$1', $this->service->request->getPathInfo()), '/');
         $urlparts = parse_url($filename);
 
-        $suffix = function (&$filepath, $fullpather) use ($minSuffixes) {
-            $minSuffixes[] = '';
-            foreach ($minSuffixes as $suffix) {
-                $minfilename = preg_replace("@^(.+?)(\.[^.]+?(\?|#|$))@u", "$1$suffix$2", $filepath);
-                $fullpath = $fullpather($minfilename);
-                if (is_file($fullpath)) {
-                    $filepath = $minfilename;
-                    return $fullpath;
-                }
-            }
-            return null;
-        };
-
-        // スキーム付き URL ならそのまま返す
+        // スキーム付きはそのまま
         if (isset($urlparts['scheme'])) {
-            // 「同じリポジトリだけど静的ファイルは別ホストに分けている」という状況があるので min 検出と更新日時付与も試みる
-            $fullpath = $suffix($filename, fn($path) => $docroot . $basepath . parse_url($path, PHP_URL_PATH));
-            if ($fullpath !== null && $appendmtime) {
-                $query = filemtime($fullpath) . (strlen($query) ? '&' : '') . $query;
-            }
-            return $filename . (strlen($query) ? (isset($urlparts['query']) ? '&' : '?') . $query : '');
+            $fullpath = "$docroot/{$urlparts['path']}";
         }
-
         // 空っぽはベースパスを表す
-        if (strlen($filename) === 0) {
-            $filepath = $basepath . '/';
+        elseif (strlen($filename) === 0) {
+            $filename = "/$basepath/";
         }
         // "//" から始まる場合はフルパスとみなす（本来別の意味だが、同一アプリ内で // から始めることなんてほとんど無い）
         elseif (substr($filename, 0, 2) === '//') {
-            $filepath = substr($filename, 1);
+            $filename = substr($filename, 1);
         }
         // "/" ならベースパスからの相対
         elseif ($filename[0] === '/') {
-            $filepath = $basepath . $filename;
+            $filename = "/$basepath/$filename";
         }
         // それ以外はカレントパスからの相対
         else {
-            $currentpath = trim(preg_replace('#(^.+)(/.*)$#', '$1', $this->service->request->getPathInfo()), '/');
-            $filepath = $basepath . '/' . $currentpath . '/' . $filename;
+            $filename = "/$basepath/$pathinfo/$filename";
         }
 
-        $fullpath = $suffix($filepath, fn($path) => $docroot . '/' . strstr($path . '?', '?', true));
-        if ($fullpath !== null && $appendmtime) {
-            $query = filemtime($fullpath) . (strlen($query) ? '&' : '') . $query;
+        if (!isset($fullpath)) {
+            $fullpath = "$docroot/" . parse_url($filename, PHP_URL_PATH);
+            $filename = preg_replace('#/+#', '/', $filename);
         }
-        return $filepath . (strlen($query) ? (isset($urlparts['query']) ? '&' : '?') . $query : '');
+
+        if (is_string($query)) {
+            $query = [$query => fn($fullpath) => is_file($fullpath) ? filemtime($fullpath) : null];
+        }
+
+        foreach ($query as $k => $v) {
+            if ($v instanceof \Closure) {
+                $v = $v($fullpath);
+            }
+            if ($v === null) {
+                unset($query[$k]);
+                continue;
+            }
+            $query[$k] = $v;
+        }
+
+        return $filename . ($query ? (isset($urlparts['query']) ? '&' : '?') . http_build_query($query) : '');
     }
 
     /**

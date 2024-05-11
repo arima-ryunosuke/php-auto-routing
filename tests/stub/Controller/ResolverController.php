@@ -8,11 +8,4 @@ class ResolverController extends AbstractController
     {
         return __FUNCTION__;
     }
-
-    #[\ryunosuke\microute\attribute\Method('get')]
-    #[\ryunosuke\microute\attribute\Queryable(false)]
-    public function action2Action(int $id)
-    {
-        return __FUNCTION__;
-    }
 }

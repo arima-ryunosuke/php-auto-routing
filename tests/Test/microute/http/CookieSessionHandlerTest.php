@@ -141,49 +141,6 @@ class CookieSessionHandlerTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertArrayNotHasKey('sessname2', $cookies);
     }
 
-    function test_regression()
-    {
-        // v0 も読み込み可能
-        $v0cookies = [
-            'sessname'  => 2,
-            'sessname0' => 'eNrbvNl5R42pf-LWU0HutQ9UFrobRRlpl5bmBFb6hWf7VVSW6me6ROXmBweFJaU4-lTmZaflhDuXRFimeeVWVGWFBlcVBhoGGhukeYXnhLsk-xhVlXlYpOZX-qQUFBYG-xk4hfoHGTuampl4euWY-_inFwZ6RpZVppea-acFhQan5LtlhgJt8TEoMM1ISg8',
-            'sessname1' => 'JiEgCAIMPNEQ=',
-        ];
-        $handler = $this->provideHandler($v0cookies);
-        $actual = $handler->read('sid');
-        $this->assertEquals('this is v0 cookie data. and other data:[[1,2,3,4,5,6,7,8,9,0],"a","b","c","d","e","f"]', $actual);
-
-        // 書き込むとマイグレーションされて v2 になる
-        $handler->write('sid', "append-$actual");
-        $this->assertJsonStringEquals([
-            'version' => 2,
-            'length'  => 1,
-            'ctime'   => time(),
-            'atime'   => time(),
-            'mtime'   => time(),
-        ], $v0cookies['sessname']);
-
-        // v1 も読み込み可能
-        $v1cookies = [
-            'sessname'  => json_encode(['version' => 1, 'length' => 2]),
-            'sessname0' => 'D4nuo82eyCm2Rz8tqB3QEzN6SkpXVlBwcHV4UlVBdzhEekVvajRaWVBNc0hjVy9kMXJodFlDQXI2SloydlFza2NmUTVuUz',
-            'sessname1' => 'NaYTJ5SkJQcjJiVXc5d3Z6WHlYS0k2YUduNm1RMGpoS1NYWTdscHcvQ3V5UnlkM2ZSUjdJPQ==',
-        ];
-        $handler = $this->provideHandler($v1cookies);
-        $actual = $handler->read('sid');
-        $this->assertEquals('this is v1 cookie data. and other data:[[1,2,3,4,5,6,7,8,9,0],"a","b","c","d","e","f"]', $actual);
-
-        // 書き込むとマイグレーションされて v2 になる
-        $handler->write('sid', "append-$actual");
-        $this->assertJsonStringEquals([
-            'version' => 2,
-            'length'  => 1,
-            'ctime'   => time(),
-            'atime'   => time(),
-            'mtime'   => time(),
-        ], $v1cookies['sessname']);
-    }
-
     function test_open()
     {
         $cookies = [];

@@ -17,142 +17,6 @@ class RouterTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertTrue($service->cacher->has(Router::CACHE_KEY . '.routings'));
     }
 
-    function test_parse()
-    {
-        $service = $this->provideService([
-            'parameterDelimiter' => '$',
-            'parameterSeparator' => ';',
-        ]);
-
-        // 普通のパース
-        $parsed = $service->router->parse('/hoge/fuga/piyo');
-        $this->assertEquals('Hoge\\Fuga', $parsed['controller']);
-        $this->assertEquals('piyo', $parsed['action']);
-        $this->assertEquals('', $parsed['context']);
-        $this->assertEquals([], $parsed['parameters']);
-
-        // ハイフン区切り（camelCase に変換されるはず）
-        $parsed = $service->router->parse('/ho-ge/fu-ga/pi-yo');
-        $this->assertEquals('HoGe\\FuGa', $parsed['controller']);
-        $this->assertEquals('piYo', $parsed['action']);
-        $this->assertEquals('', $parsed['context']);
-        $this->assertEquals([], $parsed['parameters']);
-
-        // パラメータ付き
-        $parsed = $service->router->parse('/hoge/fuga/piyo$a;b');
-        $this->assertEquals('Hoge\\Fuga', $parsed['controller']);
-        $this->assertEquals('piyo', $parsed['action']);
-        $this->assertEquals('', $parsed['context']);
-        $this->assertEquals(['a', 'b'], $parsed['parameters']);
-
-        // パラメータ付き（コンテキスト有り）
-        $parsed = $service->router->parse('/hoge/fuga/piyo$a;b.json');
-        $this->assertEquals('Hoge\\Fuga', $parsed['controller']);
-        $this->assertEquals('piyo', $parsed['action']);
-        $this->assertEquals('json', $parsed['context']);
-        $this->assertEquals(['a', 'b'], $parsed['parameters']);
-    }
-
-    function test_parse_slash()
-    {
-        $service = $this->provideService([
-            'parameterDelimiter' => '/',
-            'parameterSeparator' => ';',
-        ]);
-
-        // パラメータ付き（本当に 404）
-        $parsed = $service->router->parse('/hoge/fuga/piyo/a;b');
-        $this->assertEquals('Hoge\\Fuga', $parsed['controller']);
-        $this->assertEquals('piyo', $parsed['action']);
-        $this->assertEquals('', $parsed['context']);
-        $this->assertEquals(['a', 'b'], $parsed['parameters']);
-
-        // パラメータ付き（アクションメソッド有り）
-        $parsed = $service->router->parse('/hoge/query-context/a;b');
-        $this->assertEquals('Hoge', $parsed['controller']);
-        $this->assertEquals('queryContext', $parsed['action']);
-        $this->assertEquals('', $parsed['context']);
-        $this->assertEquals(['a', 'b'], $parsed['parameters']);
-
-        // パラメータ付き（コンテキスト有り）
-        $parsed = $service->router->parse('/hoge/query-context/a;b.json');
-        $this->assertEquals('Hoge', $parsed['controller']);
-        $this->assertEquals('queryContext', $parsed['action']);
-        $this->assertEquals('json', $parsed['context']);
-        $this->assertEquals(['a', 'b'], $parsed['parameters']);
-    }
-
-    function test_parse_slash_slash()
-    {
-        $service = $this->provideService([
-            'parameterDelimiter' => '/',
-            'parameterSeparator' => '/',
-        ]);
-
-        // パラメータ付き（本当に 404）
-        $parsed = $service->router->parse('/hoge/fuga/piyo/a/b');
-        $this->assertEquals('Hoge', $parsed['controller']);
-        $this->assertEquals('default', $parsed['action']);
-        $this->assertEquals('', $parsed['context']);
-        $this->assertEquals(['fuga', 'piyo', 'a', 'b'], $parsed['parameters']);
-
-        // パラメータ付き（デフォルトアクション）
-        $parsed = $service->router->parse('/a/b');
-        $this->assertEquals('Default', $parsed['controller']);
-        $this->assertEquals('default', $parsed['action']);
-        $this->assertEquals('', $parsed['context']);
-        $this->assertEquals(['a', 'b'], $parsed['parameters']);
-
-        // パラメータ付き（アクションメソッド有り）
-        $parsed = $service->router->parse('/hoge/query-context/a/b');
-        $this->assertEquals('Hoge', $parsed['controller']);
-        $this->assertEquals('queryContext', $parsed['action']);
-        $this->assertEquals('', $parsed['context']);
-        $this->assertEquals(['a', 'b'], $parsed['parameters']);
-
-        // パラメータ付き（コンテキスト有り）
-        $parsed = $service->router->parse('/hoge/query-context/a/b.json');
-        $this->assertEquals('Hoge', $parsed['controller']);
-        $this->assertEquals('queryContext', $parsed['action']);
-        $this->assertEquals('json', $parsed['context']);
-        $this->assertEquals(['a', 'b'], $parsed['parameters']);
-    }
-
-    function test_parse_query()
-    {
-        $service = $this->provideService([
-            'parameterDelimiter' => '?',
-            'parameterSeparator' => '&',
-        ]);
-
-        // パラメータ付き
-        $parsed = $service->router->parse('/hoge/query-context', 'a&b');
-        $this->assertEquals('Hoge', $parsed['controller']);
-        $this->assertEquals('queryContext', $parsed['action']);
-        $this->assertEquals('', $parsed['context']);
-        $this->assertEquals(['a', 'b'], $parsed['parameters']);
-
-        // パラメータ付き（コンテキスト有り）
-        $parsed = $service->router->parse('/hoge/query-context.json', 'a&b');
-        $this->assertEquals('Hoge', $parsed['controller']);
-        $this->assertEquals('queryContext', $parsed['action']);
-        $this->assertEquals('json', $parsed['context']);
-        $this->assertEquals(['a', 'b'], $parsed['parameters']);
-    }
-
-    function test_parse_rfc3986()
-    {
-        $service = $this->provideService([
-            'parameterUseRFC3986' => true,
-        ]);
-
-        $parsed = $service->router->parse('/hoge/query', 'a&b');
-        $this->assertEquals('Hoge', $parsed['controller']);
-        $this->assertEquals('query', $parsed['action']);
-        $this->assertEquals('', $parsed['context']);
-        $this->assertEquals([], $parsed['parameters']);
-    }
-
     function test_route()
     {
         $service = $this->service;
@@ -200,20 +64,10 @@ class RouterTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertTrue($route->isRedirect('/direct'));
         $this->assertEquals(302, $route->getStatusCode());
 
-        $service->router->redirect('/param', HogeController::class, 302, 'actionId');
-        $route = $service->router->match(Request::create('/param?123'));
-        $this->assertTrue($route->isRedirect('/hoge/action-id?123'));
-        $this->assertEquals(302, $route->getStatusCode());
-
         $service->router->redirect('/context.json', HogeController::class, 302, 'action_context');
         $route = $service->router->match(Request::create('/context.json'));
         $this->assertTrue($route->isRedirect('/hoge/action_context.json'));
         $this->assertEquals(302, $route->getStatusCode());
-
-        $service->router->redirect('/queryContext.json', HogeController::class, 303, 'queryContext');
-        $route = $service->router->match(Request::create('/queryContext.json?123'));
-        $this->assertTrue($route->isRedirect('/hoge/query-context.json?arg=123'));
-        $this->assertEquals(303, $route->getStatusCode());
 
         $service->router->redirect('/external', 'http://example.com');
         $route = $service->router->match(Request::create('/external'));
@@ -520,10 +374,8 @@ class RouterTest extends \ryunosuke\Test\AbstractTestCase
         $ref->setAccessible(true);
         $ref->setValue($request, '/basepath');
         $service = $this->provideService([
-            'debug'              => true,
-            'request'            => $request,
-            'parameterDelimiter' => '?',
-            'parameterSeparator' => '&',
+            'debug'   => true,
+            'request' => $request,
         ]);
         $service->router->redirect('/hoge/notfound/old', '/hoge/notfound');
         $service->router->redirect('/notfound/action/old', '/notfound/action');
@@ -554,12 +406,6 @@ class RouterTest extends \ryunosuke\Test\AbstractTestCase
                 'route'  => 'default',
                 'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::parameter',
                 'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::parameterAction',
-                'method' => [],
-            ],
-            '/basepath/url/all/queryable?$arg1@integer&$arg2@array'                   => [
-                'route'  => 'default',
-                'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::queryable',
-                'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::queryableAction',
                 'method' => [],
             ],
             '/basepath/url/all/post'                                                  => [
@@ -656,12 +502,6 @@ class RouterTest extends \ryunosuke\Test\AbstractTestCase
                 'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::parameterAction',
                 'method' => [],
             ],
-            '/basepath/relay/queryable?$arg1@integer&$arg2@array'                     => [
-                'route'  => 'alias',
-                'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::queryable',
-                'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::queryableAction',
-                'method' => [],
-            ],
             '/basepath/relay/post'                                                    => [
                 'route'  => 'alias',
                 'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::post',
@@ -741,32 +581,5 @@ class RouterTest extends \ryunosuke\Test\AbstractTestCase
             $this->assertEquals($expect, $urls[$url], "url is '$url'");
         }
         $this->assertArrayNotHasKey('/url/all/default-off', $urls);
-    }
-
-    function test_urls_slash()
-    {
-        $request = Request::createFromGlobals();
-        $ref = new \ReflectionProperty($request, 'basePath');
-        $ref->setAccessible(true);
-        $ref->setValue($request, '/basepath');
-        $service = $this->provideService([
-            'debug'              => true,
-            'request'            => $request,
-            'parameterDelimiter' => '/',
-            'parameterSeparator' => '/',
-        ]);
-        $urls = $service->router->urls();
-
-        $expects = [
-            '/basepath/url/all/parameter?arg1=string&arg2=array'    => [],
-            '/basepath/url/all/queryable/$arg1@integer/$arg2@array' => [],
-            '/basepath/relay/parameter?arg1=string&arg2=array'      => [],
-            '/basepath/relay/queryable/$arg1@integer/$arg2@array'   => [],
-            '/basepath/relay/context.json?id=integer(123)'          => [],
-            '/basepath/relay/context.xml?id=integer(123)'           => [],
-        ];
-        foreach ($expects as $url => $expect) {
-            $this->assertArrayHasKey($url, $urls, implode("\n", array_keys($urls)));
-        }
     }
 }

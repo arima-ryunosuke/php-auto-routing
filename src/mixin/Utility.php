@@ -28,4 +28,13 @@ trait Utility
         preg_match_all("#$regex#", '', $m);
         return array_flip(preg_grep('#^[0-9]+$#', array_keys($m), PREG_GREP_INVERT));
     }
+
+    private function actionMethodToAction($action)
+    {
+        // default アクションはアクションなしと等価（設定レベルではなく規約レベル）
+        if ($action === 'default') {
+            $action = '';
+        }
+        return ltrim(strtolower(preg_replace('#(?<!/)[A-Z]([A-Z](?![a-z]))*#', '-$0', $action)), '-');
+    }
 }

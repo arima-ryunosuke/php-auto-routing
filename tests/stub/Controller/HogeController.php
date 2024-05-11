@@ -103,7 +103,6 @@ class HogeController extends AbstractController
     }
 
     #[\ryunosuke\microute\attribute\Method('get')]
-    #[\ryunosuke\microute\attribute\Queryable(false)]
     public function actionIdAction(int $id)
     {
     }
@@ -130,12 +129,6 @@ class HogeController extends AbstractController
         return new JsonResponse(func_get_args());
     }
 
-    #[\ryunosuke\microute\attribute\Method('get')]
-    public function arrayableAction($mixed, ?string $string = null, ?array $array = null)
-    {
-        return 'ok';
-    }
-
     public function arrayAction(array $array) { }
 
     #[\ryunosuke\microute\attribute\Method('get')]
@@ -148,12 +141,6 @@ class HogeController extends AbstractController
     public function argAction($arg)
     {
         return 'ok';
-    }
-
-    #[\ryunosuke\microute\attribute\Method('get')]
-    #[\ryunosuke\microute\attribute\Queryable(false)]
-    public function queryAction(int $p1, int $p2)
-    {
     }
 
     public function nullAction($arg = null)
@@ -172,16 +159,6 @@ class HogeController extends AbstractController
     {
     }
 
-    public function annotationNone() { }
-
-    public function annotationOver() { }
-
-    # authentication だけは処理方法を変えたのでアノテーション・アトリビュートの2本立てで行く（後に消す）
-
-    /**
-     * @action get
-     * @authentication basic This page is required BASIC auth
-     */
     #[\ryunosuke\microute\attribute\Method('get')]
     #[\ryunosuke\microute\attribute\BasicAuth('This page is required BASIC auth')]
     public function basicAction()
@@ -189,10 +166,6 @@ class HogeController extends AbstractController
         return 'basic';
     }
 
-    /**
-     * @action get
-     * @authentication digest This page is required DIGEST auth
-     */
     #[\ryunosuke\microute\attribute\Method('get')]
     #[\ryunosuke\microute\attribute\DigestAuth('This page is required DIGEST auth')]
     public function digestAction()
@@ -200,10 +173,6 @@ class HogeController extends AbstractController
         return 'digest';
     }
 
-    /**
-     * @action get
-     * @authentication realm This page is required "REALM" auth
-     */
     #[\ryunosuke\microute\attribute\Method('get')]
     #[\ryunosuke\microute\attribute\BasicAuth('This page is required "REALM" auth')]
     public function realmAction()
@@ -224,32 +193,11 @@ class HogeController extends AbstractController
         return 'OK';
     }
 
-    /**
-     * @action get
-     * @authentication hogera This page is required HOGERA auth
-     */
-    public function hogeraAction() { return 'hogera'; }
-
     #[\ryunosuke\microute\attribute\Method('get')]
     #[\ryunosuke\microute\attribute\Context('*')]
     public function contextAction()
     {
     }
-
-    /**
-     * @aname
-     */
-    public function annotationZero() { }
-
-    /**
-     * @aname hoge
-     */
-    public function annotationOne() { }
-
-    /**
-     * @aname hoge, fuga
-     */
-    public function annotationTwo() { }
 
     #[\ryunosuke\microute\attribute\Method('get')]
     public function action_throwAction()

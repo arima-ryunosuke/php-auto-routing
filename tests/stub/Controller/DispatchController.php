@@ -70,7 +70,6 @@ class DispatchController extends AbstractController
     public function catch(\Throwable $t)
     {
         if ($t instanceof \UnexpectedValueException || $t instanceof HttpException) {
-            parent::error($t);
             return new JsonResponse('error-response');
         }
         throw $t;
