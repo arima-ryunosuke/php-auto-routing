@@ -73,7 +73,7 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
     function test___toString()
     {
         $controller = new HogeController($this->service, 'action');
-        $this->assertException('__toString is not supported', [$controller, '__toString']);
+        $this->assertEquals(HogeController::class, "$controller");
     }
 
     function test_location()
@@ -885,7 +885,7 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
 
     function test_event_alternate()
     {
-        $metadata = EventController::metadata();
+        $metadata = EventController::metadata($this->service->cacher);
         $this->assertEquals(['cache' => ['100']], $metadata['actions']['alternate']['@events']);
     }
 

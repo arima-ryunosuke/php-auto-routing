@@ -19,17 +19,17 @@ class ThrowableResponse extends Exception implements Throwable
         $this->response = $response;
     }
 
-    public function __get($name)
+    public function __get(string $name): mixed
     {
         return $this->response->$name;
     }
 
-    public function __call($name, $arguments)
+    public function __call(string $name, array $arguments): mixed
     {
         return $this->response->$name(...$arguments);
     }
 
-    public function response()
+    public function response(): HttpFoundation\Response
     {
         return $this->response;
     }

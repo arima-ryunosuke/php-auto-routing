@@ -6,12 +6,12 @@ namespace ryunosuke\microute\mixin;
  */
 trait Accessable
 {
-    public function __isset($name)
+    public function __isset(string $name): bool
     {
         return isset($this->$name);
     }
 
-    public function __get($name)
+    public function __get(string $name): mixed
     {
         if (property_exists($this, $name)) {
             return $this->$name;
@@ -19,7 +19,7 @@ trait Accessable
         throw new \DomainException(get_class($this) . "::$name is undefined.");
     }
 
-    public function __set($name, $value)
+    public function __set(string $name, mixed $value): void
     {
         throw new \DomainException(get_class($this) . "::$name is undefined.");
     }

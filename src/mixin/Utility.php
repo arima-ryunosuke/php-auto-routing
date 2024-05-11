@@ -6,7 +6,7 @@ namespace ryunosuke\microute\mixin;
  */
 trait Utility
 {
-    private function reverseRegex($regex, &$params)
+    private function reverseRegex(string $regex, array &$params): string
     {
         $url = $regex;
         foreach ($params as $key => $val) {
@@ -22,14 +22,14 @@ trait Utility
         return $url;
     }
 
-    private function regexParameter($regex)
+    private function regexParameter(string $regex): array
     {
         // 無理やり match させることで名前付きキャプチャーの名前一覧が得られる
         preg_match_all("#$regex#", '', $m);
         return array_flip(preg_grep('#^[0-9]+$#', array_keys($m), PREG_GREP_INVERT));
     }
 
-    private function actionMethodToAction($action)
+    private function actionMethodToAction(string $action): string
     {
         // default アクションはアクションなしと等価（設定レベルではなく規約レベル）
         if ($action === 'default') {

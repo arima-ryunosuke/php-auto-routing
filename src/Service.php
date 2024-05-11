@@ -50,10 +50,10 @@ class Service implements HttpKernelInterface
     const CACHE_VERSION = '1-1-0';
     const CACHE_KEY     = 'Service' . Service::CACHE_VERSION;
 
-    private $values;
-    private $frozen = [];
+    private array $values;
+    private array $frozen = [];
 
-    public function __construct($values = [])
+    public function __construct(array $values = [])
     {
         assert(($values['cacher'] ?? null) instanceof \Psr\SimpleCache\CacheInterface, 'requires cacher(\\Psr\\SimpleCache\\CacheInterface)');
 
@@ -175,12 +175,12 @@ class Service implements HttpKernelInterface
         }
     }
 
-    public function __isset($name)
+    public function __isset(string $name): bool
     {
         return isset($this->values[$name]);
     }
 
-    public function __get($name)
+    public function __get(string $name): mixed
     {
         assert(array_key_exists($name, $this->values), get_class($this) . "::$name is undefined.");
 
@@ -191,7 +191,7 @@ class Service implements HttpKernelInterface
         return $this->frozen[$name];
     }
 
-    public function trigger($name, ...$args)
+    public function trigger(string $name, ...$args)
     {
         $events = $this->events[$name] ?? [];
         if (is_callable($events)) {
@@ -212,7 +212,7 @@ class Service implements HttpKernelInterface
     /**
      * @inheritDoc
      */
-    public function handle(Request $request, $type = self::MAIN_REQUEST, $catch = true)
+    public function handle(Request $request, int $type = self::MAIN_REQUEST, bool $catch = true)
     {
         $dispacher = $this->dispatcher;
 
@@ -232,7 +232,7 @@ class Service implements HttpKernelInterface
         return $response;
     }
 
-    public function run()
+    public function run(): static
     {
         try {
             $request = $this->request;

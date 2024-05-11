@@ -11,7 +11,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  * コントローラへの移譲を行う。
  *
  * @property-read Controller $dispatchedController
- * @property-read \Throwable $lastException
+ * @property-read ?\Throwable $lastException
  */
 class Dispatcher
 {
@@ -19,28 +19,27 @@ class Dispatcher
 
     const CACHE_KEY = 'Dispatcher' . Service::CACHE_VERSION;
 
-    /** @var Service */
-    private $service;
+    private Service $service;
 
-    /** @var Controller ディスパッチされたコントローラ(存在するとは限らない) */
-    private $dispatchedController;
+    // コントローラが引けなくてもエラーコントローラのために名前空間を覚えておく必要がある
+    private string     $dispatchingNamespace;
+    private Controller $dispatchedController;
 
-    /** @var \Throwable */
-    private $lastException;
+    private ?\Throwable $lastException = null;
 
     public function __construct(Service $service)
     {
         $this->service = $service;
     }
 
-    public function dispatch(Request $request)
+    public function dispatch(Request $request): Response
     {
         $matched = $this->service->router->match($request);
         if ($matched instanceof Response) {
             return $matched;
         }
 
-        $this->dispatchedController = $matched['controller'];
+        $this->dispatchingNamespace = $matched['controller'];
         $controller_action = $this->findController($matched['controller'], $matched['action']);
 
         if (is_string($controller_action[0])) {
@@ -58,7 +57,7 @@ class Dispatcher
         throw new HttpException(...$controller_action);
     }
 
-    public function error(\Throwable $t, Request $request)
+    public function error(\Throwable $t, Request $request): Response
     {
         $this->lastException = $t;
 
@@ -68,7 +67,7 @@ class Dispatcher
 
         // 下層から順繰りにエラーコントローラを探す
         $controller = null;
-        $ns = $this->shortenController($this->dispatchedController);
+        $ns = $this->shortenController($this->dispatchingNamespace ?? '');
         while (true) {
             $controller_action = $this->findController("$ns\\Default", 'error');
             if (is_string($controller_action[0])) {
@@ -103,7 +102,7 @@ class Dispatcher
         }
     }
 
-    public function finish(Response $response, Request $request)
+    public function finish(Response $response, Request $request): Response
     {
         if (!strlen($response->headers->get('Content-Type'))) {
             $contexts = $this->service->parameterContexts;
@@ -125,11 +124,8 @@ class Dispatcher
 
     /**
      * アプリ固有のコントローラ名から完全修飾クラス名に変換する
-     *
-     * @param string $controller_class
-     * @return string|Controller
      */
-    public function resolveController($controller_class)
+    public function resolveController(string $controller_class): ?string
     {
         $controllerClass = $this->service->controllerClass;
         if (is_subclass_of($controller_class, $controllerClass)) {
@@ -150,26 +146,20 @@ class Dispatcher
 
     /**
      * 完全修飾クラス名からアプリ固有のコントローラ名に変換する
-     *
-     * @param string|Controller $controller_class
-     * @return string
      */
-    public function shortenController($controller_class)
+    public function shortenController(?string $controller_class): string
     {
         $prefix = preg_quote($this->service->controllerNamespace, '#');
         $suffix = $this->service->controllerClass::CONTROLLER_SUFFIX;
-        $classname = is_object($controller_class) ? get_class($controller_class) : $controller_class;
-        return preg_replace("#^($prefix)|($suffix)$#", '', ltrim($classname, '\\'));
+        return preg_replace("#^($prefix)|($suffix)$#", '', ltrim($controller_class, '\\'));
     }
 
     /**
      * コントローラを探す
      *
-     * @param string $controller_name コントローラ名
-     * @param string $action_name アクション名
      * @return array [見つかったクラス名, アクション名] or [投げるべき例外コード, メッセージ]
      */
-    public function findController($controller_name, $action_name)
+    public function findController(string $controller_name, string $action_name): array
     {
         $cachekey = self::CACHE_KEY . '.ca.' . strtr("$controller_name+$action_name", [
                 '\\' => '%',
@@ -225,14 +215,10 @@ class Dispatcher
 
     /**
      * コントローラを読み込む
-     *
-     * @param Controller|string $controller_class コントローラクラス
-     * @param string $action_name アクション名
-     * @param Request $request リクエストオブジェクト
-     * @return Controller
      */
-    public function loadController($controller_class, $action_name, $request)
+    public function loadController(string $controller_class, string $action_name, Request $request): Controller
     {
+        /** @var Controller::class $controller_class */
         $action_data = $controller_class::metadata($this->service->cacher)['actions'][$action_name];
         $is_error = $action_name === 'error';
 
@@ -281,9 +267,8 @@ class Dispatcher
         return new $controller_class($this->service, $action_name, $request);
     }
 
-    public function detectArgument($controller, $args)
+    public function detectArgument(Controller $controller, array $args): array
     {
-        /** @var Controller $controller */
         $metadata = $controller::metadata($this->service->cacher);
         $request = $controller->request;
         $action_name = $controller->action;

@@ -39,28 +39,22 @@ class Controller
     /** @var string アクションメソッドのサフィックス */
     const ACTION_SUFFIX = 'Action';
 
-    /** @var array メタデータ */
-    private static $metadata = [];
+    private static array $metadata = [];
 
-    /** @var array[] オートロード名前空間 */
-    private static $namespaces = [];
+    private static array $namespaces = [];
 
     /** @var object[] オートロードインスタンス */
-    private static $instances = [];
+    private static array $instances = [];
 
-    /** @var Service */
-    private $service;
+    private Service $service;
 
-    /** @var string 実行中のアクション */
-    private $action;
+    private string $action;
 
-    /** @var Request */
-    private $request;
+    private Request $request;
 
-    /** @var Response */
-    private $response;
+    private Response $response;
 
-    public static function metadata(CacheInterface $cacher = null)
+    public static function metadata(CacheInterface $cacher): array
     {
         // 頻繁に呼ばれるので $cacher だけでなくローカルキャッシュもする
         if (isset(self::$metadata[static::class])) {
@@ -170,12 +164,8 @@ class Controller
      * オートロード自体は composer などの外部頼りで自前でロードは行わない。
      * オブジェクトはキャッシュされるので生成は一度きりとなる。
      * （ほぼ内部仕様だが、このメソッドはキャッシュの削除も兼ねている）。
-     *
-     * @param string $namespace オートロードする名前空間
-     * @param array $ctor_args コンストラクタ引数
-     * @return array 現在の名前空間配列
      */
-    public static function autoload($namespace, $ctor_args = [])
+    public static function autoload(string $namespace, array $ctor_args = []): array
     {
         $namespace = trim($namespace, '\\');
         self::$namespaces[$namespace] = $ctor_args;
@@ -183,7 +173,7 @@ class Controller
         return array_keys(self::$namespaces);
     }
 
-    final public function __construct(Service $service, $action, Request $request = null)
+    final public function __construct(Service $service, string $action, ?Request $request = null)
     {
         $this->service = $service;
         $this->action = $action;
@@ -193,7 +183,7 @@ class Controller
         $this->construct();
     }
 
-    public function __get($name)
+    public function __get(string $name): mixed
     {
         if ($name === 'session') {
             return $this->request->getSession();
@@ -209,22 +199,17 @@ class Controller
         return $this->Accessable__get($name);
     }
 
-    public function __toString()
+    public function __toString(): string
     {
-        if ($this) {
-            throw new \DomainException(__METHOD__ . ' is not supported');
-        }
-        return ''; // @codeCoverageIgnore
+        return static::class;
     }
 
     /**
      * 名前空間からの相対パスを返す
      *
      * 実質的にビューファイルへのパス取得として機能する。
-     *
-     * @return string 相対パス
      */
-    public function location()
+    public function location(): string
     {
         $classname = $this->service->dispatcher->shortenController(static::class);
         return str_replace('\\', '/', $classname) . '/' . $this->action;
@@ -235,20 +220,8 @@ class Controller
      *
      * 第2引数以降で配列ではなく個別指定できるが特に意味はない（配列のキーを明示するために定義している）。
      * 引数で作成したい場合は普通に new Cookie すればいい。
-     *
-     * @param array $default 引数配列
-     * @param string|null $name The name of the cookie
-     * @param string|null $value The value of the cookie
-     * @param int|string|\DateTimeInterface $expire The time the cookie expires
-     * @param string|null $path The path on the server in which the cookie will be available on
-     * @param string|null $domain The domain that the cookie is available to
-     * @param bool|null $secure Whether the client should send back the cookie only over HTTPS or null to auto-enable this when the request is already using HTTPS
-     * @param bool $httpOnly Whether the cookie will be made accessible only through the HTTP protocol
-     * @param bool $raw Whether the cookie value should be sent with no url encoding
-     * @param string|null $sameSite Whether the cookie will be available for cross-site requests
-     * @return Cookie
      */
-    public function cookie(array $default, string $name = null, string $value = null, $expire = 0, ?string $path = '/', string $domain = null, ?bool $secure = false, bool $httpOnly = true, bool $raw = false, string $sameSite = null)
+    public function cookie(array $default, string $name = null, string $value = null, $expire = 0, ?string $path = '/', string $domain = null, ?bool $secure = false, bool $httpOnly = true, bool $raw = false, string $sameSite = null): Cookie
     {
         extract($default);
         return new Cookie($name, $value, $expire, $path, $domain, $secure, $httpOnly, $raw, $sameSite);
@@ -260,11 +233,8 @@ class Controller
      * 実態は register_shutdown_function であり、 fpm 環境でなければほとんど意味はない。
      * （fpm 環境なら fastcgi_finish_request でコールされるので後処理として活用できるのを利用している）。
      * それに付随するいくつかのボイラープレートをまとめ上げただけなので、ちょろっと呼ぶだけなら普通に register_shutdown_function を呼ぶだけとあまり変わらない。
-     *
-     * @param \Closure $tack 実行する処理
-     * @param int $timeout 後処理のタイムアウト（0は無制限。request_terminate_timeout_track_finished:no だと決してタイムアウトしないので注意）
      */
-    public function background($tack, $timeout = 0)
+    public function background(\Closure $tack, int $timeout = 0): \Closure
     {
         $callback = function () use ($tack, $timeout) {
             // ファイルセッションだと次のリクエストをブロックしてしまうのでセッションを書き込んで終了する
@@ -281,25 +251,16 @@ class Controller
 
     /**
      * 指定 URL へリダイレクト
-     *
-     * @param string $url リダイレクト URL
-     * @param int $status ステータスコード
-     * @return RedirectResponse
      */
-    public function redirect($url, $status = 302)
+    public function redirect(string $url, int $status = 302): RedirectResponse
     {
         return $this->response(new RedirectResponse($url, $status));
     }
 
     /**
      * 指定 URL へリダイレクト（自身のホストのみ）
-     *
-     * @param string $url リダイレクト URL
-     * @param string $default ダメだった場合のデフォルト
-     * @param int $status ステータスコード
-     * @return RedirectResponse
      */
-    public function redirectInternal($url, $default = '/', $status = 302)
+    public function redirectInternal(string $url, string $default = '/', int $status = 302): RedirectResponse
     {
         $hostname = parse_url($url, PHP_URL_HOST);
         if ($hostname !== null && $hostname !== $this->request->getHost()) {
@@ -310,13 +271,8 @@ class Controller
 
     /**
      * 指定ルートへリダイレクト
-     *
-     * @param string $route ルート名
-     * @param array $params パラメータ
-     * @param int $status ステータスコード
-     * @return RedirectResponse
      */
-    public function redirectRoute($route, $params = [], $status = 302)
+    public function redirectRoute(string $route, array $params = [], int $status = 302): RedirectResponse
     {
         $url = $this->service->router->reverseRoute($route, $params);
         return $this->redirect($url, $status);
@@ -324,14 +280,8 @@ class Controller
 
     /**
      * 指定 Controller/Action へリダイレクト
-     *
-     * @param array|string|null $eitherParamsOrAction パラメータあるいはアクション名
-     * @param string|null $action アクション名
-     * @param string|null $controller コントローラ名
-     * @param int $status ステータスコード
-     * @return RedirectResponse
      */
-    public function redirectThis($eitherParamsOrAction = null, $action = null, $controller = null, $status = 302)
+    public function redirectThis(string|array $eitherParamsOrAction = [], ?string $action = null, ?string $controller = null, int $status = 302): RedirectResponse
     {
         // 文字列なら action 指定とみなす
         if (is_string($eitherParamsOrAction)) {
@@ -354,12 +304,8 @@ class Controller
 
     /**
      * 現在の URL へリダイレクト
-     *
-     * @param array $params パラメータ
-     * @param int $status ステータスコード
-     * @return RedirectResponse
      */
-    public function redirectCurrent($params = [], $status = 302)
+    public function redirectCurrent(array $params = [], int $status = 302): RedirectResponse
     {
         $url = $this->service->resolver->current($params);
         return $this->redirect($url, $status);
@@ -367,12 +313,8 @@ class Controller
 
     /**
      * JSON レスポンスを返す
-     *
-     * @param array $data JSON データ
-     * @param int $jsonOptions JSON オプション
-     * @return JsonResponse
      */
-    public function json($data = [], $jsonOptions = JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE)
+    public function json(mixed $data = [], int $jsonOptions = JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE): JsonResponse
     {
         // JsonResponse は後から setEncodingOptions を呼ぶと decode/encode が走るので注意すること
         $jsonData = json_encode($data, $jsonOptions);
@@ -381,13 +323,8 @@ class Controller
 
     /**
      * ファイルの内容をそのままレスポンスする
-     *
-     * @param string $filename レスポンスファイル
-     * @param bool $httpcache 304 キャッシュを使用するか
-     * @param bool $public cache-control:public フラグ
-     * @return Response
      */
-    public function content($filename, $httpcache = true, $public = false)
+    public function content(string $filename, bool $httpcache = true, bool $public = false): Response
     {
         if (!file_exists($filename)) {
             throw new HttpException(404);
@@ -406,12 +343,8 @@ class Controller
 
     /**
      * ダウンロードレスポンスを返す
-     *
-     * @param \Closure|\SplFileInfo|string $eitherContentOrFileinfo クロージャかファイルオブジェクトかダウンロードの中身
-     * @param string|null $filename ダウンロードファイル名
-     * @return Response
      */
-    public function download($eitherContentOrFileinfo, $filename = null)
+    public function download(\Closure|\SplFileInfo|string $eitherContentOrFileinfo, ?string $filename = null): Response
     {
         $attachment = function ($filename) {
             if ($filename !== null) {
@@ -456,13 +389,8 @@ class Controller
      * レコードが配列の場合は json_encode して data として送出される。
      * レコードがオブジェクトの場合はイテレータ結果が送出される。
      * その際、フィールドが配列の場合は json_encode, オブジェクトの場合は __toString/json_encode される（__toString 優先）。
-     *
-     * @param \Closure $provider データを返すクロージャ
-     * @param int|float $timeout タイムアウト秒
-     * @param bool $testing テストフラグ（出力を扱うため引数で与える）
-     * @return StreamedResponse
      */
-    public function push($provider, $timeout = 10, $testing = false)
+    public function push(\Closure $provider, float $timeout = 10, bool $testing = false): StreamedResponse
     {
         $response = new StreamedResponse(function () use ($provider, $timeout, $testing) {
             session_write_close();
@@ -519,7 +447,7 @@ class Controller
         return $this->response($response);
     }
 
-    public function dispatch($args = [], $error_handling = true)
+    public function dispatch(array $args = [], bool $error_handling = true): Response
     {
         $metadata = static::metadata($this->service->cacher);
 
@@ -592,7 +520,7 @@ class Controller
         }
     }
 
-    public function action($args)
+    public function action(array $args): Response
     {
         // RateLimit はログイン前提なことがあるので action 内でやるしかない（IP だけならもっと早い段階で弾けるが…）
         $this->ratelimit();
@@ -626,7 +554,7 @@ class Controller
         return $this->response;
     }
 
-    private function dispatchEvent($phase)
+    private function dispatchEvent(string $phase): ?Response
     {
         $metadata = static::metadata($this->service->cacher);
 
@@ -640,16 +568,13 @@ class Controller
                 return $result;
             }
         }
+        return null;
     }
 
     /**
      * 認証ヘッダを返す
-     *
-     * @param string $method 認証メソッド（basic or digest）
-     * @param string $realm realm 文字列
-     * @return string|null ユーザ名
      */
-    protected function authenticate(string $method, string $realm)
+    protected function authenticate(string $method, string $realm): ?string
     {
         // クオートは RFC 的に規定はされているようだが、詳細な情報を見つけられなかった
         // そもそも Edge では正しく解釈してくれない挙動を示したのでいっその事不可とする
@@ -766,12 +691,8 @@ class Controller
      * - 更新されていたら通常レスポンス
      * - されていないなら 304 レスポンス
      * のような場合に使用できる。
-     *
-     * @param Response $response レスポンスオブジェクト
-     * @param \DateTime|int|null $lastModified 最終更新時刻
-     * @return bool キャッシュの設定に成功したら(304を返すはずなら) true
      */
-    protected function cache(Response $response, $lastModified = null)
+    protected function cache(Response $response, \DateTime|int|null $lastModified = null): bool
     {
         // http 的キャッシュが許容されているのは GET, HEAD のみ
         if (!$this->request->isMethodCacheable()) {
@@ -794,16 +715,16 @@ class Controller
         return $response->isNotModified($this->request);
     }
 
-    protected function cacheEvent($phase, $expire)
+    protected function cacheEvent(string $phase, int $expire): ?Response
     {
         // debug 中は無効
         if ($this->service->debug) {
-            return;
+            return null;
         }
 
         // http 的キャッシュが許容されているのは GET, HEAD のみ
         if (!$this->request->isMethodCacheable()) {
-            return;
+            return null;
         }
 
         if ($phase === 'pre') {
@@ -819,9 +740,10 @@ class Controller
                 'last_modified' => new \DateTime(),
             ]);
         }
+        return null;
     }
 
-    protected function publicEvent($phase, $expire)
+    protected function publicEvent(string $phase, int $expire)
     {
         // debug 中は無効
         if ($this->service->debug) {
@@ -856,10 +778,8 @@ class Controller
      * このメソッドの中身はリファレンス実装としての意味合いが強いので、使用側で必ずオーバーライドして使うこと。
      *
      * @codeCoverageIgnore
-     * @param mixed $action_value アクションメソッドの返り値
-     * @return string|Response レスポンス
      */
-    protected function render($action_value)
+    protected function render(mixed $action_value): Response
     {
         // アクションメソッドが数値を返したらステータスコードにするとか
         if (is_int($action_value)) {
@@ -892,7 +812,7 @@ class Controller
      * @param T $response
      * @return T
      */
-    protected function response(Response $response)
+    protected function response(Response $response): Response
     {
         if ($this->response === $response) {
             return $this->response;

@@ -9,14 +9,12 @@ use Symfony\Component\HttpFoundation\Session\SessionInterface;
  */
 class Request extends \Symfony\Component\HttpFoundation\Request
 {
-    /** @var InputBag alias for $this->>query */
-    public $get;
+    public InputBag $get;
 
-    /** @var InputBag alias for $this->>request */
-    public $post, $body;
+    public InputBag $post;
+    public InputBag $body;
 
-    /** @var InputBag alias by Request Method */
-    public $input;
+    public InputBag $input;
 
     public function __construct(array $query = [], array $request = [], array $attributes = [], array $cookies = [], array $files = [], array $server = [], $content = null)
     {
@@ -28,7 +26,7 @@ class Request extends \Symfony\Component\HttpFoundation\Request
         $this->input = $this->isMethod('GET') ? $this->query : $this->request;
     }
 
-    public function __get($name)
+    public function __get(string $name): mixed
     {
         if ($name === 'session') {
             return $this->getSession();
@@ -40,12 +38,8 @@ class Request extends \Symfony\Component\HttpFoundation\Request
      * GET, POST, COOKIE の優先順位でリクエスト値を返す
      *
      * いわゆる $_REQUEST 変数に値するが、request_order などの影響は受けない。
-     *
-     * @param string $key キー名
-     * @param string|int|float|bool|null $default デフォルト値
-     * @return string|int|float|bool|null リクエストの値
      */
-    public function input(string $key, $default = null)
+    public function input(string $key, mixed $default = null): mixed
     {
         foreach ([$this->query, $this->request, $this->cookies] as $bag) {
             if ($bag->has($key)) {
@@ -61,11 +55,8 @@ class Request extends \Symfony\Component\HttpFoundation\Request
      *
      * Symfony の型の制約を受けない（配列型でもそのまま返す）。
      * 無かった場合は null 固定。
-     *
-     * @param string ...$keys キー名
-     * @return string|int|float|bool|null リクエストの値
      */
-    public function any(string ...$keys)
+    public function any(string ...$keys): mixed
     {
         $all = $this->input->all();
         foreach ($keys as $key) {
@@ -81,11 +72,8 @@ class Request extends \Symfony\Component\HttpFoundation\Request
      *
      * Symfony の型の制約を受けない（配列型でもそのまま返す）。
      * keys の指定順は維持される。
-     *
-     * @param string ...$keys キー名
-     * @return array リクエストの値
      */
-    public function only(string ...$keys)
+    public function only(string ...$keys): array
     {
         //return array_intersect_key($this->input->all(), array_keys($keys));
         $all = $this->input->all();
@@ -102,26 +90,23 @@ class Request extends \Symfony\Component\HttpFoundation\Request
      * 現在のリクエストメソッドパラメータから指定したものを除外してを返す
      *
      * Symfony の型の制約を受けない（配列型でもそのまま返す）。
-     *
-     * @param string ...$keys キー名
-     * @return array リクエストの値
      */
-    public function except(string ...$keys)
+    public function except(string ...$keys): array
     {
         return array_diff_key($this->input->all(), array_flip($keys));
     }
 
-    public function getUserAgent()
+    public function getUserAgent(): ?string
     {
         return $this->headers->get('USER-AGENT');
     }
 
-    public function getReferer()
+    public function getReferer(): ?string
     {
         return $this->headers->get('REFERER');
     }
 
-    public function getClientHints($raw = false, string $alternativeCookie = 'client_hints')
+    public function getClientHints(bool $raw = false, string $alternativeCookie = 'client_hints'): array
     {
         // @see https://developer.mozilla.org/ja/docs/Web/HTTP/Headers/Accept-CH
         $hints = [
@@ -169,7 +154,7 @@ class Request extends \Symfony\Component\HttpFoundation\Request
         return $result;
     }
 
-    private function _parseStructuredFieldValue(string $type, string $sfv)
+    private function _parseStructuredFieldValue(string $type, string $sfv): mixed
     {
         // @todo 真面目にはやってられないので CH に必要なもののみ（まぁ自前実装より専用のライブラリを使った方がいい）
 

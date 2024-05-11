@@ -14,8 +14,7 @@ class Resolver
 
     const CACHE_KEY = 'Resolver' . Service::CACHE_VERSION;
 
-    /** @var Service */
-    private $service;
+    private Service $service;
 
     public function __construct(Service $service)
     {
@@ -26,10 +25,8 @@ class Resolver
      * URL ビルダー（ホスト名）
      *
      * 単純にホスト名を返す。
-     *
-     * @return string URL
      */
-    public function host()
+    public function host(): string
     {
         return $this->service->request->getHttpHost();
     }
@@ -38,26 +35,16 @@ class Resolver
      * URL ビルダー（ルート名）
      *
      * ルート名、パラメータ配列から URL を生成。
-     *
-     * @param string $route ルート名
-     * @param array $params クエリパラメータ
-     * @return string URL
      */
-    public function route($route, $params = [])
+    public function route(string $route, array $params = []): string
     {
         return $this->service->router->reverseRoute($route, $params);
     }
 
     /**
      * URL ビルダー（コントローラ・アクション）
-     *
-     * @param string $controller コントローラ名
-     * @param string $action アクション名
-     * @param array $params パラメーター
-     * @param string|null $base エイリアス名
-     * @return string URL
      */
-    public function url($controller, $action = '', $params = [], $base = null)
+    public function url(string $controller, string $action = '', array $params = [], ?string $base = null): string
     {
         // コンテキストの切り離し
         $parts = pathinfo($action);
@@ -67,6 +54,7 @@ class Resolver
         $maction = lcfirst(strtr(ucwords($action, " \t\r\n\f\v-"), ['-' => '']));
         $action = $this->actionMethodToAction($action);
 
+        /** @var Controller::class $controller */
         $controller = $this->service->dispatcher->resolveController($controller);
         $class_name = $this->service->dispatcher->shortenController($controller);
         $class_name = preg_replace('#\\\\?Default$#', '', $class_name);
@@ -107,13 +95,8 @@ class Resolver
      * URL ビルダー（アクション）
      *
      * url メソッドの引数簡易版として機能する。
-     *
-     * @param string|null $eitherControllerOrAction コントローラ名 or アクション名
-     * @param string|null $eitherActionOrParams アクション名 or クエリパラメータ
-     * @param array $params クエリパラメータ
-     * @return string URL
      */
-    public function action($eitherControllerOrAction = null, $eitherActionOrParams = null, array $params = [])
+    public function action(string|array|null $eitherControllerOrAction = null, string|array|null $eitherActionOrParams = null, array $params = []): string
     {
         // 引数が3つの時は「controller, action, params」確定
         if (func_num_args() === 3) {
@@ -160,12 +143,9 @@ class Resolver
      *
      * 現在 URL を返す。
      * ただし、クエリパラメータを与えればクエリ部分は書き換えることができる。
-     *
-     * @param array $params クエリパラメータ
-     * @param ?array $current 現在パラメータ。null を与えると現在の物がそのまま適用される。空配列を渡すと完全にリセットされる
-     * @return string URL
+     * $current に null を与えると現在の物がそのまま適用される。空配列を渡すと完全にリセットされる。
      */
-    public function current($params = [], $current = null)
+    public function current(array $params = [], ?array $current = null): string
     {
         $basepath = rtrim($this->service->request->getBasePath(), '/');
         $currentpath = $this->service->request->getPathInfo();
@@ -185,12 +165,8 @@ class Resolver
      * - "/"  から始まらない :hostname/base/path/controller/{$filename}
      *
      * $query に文字列を渡すと更新日時クエリのキーとして付与される。
-     *
-     * @param string $filename 静的ファイル名
-     * @param array|string $query クエリパラメータ
-     * @return string URL
      */
-    public function path($filename = '', $query = 'v')
+    public function path(string $filename = '', string|array $query = 'v'): string
     {
         $docroot = rtrim($this->service->request->server->get('DOCUMENT_ROOT'), '/');
         $basepath = trim($this->service->request->getBasePath(), '/');
@@ -248,12 +224,8 @@ class Resolver
      * 連想配列は再帰する。
      * クロージャを与えると元の値を引数としてコールバックされる（ない場合は null）。
      * null を与えるとパラメータから除去される。
-     *
-     * @param array $params 付与・除去するパラメータ
-     * @param ?array $current 元となるクエリパラメータ（デバッグ・テスト用）
-     * @return string クエリ文字列
      */
-    public function query($params, $current = null)
+    public function query(array $params, ?array $current = null): string
     {
         $is_hasharray = function ($array) {
             if (!is_array($array)) {
@@ -296,14 +268,8 @@ class Resolver
      * data URI 化する
      *
      * いろいろ引数は用意しているが原則として指定しなくても特に問題はない。
-     *
-     * @param string $file ファイル名
-     * @param string|null $mimetype MIME タイプ（省略時は自動検出）
-     * @param string|null $charset charset（省略時は自動設定）
-     * @param string|null $encode エンコード方法（省略時は自動設定）
-     * @return string data URI
      */
-    public function data($file, $mimetype = null, $charset = null, $encode = null)
+    public function data(string $file, ?string $mimetype = null, ?string $charset = null, ?string $encode = null): string
     {
         if (!file_exists($file)) {
             throw new \InvalidArgumentException("$file is not exists.");

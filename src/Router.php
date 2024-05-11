@@ -4,6 +4,7 @@ namespace ryunosuke\microute;
 use ryunosuke\microute\mixin\Utility;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * ルータクラス
@@ -24,11 +25,9 @@ class Router
     const ROUTE_REDIRECT = 'redirect';
     const ROUTE_REGEX    = 'regex';
 
-    /** @var Service */
-    private $service;
+    private Service $service;
 
-    /** @var array ルーティング一覧 */
-    private $routings;
+    private array $routings;
 
     public function __construct(Service $service)
     {
@@ -71,7 +70,7 @@ class Router
         }
     }
 
-    public function match(Request $request)
+    public function match(Request $request): array|Response
     {
         $parse = function (string $path) {
             $context = pathinfo($path, PATHINFO_EXTENSION);
@@ -156,7 +155,7 @@ class Router
                     foreach ($this->routings[self::ROUTE_SCOPE] as $regex => $routing) {
                         if (preg_match("#^$regex#u", $path, $matches)) {
                             $this->service->logger->info("match " . self::ROUTE_SCOPE . "($regex): $path");
-                            $path2 = preg_replace("#^$regex#u", '', $path, 1, $count);
+                            $path2 = preg_replace("#^$regex#u", '', $path, 1);
                             $parsed2 = $parse($path2);
                             $parsed['controller'] = $this->service->dispatcher->shortenController($routing);
                             $parsed['action'] = $parsed2['action'];
@@ -194,13 +193,8 @@ class Router
 
     /**
      * ルート名を追加
-     *
-     * @param string $name ルート名
-     * @param string $controller コントローラ名
-     * @param string $action アクション名
-     * @return $this
      */
-    public function route($name, $controller, $action)
+    public function route(string $name, string $controller, string $action): static
     {
         $this->service->logger->debug(self::ROUTE_ROUTE . " $name: $controller@$action");
         $this->routings[self::ROUTE_ROUTE][$name] = [$controller, $action];
@@ -209,12 +203,8 @@ class Router
 
     /**
      * エイリアスルート定義
-     *
-     * @param string $prefix URL
-     * @param string $controller コントローラ名
-     * @return $this
      */
-    public function alias($prefix, $controller)
+    public function alias(string $prefix, string $controller): static
     {
         $this->service->logger->debug(self::ROUTE_ALIAS . " $prefix: $controller");
         $this->routings[self::ROUTE_ALIAS][$prefix] = $controller;
@@ -223,12 +213,8 @@ class Router
 
     /**
      * スコープルート定義
-     *
-     * @param string $regex 正規表現
-     * @param string $controller コントローラ名
-     * @return $this
      */
-    public function scope($regex, $controller)
+    public function scope(string $regex, string $controller): static
     {
         if ($regex[0] !== '/') {
             $regex = rtrim($this->service->resolver->url($controller, '', [], ''), '/') . '/' . $regex;
@@ -240,13 +226,8 @@ class Router
 
     /**
      * リライトルート定義
-     *
-     * @param string $from_url 元 URL
-     * @param string $to_url 先 URL
-     * @param string|null $action アクション名（内部向け）
-     * @return $this
      */
-    public function rewrite($from_url, $to_url, $action = null)
+    public function rewrite(string $from_url, string $to_url, ?string $action = null): static
     {
         $this->service->logger->debug(self::ROUTE_REWRITE . " $from_url: $to_url@$action");
         $this->routings[self::ROUTE_REWRITE][$from_url] = [$to_url, $action];
@@ -255,14 +236,8 @@ class Router
 
     /**
      * リダイレクトルート定義
-     *
-     * @param string $from_url 元 URL
-     * @param string $to_url 先 URL
-     * @param int $status_code 302 などのステータスコード
-     * @param string|null $action アクション名（内部向け）
-     * @return $this
      */
-    public function redirect($from_url, $to_url, $status_code = 302, $action = null)
+    public function redirect(string $from_url, string $to_url, int $status_code = 302, ?string $action = null): static
     {
         if (!(300 <= $status_code && $status_code < 400)) {
             $status_code = 302;
@@ -274,13 +249,8 @@ class Router
 
     /**
      * 正規表現ルート定義
-     *
-     * @param string $regex 正規表現
-     * @param string $controller コントローラ名
-     * @param string $action アクション名
-     * @return $this
      */
-    public function regex($regex, $controller, $action)
+    public function regex(string $regex, string $controller, string $action): static
     {
         if ($regex[0] !== '/') {
             $regex = rtrim($this->service->resolver->url($controller, '', [], ''), '/') . '/' . $regex;
@@ -293,7 +263,7 @@ class Router
     /**
      * ディスパッチ中のルート名を返す
      */
-    public function currentRoute()
+    public function currentRoute(): string
     {
         $controller = $this->service->dispatcher->dispatchedController;
         [$controller, $action] = [get_class($controller), $controller->action];
@@ -305,26 +275,22 @@ class Router
      * リバースルーティング
      *
      * ルート名とパラメーターで URL を生成。
-     *
-     * @param string $name ルート名
-     * @param array $params パラメーター
-     * @return string URL
      */
-    public function reverseRoute($name, array $params = [])
+    public function reverseRoute(string $route, array $params = []): string
     {
-        $cachekey = self::CACHE_KEY . '.reverse.' . sha1($name . '?' . json_encode($params));
+        $cachekey = self::CACHE_KEY . '.reverse.' . sha1($route . '?' . json_encode($params));
         $cache = $this->service->cacher->get($cachekey);
         if (!$this->service->debug && $cache !== null) {
             return $cache;
         }
 
-        if (isset($this->routings[self::ROUTE_ROUTE][$name])) {
-            $controller_action = $this->routings[self::ROUTE_ROUTE][$name];
+        if (isset($this->routings[self::ROUTE_ROUTE][$route])) {
+            $controller_action = $this->routings[self::ROUTE_ROUTE][$route];
         }
         else {
-            $controller_action = explode('::', $name, 2);
+            $controller_action = explode('::', $route, 2);
             if (count($controller_action) < 2) {
-                throw new \UnexpectedValueException("route name '$name' is not defined.");
+                throw new \UnexpectedValueException("route name '$route' is not defined.");
             }
         }
 
@@ -375,10 +341,8 @@ class Router
 
     /**
      * 存在する URL を返す
-     *
-     * @return array URL 配列
      */
-    public function urls()
+    public function urls(): array
     {
         $gather = function (&$receiver, $route, $url, $controller, $action) {
             if ($action === 'error') {

@@ -1,6 +1,8 @@
 <?php
 namespace ryunosuke\microute\example\controller;
 
+use Symfony\Component\HttpFoundation\Response;
+
 abstract class AbstractController extends \ryunosuke\microute\Controller
 {
     /** @var \stdClass */
@@ -11,7 +13,7 @@ abstract class AbstractController extends \ryunosuke\microute\Controller
         $this->view = new \stdClass();
     }
 
-    public function render($action_value)
+    public function render(mixed $action_value): Response
     {
         $vars = (array) $this->view + $this->request->attributes->get('parameter', []);
         $vars['request'] = $this->request;

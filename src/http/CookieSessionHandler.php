@@ -7,31 +7,26 @@ class CookieSessionHandler extends AbstractSessionHandler
 {
     private const VERSION = 2;
 
-    /** @var string */
-    private $privateKey;
+    private string $privateKey;
 
-    /** @var string */
-    private $storeName, $initialStoreName;
+    private string $storeName;
+    private string $initialStoreName;
 
-    /** @var int */
-    private $chunkSize, $initialChunkSize;
+    private int $chunkSize;
+    private int $initialChunkSize;
 
-    /** @var int */
-    private $maxLength;
+    private int $maxLength;
 
-    /** @var int */
-    private $lifetime;
+    private int $lifetime;
 
-    /** @var array */
-    private $cookieInput, $cookieOutput;
+    private array $cookieInput;
+    private array $cookieOutput;
 
-    /** @var array */
-    private $metadata;
+    private array $metadata;
 
-    /** @var \Closure */
-    private $setcookie;
+    private \Closure $setcookie;
 
-    public function __construct($options = [])
+    public function __construct(array $options = [])
     {
         assert(array_key_exists('privateKey', $options));
 
@@ -48,7 +43,7 @@ class CookieSessionHandler extends AbstractSessionHandler
     /**
      * {@inheritdoc}
      */
-    public function open($savePath, $sessionName)
+    public function open($savePath, $sessionName): bool
     {
         $this->storeName = strlen($this->initialStoreName) ? $this->initialStoreName : $sessionName;
         // クッキーサイズ制限にはクッキー名、さらに path, domain まで含まれる（メタ部分は http_build_query で概算）
@@ -62,7 +57,7 @@ class CookieSessionHandler extends AbstractSessionHandler
     /**
      * {@inheritdoc}
      */
-    protected function doRead($sessionId): string
+    protected function doRead(string $sessionId): string
     {
         $this->metadata = (array) json_decode($this->cookieInput[$this->storeName] ?? '{}', true);
         $this->metadata['version'] = (int) ($this->metadata['version'] ?? self::VERSION);
@@ -92,7 +87,7 @@ class CookieSessionHandler extends AbstractSessionHandler
     /**
      * {@inheritdoc}
      */
-    protected function doWrite($sessionId, $data): bool
+    protected function doWrite(string $sessionId, string $data): bool
     {
         $chunks = array_values(array_filter(str_split($this->encode($data), $this->chunkSize), fn($v) => strlen($v)));
         $length = count($chunks);
@@ -117,7 +112,7 @@ class CookieSessionHandler extends AbstractSessionHandler
     /**
      * {@inheritdoc}
      */
-    protected function doDestroy($sessionId): bool
+    protected function doDestroy(string $sessionId): bool
     {
         $this->cookieOutput = array_fill_keys(array_keys($this->cookieOutput), '');
         return true;
@@ -155,7 +150,7 @@ class CookieSessionHandler extends AbstractSessionHandler
     /**
      * {@inheritdoc}
      */
-    public function gc($maxlifetime): bool
+    public function gc(int $maxlifetime): bool
     {
         return true;
     }
@@ -163,12 +158,12 @@ class CookieSessionHandler extends AbstractSessionHandler
     /**
      * {@inheritdoc}
      */
-    public function updateTimestamp($sessionId, $data)
+    public function updateTimestamp(string $sessionId, string $data): bool
     {
         return true;
     }
 
-    private function encode($decrypted_data)
+    private function encode(string $decrypted_data): string
     {
         $algo = 'aes-256-gcm';
         $taglen = 16;
@@ -187,7 +182,7 @@ class CookieSessionHandler extends AbstractSessionHandler
         ]);
     }
 
-    private function decode($encrypted_data)
+    private function decode(string $encrypted_data): string
     {
         $data = base64_decode(strtr($encrypted_data, [
             '_' => '/',

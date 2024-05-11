@@ -59,7 +59,7 @@ class RouterTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertTrue($route->isRedirect('/direct'));
         $this->assertEquals(301, $route->getStatusCode());
 
-        $service->router->redirect('/url302', '/direct', 'hoge');
+        $service->router->redirect('/url302', '/direct', 400);
         $route = $service->router->match(Request::create('/url302'));
         $this->assertTrue($route->isRedirect('/direct'));
         $this->assertEquals(302, $route->getStatusCode());

@@ -297,7 +297,7 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
     function test_resolveController()
     {
         $dispatcher = $this->service->dispatcher;
-        $this->assertInstanceOf(HogeController::class, $dispatcher->resolveController(new HogeController($this->service, '')));
+        $this->assertEquals(HogeController::class, $dispatcher->resolveController(new HogeController($this->service, '')));
         $this->assertEquals(HogeController::class, $dispatcher->resolveController(HogeController::class));
         $this->assertEquals(HogeController::class, $dispatcher->resolveController('Hoge'));
         $this->assertEquals(SubSub\FooBarController::class, $dispatcher->resolveController('SubSub/FooBar'));

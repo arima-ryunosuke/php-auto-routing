@@ -6,7 +6,7 @@ use Symfony\Component\HttpFoundation\Cookie;
 
 class Response extends HttpFoundation\Response
 {
-    public function setHeaders(array $headers)
+    public function setHeaders(array $headers): static
     {
         foreach ($headers as $name => $value) {
             $this->headers->set($name, $value);
@@ -15,14 +15,14 @@ class Response extends HttpFoundation\Response
         return $this;
     }
 
-    public function setCookie(Cookie $cookie)
+    public function setCookie(Cookie $cookie): static
     {
         $this->headers->setCookie($cookie);
 
         return $this;
     }
 
-    public function setCookies(array $values, int $expire = 0)
+    public function setCookies(array $values, int $expire = 0): static
     {
         foreach ($values as $name => $value) {
             $this->headers->setCookie(new Cookie($name, $value, $expire));
@@ -31,14 +31,14 @@ class Response extends HttpFoundation\Response
         return $this;
     }
 
-    public function setDisposition(string $filename, $disposition = 'attachment')
+    public function setDisposition(string $filename, string $disposition = 'attachment'): static
     {
         $this->headers->set('Content-Disposition', $this->headers->makeDisposition($disposition, $filename));
 
         return $this;
     }
 
-    public function setCors(array $cors)
+    public function setCors(array $cors): static
     {
         if (array_key_exists('origin', $cors) && $cors['origin']) {
             $this->headers->set('Access-Control-Allow-Origin', $cors['origin']);
@@ -59,7 +59,7 @@ class Response extends HttpFoundation\Response
         return $this;
     }
 
-    public function setAcceptClientHints($hints, int $lifetime = 0, bool $withVary = true)
+    public function setAcceptClientHints(string|array $hints, int $lifetime = 0, bool $withVary = true): static
     {
         // @see https://developer.mozilla.org/ja/docs/Web/HTTP/Headers/Accept-CH
         if ($hints === '*') {
@@ -101,7 +101,7 @@ class Response extends HttpFoundation\Response
         return $this;
     }
 
-    public function setAlternativeCookieHints(int $expire = 60 * 60 * 24, string $cookiName = 'client_hints')
+    public function setAlternativeCookieHints(int $expire = 60 * 60 * 24, string $cookiName = 'client_hints'): static
     {
         if ($expire) {
             $this->setExpires(new \DateTime("+$expire seconds"));
