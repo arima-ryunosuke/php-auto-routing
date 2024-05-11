@@ -106,48 +106,12 @@ class Controller
                     '@ratelimit'     => attribute\RateLimit::by($action) ?? [],
                     // パラメータ系
                     '@context'       => attribute\Context::by($action) ?: [''],
-                    'parameters'     => array_map(function (\ReflectionParameter $parameter) {
-                        $typemap = [
-                            'bool'    => 'boolean',
-                            'boolean' => 'boolean',
-                            'int'     => 'integer',
-                            'integer' => 'integer',
-                            'float'   => 'double',
-                            'double'  => 'double',
-                            'null'    => 'null',
-                        ];
-                        $pname = $parameter->name;
-                        $types = [];
-                        $defaultable = $parameter->isDefaultValueAvailable();
-                        $default = $defaultable ? $parameter->getDefaultValue() : null;
-
-                        // タイプヒントから
-                        if ($parameter->hasType()) {
-                            $type = $parameter->getType();
-                            $tname = $type instanceof \ReflectionNamedType ? $type->getName() : (string) $type;
-                            $types[$typemap[strtolower($tname)] ?? $tname] = 'typehint';
-                            if ($parameter->allowsNull()) {
-                                $types['null'] = 'typehint';
-                            }
-                        }
-                        // デフォルト値があるならその型を加える
-                        if ($defaultable) {
-                            $tname = gettype($default);
-                            $types[$typemap[strtolower($tname)] ?? $tname] = 'typehint';
-                        }
-                        // 後始末（NULL は特殊すぎるので後ろに持っていく）
-                        if (array_key_exists('null', $types)) {
-                            $tmp = $types['null'];
-                            unset($types['null']);
-                            $types['null'] = $tmp;
-                        }
-                        return [
-                            'name'        => $pname,
-                            'type'        => $types,
-                            'defaultable' => $defaultable,
-                            'default'     => $default,
-                        ];
-                    }, $action->getParameters()),
+                    'parameters'     => array_map(fn(\ReflectionParameter $parameter) => [
+                        'name'        => $parameter->name,
+                        'type'        => $parameter->hasType() ? (string) $parameter->getType() : 'mixed',
+                        'defaultable' => $parameter->isDefaultValueAvailable(),
+                        'default'     => $parameter->isDefaultValueAvailable() ? $parameter->getDefaultValue() : null,
+                    ], $action->getParameters()),
                 ];
             }, $actions),
         ];
@@ -451,6 +415,67 @@ class Controller
     {
         $metadata = static::metadata($this->service->cacher);
 
+        // アクションパラメータ（もっと後でも良いが attribute.parameters の設定があるので少し早めの段階で）
+        $datasources = [];
+
+        // @argument に基いて見るべきパラメータを導出
+        $argumentmap = [
+            'GET'    => ['query'],
+            'POST'   => ['request'],
+            'FILE'   => ['files'],
+            'COOKIE' => ['cookies'],
+            'ATTR'   => ['attributes'],
+        ];
+        foreach ($metadata['actions'][$this->action]['@argument'] as $argument) {
+            foreach ($argumentmap[$argument] ?? [] as $source) {
+                $datasources += $this->request->$source->all();
+            }
+        }
+        // @method に基いて見るべきパラメータを導出
+        $actionmap = [
+            'GET'    => ['query', 'attributes'],                     // GET で普通は body は来ない
+            'POST'   => ['request', 'files', 'query', 'attributes'], // POST はかなり汎用的なのですべて見る
+            'PUT'    => ['request', 'query', 'attributes'],          // PUT は body が単一みたいなもの（symfony が面倒見てくれてる）
+            'DELETE' => ['query', 'attributes'],                     // DELETE で普通は body は来ない
+            '*'      => ['query', 'request', 'files', 'attributes'], // 全部
+        ];
+        foreach ($metadata['actions'][$this->action]['@method'] ?: ['*'] as $action) {
+            foreach ($actionmap[$action] ?? [] as $source) {
+                $datasources += $this->request->$source->all();
+            }
+        }
+
+        // ReflectionParameter に基いてパラメータを確定
+        $parameters = [];
+        foreach ($metadata['actions'][$this->action]['parameters'] as $i => $parameter) {
+            $name = $parameter['name'];
+            // GET/POST などのリクエスト引数から来ている
+            if (array_key_exists($name, $datasources)) {
+                $value = $datasources[$name];
+            }
+            // 基本的には通常配列で来るが、正規表現ルートでは連想配列で来ることがある
+            elseif (array_key_exists($name, $args)) {
+                $value = $args[$name];
+            }
+            // /path/hoge のようなアクションパラメータから来ている
+            elseif (array_key_exists($i, $args)) {
+                $value = $args[$i];
+            }
+            // 上記に引っかからなかったらメソッド引数のデフォルト値を使う
+            elseif ($parameter['defaultable']) {
+                $value = $parameter['default'];
+            }
+            // それでも引っかからないならパラメータが不正・足りない
+            else {
+                throw new HttpException(404, 'parameter is not match.');
+            }
+
+            $parameters[$name] = $value;
+        }
+
+        // 利便性が高いので attribute に入れておく
+        $this->request->attributes->set('parameter', $parameters);
+
         // 認証
         $authentications = [
             'basic'  => $metadata['actions'][$this->action]['@basic-auth'] ?? null,
@@ -482,7 +507,7 @@ class Controller
 
             // action はメイン処理
             $this->service->logger->info(get_class($this) . " action");
-            $this->response($this->action($args));
+            $this->response($this->action($parameters));
 
             // after は共通事後処理
             $this->after();
@@ -531,7 +556,12 @@ class Controller
         }
 
         // アクション実行
-        $result = ([$this, $this->action . static::ACTION_SUFFIX])(...$args);
+        try {
+            $result = ([$this, $this->action . static::ACTION_SUFFIX])(...$args);
+        }
+        catch (\TypeError) {
+            throw new HttpException(404, 'parameter is not match type.');
+        }
 
         // 返り値が string ならレスポンンスボディ
         if (is_string($result)) {

@@ -504,6 +504,86 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals('mainafterfinish', $response->getContent());
     }
 
+    function test_dispatch_parameters()
+    {
+        $object = new \Exception();
+        $request = Request::createFromGlobals();
+        $request->query->set('arg1', "123");
+        $request->query->set('arg2', 'hoge');
+        $request->query->set('arg3', true);
+        $request->query->set('arg4', '3.14');
+        $request->query->set('arg5', [1]);
+        $request->query->set('arg6', $object);
+        $request->query->set('arg7', null);
+        $request->request->set('arg7', 'use');
+        $controller = new HogeController($this->service, 'parameter', $request);
+
+        $response = $controller->dispatch([7 => 'specifyval']);
+        $this->assertEquals('[123,"hoge",true,3.14,[1],{},null,"specifyval","defval",null]', $response->getContent());
+        $this->assertSame([
+            'arg1' => '123',
+            'arg2' => 'hoge',
+            'arg3' => true,
+            'arg4' => '3.14',
+            'arg5' => [1],
+            'arg6' => $object,
+            'arg7' => null,
+            'arg8' => 'specifyval',
+            'argX' => 'defval',
+            'argY' => null,
+        ], $request->attributes->get('parameter'));
+
+        $request->query->remove('arg3');
+        $this->assertStatusCode(404, function () use ($controller) {
+            $controller->dispatch();
+        });
+
+        $request = Request::createFromGlobals();
+        $controller = new HogeController($this->service, 'argument', $request);
+        $response = $controller->dispatch([
+            0      => 'hoge',
+            'cval' => 'fuga',
+        ]);
+        $this->assertEquals('hoge/fuga', $response->getContent());
+        $this->assertSame([
+            'arg'  => 'hoge',
+            'cval' => 'fuga',
+        ], $request->attributes->get('parameter'));
+    }
+
+    function test_dispatch_parameters_order()
+    {
+        $request = Request::createFromGlobals();
+        $request->setMethod('POST');
+        $request->query->set('arg', 'query');
+        $request->request->set('arg', 'request');
+        $request->attributes->set('arg', 'attributes');
+        $controller = new HogeController($this->service, 'arg', $request);
+
+        // @action に従うので POST が優先されるはず
+        $response = $controller->dispatch([7 => 'specifyval']);
+        $this->assertEquals('ok', $response->getContent());
+        $this->assertSame([
+            'arg' => 'request',
+        ], $request->attributes->get('parameter'));
+
+        $request = Request::createFromGlobals();
+        $request->setMethod('POST');
+        $request->query->set('arg', 'hoge');
+        $request->cookies->set('cval', 'piyo');
+        $request->request->set('arg', 'unuse');
+        $request->request->set('cval', 'unuse');
+        $controller = new HogeController($this->service, 'argument', $request);
+
+        // @argument 指定が効いて POST なのに GET パラメータが優先されるし、クッキーの値も使われるはず
+        $response = $controller->dispatch([]);
+        $this->assertEquals('hoge/piyo', $response->getContent());
+        $this->assertSame([
+            'arg'  => 'hoge',
+            'cval' => 'piyo',
+        ], $request->attributes->get('parameter'));
+    }
+
     function test_dispatch_init()
     {
         $request = Request::createFromGlobals();
@@ -684,6 +764,22 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         $controller = new HogeController($this->service, 'action_unknown');
         $response = $controller->action([]);
         $this->assertEquals('["unknown"]', $response->getContent());
+    }
+
+    function test_action_type()
+    {
+        $controller = new HogeController($this->service, 'queryableNull');
+
+        $response = $controller->action([]);
+        $this->assertEquals('queryableNull:NULL, NULL', $response->getContent());
+
+        $response = $controller->action([1, 2]);
+        $this->assertEquals('queryableNull:1, 2', $response->getContent());
+
+        $response = $controller->action(['param2' => 1, 'param1' => 2]);
+        $this->assertEquals('queryableNull:2, 1', $response->getContent());
+
+        $this->assertException('parameter is not match type', [$controller, 'action'], ['X']);
     }
 
     function test_event_cache()

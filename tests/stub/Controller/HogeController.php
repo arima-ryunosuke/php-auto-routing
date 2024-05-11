@@ -124,7 +124,7 @@ class HogeController extends AbstractController
     }
 
     #[\ryunosuke\microute\attribute\Method('get')]
-    public function parameterAction(int $arg1, string $arg2, bool $arg3, float $arg4, array $arg5, \stdClass $arg6, ?string $arg7, $arg8, $argX = "defval", $argY = null)
+    public function parameterAction(int $arg1, string $arg2, bool $arg3, float $arg4, array $arg5, \Throwable $arg6, ?string $arg7, $arg8, $argX = "defval", $argY = null)
     {
         return new JsonResponse(func_get_args());
     }
@@ -135,6 +135,7 @@ class HogeController extends AbstractController
     #[\ryunosuke\microute\attribute\Argument('get', 'cookie')]
     public function argumentAction(string $arg, string $cval)
     {
+        return "$arg/$cval";
     }
 
     #[\ryunosuke\microute\attribute\Method('post')]

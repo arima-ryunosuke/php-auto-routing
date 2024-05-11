@@ -373,11 +373,7 @@ class Router
                 $args = [];
                 foreach ($action_data['parameters'] as $param) {
                     $name = $param['name'];
-                    $type = [];
-                    foreach ($param['type'] as $tn => $true) {
-                        $type[] = $tn . ($param['defaultable'] ? '(' . json_encode($param['default']) . ')' : '');
-                    }
-                    $type = implode('|', $type) ?: 'mixed';
+                    $type = $param['type'] . ($param['defaultable'] ? '(' . json_encode($param['default']) . ')' : '');
                     $args[] = "$name=$type";
                 }
                 $pathinfo = '?' . implode('&', $args);

@@ -51,7 +51,7 @@ class Dispatcher
                 throw new HttpException(404, "$controller_class::$action_name is not allowed default routhing.");
             }
 
-            return $this->service->trigger('dispatch', $controller) ?? $controller->dispatch($this->detectArgument($controller, $matched['parameters']));
+            return $this->service->trigger('dispatch', $controller) ?? $controller->dispatch($matched['parameters']);
         }
 
         throw new HttpException(...$controller_action);
@@ -265,90 +265,5 @@ class Dispatcher
         }
 
         return new $controller_class($this->service, $action_name, $request);
-    }
-
-    public function detectArgument(Controller $controller, array $args): array
-    {
-        $metadata = $controller::metadata($this->service->cacher);
-        $request = $controller->request;
-        $action_name = $controller->action;
-
-        $datasources = [];
-
-        // @argument に基いて見るべきパラメータを導出
-        $argumentmap = [
-            'GET'    => ['query'],
-            'POST'   => ['request'],
-            'FILE'   => ['files'],
-            'COOKIE' => ['cookies'],
-            'ATTR'   => ['attributes'],
-        ];
-        foreach ($metadata['actions'][$action_name]['@argument'] as $argument) {
-            foreach ($argumentmap[$argument] ?? [] as $source) {
-                $datasources += $request->$source->all();
-            }
-        }
-        // @method に基いて見るべきパラメータを導出
-        $actionmap = [
-            'GET'    => ['query', 'attributes'],                     // GET で普通は body は来ない
-            'POST'   => ['request', 'files', 'query', 'attributes'], // POST はかなり汎用的なのですべて見る
-            'PUT'    => ['request', 'query', 'attributes'],          // PUT は body が単一みたいなもの（symfony が面倒見てくれてる）
-            'DELETE' => ['query', 'attributes'],                     // DELETE で普通は body は来ない
-            '*'      => ['query', 'request', 'files', 'attributes'], // 全部
-        ];
-        foreach ($metadata['actions'][$action_name]['@method'] ?: ['*'] as $action) {
-            foreach ($actionmap[$action] ?? [] as $source) {
-                $datasources += $request->$source->all();
-            }
-        }
-
-        // ReflectionParameter に基いてパラメータを確定
-        $parameters = [];
-        foreach ($metadata['actions'][$action_name]['parameters'] as $i => $parameter) {
-            $name = $parameter['name'];
-            // GET/POST などのリクエスト引数から来ている
-            if (array_key_exists($name, $datasources)) {
-                $value = $datasources[$name];
-            }
-            // 基本的には通常配列で来るが、正規表現ルートでは連想配列で来ることがある
-            elseif (array_key_exists($name, $args)) {
-                $value = $args[$name];
-            }
-            // /path/hoge のようなアクションパラメータから来ている
-            elseif (array_key_exists($i, $args)) {
-                $value = $args[$i];
-            }
-            // 上記に引っかからなかったらメソッド引数のデフォルト値を使う
-            elseif ($parameter['defaultable']) {
-                $value = $parameter['default'];
-            }
-            // それでも引っかからないならパラメータが不正・足りない
-            else {
-                throw new HttpException(404, 'parameter is not match.');
-            }
-
-            // キャストや配列のチェック
-            $type = $parameter['type'];
-            if ($type) {
-                $firsttype = array_key_first($type);
-                if (!isset($type['array']) && is_array($value)) {
-                    throw new HttpException(404, 'parameter is not match type.');
-                }
-                if ($firsttype !== "null" && !isset($type[strtolower(gettype($value))]) && !class_exists($firsttype)) {
-                    @settype($value, $firsttype);
-                }
-            }
-            // 型指定が存在しないかつ配列が来たら 404
-            elseif (is_array($value)) {
-                throw new HttpException(404, 'parameter is not match type.');
-            }
-
-            $parameters[$name] = $value;
-        }
-
-        // 利便性が高いので attribute に入れておく
-        $request->attributes->set('parameter', $parameters);
-
-        return array_values($parameters);
     }
 }
