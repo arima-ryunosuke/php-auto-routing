@@ -2,12 +2,19 @@
 このページは SSE で3秒間隔でデータを垂れ流します<br>
 
 <div>
-    <pre id="result"></pre>
+    <div style="display: flex;gap: 45px">
+        <pre id="message"></pre>
+        <pre id="userevent"></pre>
+    </div>
     <script>
-        var result = document.getElementById('result');
+        var message = document.getElementById('message');
+        var userevent = document.getElementById('userevent');
         var evtSource = new EventSource("");
         evtSource.addEventListener("message", function (e) {
-            result.textContent += e.data + "\n";
+            message.textContent += e.data + "\n";
+        }, false);
+        evtSource.addEventListener("userevent", function (e) {
+            userevent.textContent += e.data + "\n";
         }, false);
     </script>
 </div>

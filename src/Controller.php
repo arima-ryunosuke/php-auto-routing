@@ -344,64 +344,40 @@ class Controller
     /**
      * プッシュ（SSE）レスポンスを返す
      *
-     * $provider は前回のデータを引数として受けるので、流したいデータを返せばそれが SSE のレスポンスとして返される。
+     * Generator を渡すとその結果が SSE のレスポンスとなる。
      * いわゆるポーリングとして動作するので、適宜 sleep 処理などを必ず入れなければならない。
-     * 返り値はレコード or レコード配列でなければならない。
-     * 「レコード」とは返すべきデータを表す。
      *
-     * レコードがプリミティブの場合は単純に data として送出される。
-     * レコードが配列の場合は json_encode して data として送出される。
-     * レコードがオブジェクトの場合はイテレータ結果が送出される。
-     * その際、フィールドが配列の場合は json_encode, オブジェクトの場合は __toString/json_encode される（__toString 優先）。
+     * 結果がプリミティブの場合は単純に data として送出される。
+     * 結果が配列の場合はレコードとして送出される。
      */
-    public function push(\Closure $provider, float $timeout = 10, bool $testing = false): StreamedResponse
+    public function push(\Generator $generator, float $timeout = 10, bool $testing = false): StreamedResponse
     {
-        $response = new StreamedResponse(function () use ($provider, $timeout, $testing) {
+        $response = new StreamedResponse(function () use ($generator, $timeout, $testing) {
+            if (!$testing) {
+                Response::closeOutputBuffers(0, true); // @codeCoverageIgnore
+            }
             session_write_close();
             $mtime = microtime(true);
-            while (true) {
+            foreach ($generator as $value) {
                 if (connection_aborted() || $timeout < (microtime(true) - $mtime)) {
                     break;
                 }
 
-                $value = $provider($prev ?? []);
-                if ($value === []) {
-                    usleep(1 * 1000); // 念の為
-                    continue;
+                if (!is_iterable($value)) {
+                    $value = ['data' => $value];
                 }
-                $prev = $value;
+                foreach ($value as $k => $v) {
+                    if (is_array($v) || (is_object($v) && !method_exists($v, '__toString'))) {
+                        $v = json_encode($v);
+                    }
+                    foreach (preg_split('#\\R#u', $v) as $line) {
+                        echo "$k: $line\n";
+                    }
+                }
+                echo "\n";
 
-                $values = (is_array($value) || $value instanceof \Generator) ? $value : [$value];
-                foreach ($values as $record) {
-                    if (is_array($record)) {
-                        echo 'data: ' . json_encode($record) . "\n";
-                    }
-                    elseif (is_object($record)) {
-                        foreach ($record as $k => $v) {
-                            if (is_array($v) || (is_object($v) && !method_exists($v, '__toString'))) {
-                                $v = json_encode($v);
-                            }
-                            foreach (preg_split('#\\R#u', strval($v)) as $line) {
-                                echo "$k: $line\n";
-                            }
-                        }
-                    }
-                    else {
-                        foreach (preg_split('#\\R#u', strval($record)) as $line) {
-                            echo "data: $line\n";
-                        }
-                    }
-                    echo "\n";
-                }
-
-                if (!$testing) {
-                    Response::closeOutputBuffers(0, true); // @codeCoverageIgnore
-                }
                 flush();
-
-                if ($testing && $value instanceof \Generator) {
-                    break;
-                }
+                usleep(10 * 1000); // 呼び元 Generator が sleep する保証もないので念の為
             }
         }, $this->response->getStatusCode());
         $response->headers->set('Content-Type', 'text/event-stream; charset=utf-8');

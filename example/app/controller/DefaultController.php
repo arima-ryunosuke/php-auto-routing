@@ -168,10 +168,17 @@ class DefaultController extends AbstractController
         if ($this->request->headers->get('accept') !== 'text/event-stream') {
             return;
         }
-        return $this->push(function ($prevdata) {
-            sleep(3);
-            return date('Y-m-dTh:i:s');
-        });
+        return $this->push((function () {
+            while (true) {
+                yield date('Y-m-dTH:i:s');
+                yield [
+                    'event' => 'userevent',
+                    'data'  => date('Y-m-dTH:i:s'),
+                    'retry' => 100,
+                ];
+                sleep(3);
+            }
+        })());
     }
 
     #[\ryunosuke\microute\attribute\Method('GET')]

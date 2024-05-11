@@ -454,41 +454,62 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         $controller = new HogeController($this->service, 'action-a');
 
         ob_start();
-        $controller->push(function () {
-            yield [1, 2, 3];
-        }, 1, true)->sendContent();
-        $output = ob_get_clean();
-        $this->assertStringContainsString('data: [1,2,3]', $output);
+        $controller->push((function () {
+            yield from ["first data", 'second data'];
+        })(), 1, true)->sendContent();
+        $this->assertEquals(<<<SSE
+        data: first data
+        
+        data: second data
+        
+        
+        SSE, ob_get_clean());
 
         ob_start();
-        $controller->push(function () {
+        $controller->push((function () {
             yield "string data1\nstring data2";
-        }, 1, true)->sendContent();
-        $output = ob_get_clean();
-        $this->assertStringContainsString('data: string data1', $output);
-        $this->assertStringContainsString('data: string data2', $output);
+        })(), 1, true)->sendContent();
+        $this->assertEquals(<<<SSE
+        data: string data1
+        data: string data2
+        
+        
+        SSE, ob_get_clean());
 
         ob_start();
-        $controller->push(function () {
-            yield (object) [
-                'id'    => 123,
+        $controller->push((function () {
+            yield [
+                'id'    => 1,
                 'event' => 'receive',
                 'retry' => new class {
                     public function __toString() { return '1000'; }
                 },
                 'data'  => (object) ["object data1", "object data2"],
             ];
-        }, 1, true)->sendContent();
-        $output = ob_get_clean();
-        $this->assertStringContainsString('id: 123', $output);
-        $this->assertStringContainsString('event: receive', $output);
-        $this->assertStringContainsString('retry: 1000', $output);
-        $this->assertStringContainsString('data: {"0":"object data1","1":"object data2"}', $output);
+            yield [
+                'id'    => 2,
+                'event' => 'receive',
+                'data'  => (object) ["object data1", "object data2"],
+            ];
+        })(), 1, true)->sendContent();
+        $this->assertStringContainsString(<<<SSE
+        id: 1
+        event: receive
+        retry: 1000
+        data: {"0":"object data1","1":"object data2"}
+        
+        id: 2
+        event: receive
+        data: {"0":"object data1","1":"object data2"}
+        
+        
+        SSE, ob_get_clean());
 
         ob_start();
-        $controller->push(function () {
-            return [];
-        }, 0.5, true)->sendContent();
+        $controller->push((function () {
+            sleep(1);
+            yield [];
+        })(), 0.5, true)->sendContent();
         $output = ob_get_clean();
         $this->assertEquals('', $output);
     }
