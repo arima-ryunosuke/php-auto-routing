@@ -34,12 +34,7 @@ MVC の MV 的な機能は一切ありません。
     - `#[Context('json')]` すると `.json` という拡張子アクセスを受け付けるようになります
 - アクションメソッドの引数はメソッド定義に基いて自動で引数化されます
     - `hogeAction($id)` というアクションでリクエストパラメータから `id` を取得してマップします
-    - その値は型引数でキャストされます
     - データソースは `#[Method]` や `#[Argument]` 属性に基づきます
-- クエリストリングではない pathful な URL が構築できます
-    - e.g. `/controller/action/123`
-    - 上記の 123 はアクションメソッドの第一引数として渡ってきます
-    - パラメータの区切り文字は指定できます
 - Symfony の BrowserKit でテストできます
     - tests を参照
 
@@ -87,11 +82,10 @@ $service->run();
     - デフォルトは `false` です
 - **cacher**: `\Psr\SimpleCache\CacheInterface`
     - 内部で使用するキャッシュインスタンスを指定します
-    - デフォルトはキャッシュしません。将来的に必須パラメータに変更されます
-- **logger**: `callable`
+    - デフォルトはありません。必須です
+- **logger**: `\Psr\Log\LoggerInterface`
     - 動作をログる psr3 LoggerInterface を指定します
-    - 互換性担保のため callable も受け入れます。その場合未チャッチ例外のみがログられます
-    - デフォルトは何もしません
+    - デフォルトはログりません
 - **events**: `callable[][]`
     - 各イベントごとに実行されるイベントハンドラを指定します
     - デフォルトは何もしません
@@ -121,17 +115,10 @@ $service->run();
         - name => [url => string, ttl => int, filter => callable]: フィルタ条件や TTL を指定しつつ URL にアクセスしてその結果を登録します
     - キー（name）はキャッシュキーとして使用されます。URL 指定以外では意味を持ちません
     - デフォルトは `[]` です
-- routeAbbreviation: `bool`
-    - デフォルトルーティングで省略語（連続大文字）を大文字のままにします（e.g. GAMEManagerController -> game-manager）
-    - デフォルトは `false` です。このデフォルトは将来的に変更される可能性があります
 - controllerClass: string
     - Controller の基底クラス名を指定します
     - デフォルトは `\ryunosuke\microute\Controller::class` です
     - よほど抜き差しならない状況じゃない限り指定する意味はありません
-- controllerAnnotation: bool
-    - メタ情報の指定をアノテーションかアトリビュートか指定します
-    - デフォルトは true です（アノテーションのみ有効）
-    - この項目は互換性のために存在するため将来削除予定です。
 - controllerAutoload: array
     - Controller の __get で呼び出せるオブジェクトの名前空間とコンストラクタ引数を指定します
     - `['name\\space' => [1, 2, 3]]` とすると Controller 内部で `$this->Hoge` で `name\\space\\Hoge` オブジェクトが取得できるようになります
@@ -142,11 +129,11 @@ $service->run();
     - よほど抜き差しならない状況じゃない限り指定する意味はありません
 - requestClass: string
     - リクエストオブジェクトのクラス名を指定します
-    - デフォルトは `\Symfony\Component\HttpFoundation\Request::class` です
+    - デフォルトは `\ryunosuke\microute\http\Request::class` です
     - よほど抜き差しならない状況じゃない限り指定する意味はありません
-- request: `\Symfony\Component\HttpFoundation\Request`
+- request: `\ryunosuke\microute\http\Request`
     - リクエストオブジェクトを指定します
-    - デフォルトは `\Symfony\Component\HttpFoundation\Request` です
+    - デフォルトは `\ryunosuke\microute\http\Request` です
     - よほど抜き差しならない状況じゃない限り指定する意味はありません
 - requestTypes: `callable[]`
     - コンテントタイプに基づいてリクエストボディをどのようにパースするかを指定します
@@ -154,24 +141,6 @@ $service->run();
 - sessionStorage: `\Symfony\Component\HttpFoundation\Session\Storage\SessionStorageInterface`
     - セッションストレージを指定します
     - デフォルトは `\Symfony\Component\HttpFoundation\Session\Storage\NativeSessionStorage` です
-- defaultActionAsDirectory: `bool`
-    - デフォルトアクションの url を `/` 付きにします
-    - デフォルトは `false` です。このデフォルトは将来的に変更される可能性があります
-- parameterDelimiter: `string`
-    - パスとパラメータの区切り文字を指定します
-    - これを `/` などにすると `/controller/action/123` のような restful な URL でアクセスできます
-    - デフォルトは `?` です。 `/controller/action?123` のような URL でアクセスできます
-- parameterSeparator: `string`
-    - パラメータ間の区切り文字を指定します
-    - これを `/` などにすると `/controller/action/123/456` のような pathful な URL でアクセスできます
-    - デフォルトは `&` です。 `/controller/action?123&456` のような URL でアクセスできます
-- parameterUseRFC3986: `bool`
-    - パスパラメータ機構の有効/無効を指定します
-    - これを `true` にすると `parameterDelimiter`, `parameterSeparator` が強制的に `?`, `&` に設定され、純粋に RFC3986 のクエリパラメータのみがパラメータとして渡ってきます
-    - デフォルトは `false` です。 `/controller/action?123&456` のような URL でアクセスするとアクションパラメータは `[123, 456]` になります
-- parameterArrayable: `bool`
-    - パラメータに配列を許可するかを指定します
-    - デフォルトは `false` です。明示されない限り `/controller/action?id[]=123` のような配列パラメータが 404 になります
 - parameterContexts: `array|callable`
     - 拡張子ごとの Content-Type を指定します
     - `['json' => 'application/json']` などとすると `/controller/action.json` アクセスされたときに Content-Type が `application/json` になります
@@ -200,7 +169,7 @@ $service->run();
 根本の動作に関わる重要なものや必須・準必須なものは太字にしてあります。
 
 例えば `controllerLocation` は必須です。これがないとコントローラのロードができず、あらゆる処理が失敗します。
-`debug` `cacher` は必須ではないですが、指定しないと動作速度に影響が出たり開発が不便になったりします。
+`debug` 等は必須ではないですが、指定しないと動作速度に影響が出たり開発が不便になったりします。
 
 すべての要素はクロージャを渡すと初回参照時のみ実行され、以後その結果を示すようになります。
 つまり callable を設定したい場合は「callable を返す Closure」を指定します（Pimple などの DI コンテナと同じ）。
@@ -357,12 +326,6 @@ $service->run();
     - `#[Ajaxable(403)]` とすると普通にアクセスしても 403 になります。ただし、デバッグ時はアクセス可能です
     - 未指定時はリクエストの制限を行いません
     - 値省略時は 400 です
-- `#[Queryable]`
-    - URL 生成時やリダイレクト時に queryable な URL で生成するかを指定します
-    - `#[Queryable(false)]` とすると `/controller/action?123` のように生成されます
-        - 生成時の指定であって、false にしたからといってクエリストリングアクセスが無効になるわけでもその逆でもありません
-    - 未指定時は通常のクエリストリングです（e.g. `/controller/action?id=123`）
-    - 値省略時は true です
 - `#[RateLimit]`
     - 一定秒間のリクエスト数を制限します
     - `#[RateLimit(30, 10)]` とすると「10秒間に30リクエストまで」となります。この場合は IP をキーとして使用します
@@ -407,6 +370,7 @@ $service->run();
     - デフォルトルーティングの有効/無効を設定します（後述）
     - `[DefaultRoute(false)]` とするとデフォルトルーティングが無効になります
 - `#[Route]`
+    - ルートに名前を付けます
     - `#[Route('hoge')]` とすると 'hoge' でリバースルーティングしたときにこのアクションの URL を返すようになります
 - `#[Rewrite('/url')]`
     - /url アクセス時に rewrite されてこのアクションへ到達します
@@ -464,10 +428,8 @@ foo だけではなく、他にアクションが生えていれば到達しま�
 
 ### アクションメソッドに渡ってくるパラメータ
 
-クエリストリング や `parameterDelimiter` `parameterSeparator` `parameterArrayable` などに応じてアクションメソッドは引数を取ることができます。
-データソースは `#[Argument]` `#[Method]` などの属性に応じて変わります。
-
 特殊なことをしなければ `?id=123` というクエリストリングでアクションメソッドの引数 `$id` が設定されます。
+データソースは `#[Argument]` `#[Method]` などの属性に応じて変わります。
 その際、下記の特殊な処理が走ります。
 
 - アクションメソッドが引数を持っていてかつマッチするパラメータが無い場合はルーティングに失敗し、 404 になります
@@ -476,8 +438,6 @@ foo だけではなく、他にアクションが生えていれば到達しま�
     - 名前付きキャプチャの名前が一致するものが優先で、名前が見つからない場合はマッチ順でマップします
 - `#[Scope]` でルーティングされた場合はマッチ結果が渡ってきます
     - 名前付きキャプチャの名前が一致するものが優先で、名前が見つからない場合はマッチ順でマップします
-
-php7 の型宣言があれば大抵の場合で不要ですが、キャストが便利な状況もあります（例えば int に not intable な文字列が来ると即死するなど）。
 
 ```php
     public function hogeAction($id, $seq)
@@ -488,6 +448,11 @@ php7 の型宣言があれば大抵の場合で不要ですが、キャストが
     public function fugaAction($id, $seq = 123)
     {
         // /fuga?id=foo でアクセスすると $id=foo, $seq=123 となる（seq はデフォルト値が使われる）
+    }
+
+    public function piyoAction(int $id, $seq = 123)
+    {
+        // /piyo?id=foo でアクセスすると 404 になる（foo を int 化できない）
     }
 
     #[Regex('/detail-(?<id>[a-z]+)/(\d+)')]
@@ -562,38 +527,10 @@ resolver で URL を生成する際に、`$resolver->action($controller, $action
 
 とは言え存在しない "$controller::$action" を指定するのは気持ち悪いのであらかじめ `#[Route]` で指定しておくのがベストです。
 
-#### parameterDelimiter, parameterSeparator の補足
-
-これらのデフォルトは順に `?` `&` になっています。
-これは `/controller/action?123&hoge` でアクションメソッドが `(123, "hoge")` で起動することを意味します。
-ちょうどクエリストリングから key を差っ引いて、アクションメソッドの順番に当てはめるような形です。
-
-クエリパラメータのように見えてクエリパラメータじゃないのは少し気持ち悪いので、これを順に `/` `&` にすると `/controller/action/123&hoge` でアクションメソッドが `(123, "hoge")` で起動します。
-コンテキストは常に活きるので `/` `-` などにすると `/controller/action/123-hoge.json` で `(123, "hoge")` で起動します。
-これは REST っぽい URL 設計に役立ちます。
-
-ただし、注意点として `/` `/` にするとうまく起動しません。これは「どこまでが controller/action なのか、どこからがパラメータなのか」を機械的に判断することが不可能だからです。
-厳密に言えば起動はしますが、それ以外の URL での動作は未定義です。
-現在のところ、有効な controller/action にマッチするまで探しに行くので、最終的に DefaultController まで行き着いてしまいます。
-
-何が言いたいのかと言うと、 `/` `/` の組み合わせは推奨しません。
-きちんと action を設けてパラメータ区切りは `/` `-` などにすることをおすすめします。
-
 #### urls メソッド
 
 router に urls というメソッドが生えています。これは現存するすべての URL とそのメタ情報を返します。
 ルーティングの確認や sitemap・URL リストなどを作るときに便利です。
-
-#### アノテーションとアトリビュート
-
-version 1.1.15 まではメタデータはアノテーション指定でした。
-version 1.1.16 からはアトリビュートにも対応しています。
-どちらを使うかは `controllerAnnotation` オプションで指定できます。
-
-互換性のため、アノテーションも使えますしデフォルトではアノテーションのみを見に行きます。
-ただ、アノテーションは前時代的であり、php8.0 からはアトリビュートの言語サポートもあるため、アトリビュートの使用を推奨します。
-
-なお、polyfill が含まれており、php7.4 でもアトリビュートは使用できますが、規模によっては初回アクセスのパフォーマンスが劣悪になる可能性があります。
 
 ## License
 

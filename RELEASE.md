@@ -20,8 +20,38 @@
 
 - psr15(middleware) に対応する？
 - DefaultController::errorAction の廃止
-- タイプヒントの設定
 - php8 対応が済んだら Attribute 自体に処理を持たせたい
+
+## 2.0.0
+
+- [change] php>=8.0
+- [*change] push(SSE) のシンプル化
+  - Generator のみの対応にした
+  - シンプルに文字列が来れば data に、配列が来ればレコードになる
+- [*change] 型チェックを廃止
+  - 自前でやらずともタイプヒントに完全に任せられる
+- [*change] 古い仕様と後方互換性のコードを削除
+  - controllerAnnotation を削除（デフォルト無効）
+    - php8.0 であれば属性の方がパフォーマンスが良い
+  - routeAbbreviation を削除（デフォルト有効）
+    - CSVDownload が c-s-v-download になって嬉しい人間はいない
+  - defaultActionAsDirectory を削除（デフォルト有効）
+    - html の action/href を考慮すると / がつかないと不都合が多い
+    - domain/controller で href=action を使用すると domain/action になってしまう
+  - parameter 3兄弟を削除（デフォルトRFC3986）
+    - パラメータは RFC3986 に従うべきであり、 url?123&hoge 等と書けても便利になることがない
+    - パスパラメータはある状況で便利だが、scope/regex で代替可能
+  - queryable を削除
+    - ↑と同じ理由
+  - parameterArrayable を削除（デフォルト無効）
+    - タイプヒントで int,array,int|array 等とした方がはるかに汎用的
+  - Resolver::path のシンプル化
+    - minSuffix の廃止
+      - 呼び元で何とかして欲しい
+    - query に文字列を与えると更新日時キーになるように
+      - 消そうかと思ったがなんだかんだ言って使うことが多いので特別扱い
+    - query のクロージャ対応
+      - 更新日時ではなく inode や hash を付与したいこともある
 
 ## 1.2.7
 
