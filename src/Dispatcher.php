@@ -233,6 +233,11 @@ class Dispatcher
      */
     public function loadController($controller_class, $action_name, $request)
     {
+        // サブリクエストはあらゆる制約を見ない（例えば ajaxable なアクションでも forward 可能）
+        if ($request->attributes->get('request-type', Service::MAIN_REQUEST) === Service::SUB_REQUEST) {
+            return new $controller_class($this->service, $action_name, $request);
+        }
+
         $action_data = $controller_class::metadata($this->service->cacher)['actions'][$action_name];
         $is_error = $action_name === 'error';
 

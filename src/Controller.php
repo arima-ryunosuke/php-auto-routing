@@ -388,6 +388,77 @@ class Controller
     }
 
     /**
+     * 指定 URL へフォワード（内部リダイレクト）
+     */
+    public function forward(string $url): Response
+    {
+        $parsed = parse_url($url);
+
+        if (($parsed['path'][0] ?? '/') !== '/') {
+            $url = $this->service->resolver->url($this) . $parsed['path'];
+        }
+        parse_str($parsed['query'] ?? '', $query);
+
+        $subrequest = $this->request->duplicate();
+        $subrequest->query->replace($query);
+        $subrequest->server->set('REQUEST_URI', $url);
+
+        $matched = $this->service->router->match($subrequest);
+        if ($matched instanceof Response) {
+            return $matched;
+        }
+
+        return $this->_forward($subrequest, $matched['controller'], $matched['action'], $matched['parameters']);
+    }
+
+    /**
+     * 指定 Controller/Action へフォワード（内部リダイレクト）
+     */
+    public function forwardThis($eitherParamsOrAction = [], ?string $action = null, ?string $controller = null): Response
+    {
+        // 文字列なら action 指定とみなす
+        if (is_string($eitherParamsOrAction)) {
+            $action = $eitherParamsOrAction;
+        }
+        $params = is_array($eitherParamsOrAction) ? $eitherParamsOrAction : [];
+
+        // action 指定がないなら現在の action
+        if ($action === null) {
+            $action = $this->action;
+        }
+        $action = lcfirst(strtr(ucwords($action, " \t\r\n\f\v-"), ['-' => '']));
+
+        // controller 指定がないなら現在の $controller
+        if ($controller === null) {
+            $controller = get_class($this);
+        }
+        $controller = $this->service->dispatcher->shortenController($controller);
+
+        return $this->_forward($this->request->duplicate(), $controller, $action, $params);
+    }
+
+    protected function _forward(Request $subrequest, string $controller, string $action, array $parameters): Response
+    {
+        $subrequest->attributes->set('request-type', Service::SUB_REQUEST);
+
+        // forward はアプリケーションエラーなので HttpException ではない（ヘタに forward して 404 が出たら混乱してしまう）
+        try {
+            [$controller_name, $action_name] = $this->service->dispatcher->findController($controller, $action);
+            if (is_int($controller_name)) {
+                throw new HttpException($controller_name, $action_name);
+            }
+
+            $controller = $this->service->dispatcher->loadController($controller_name, $action_name, $subrequest);
+            $controller->subrequest($this);
+
+            return $controller->dispatch($parameters);
+        }
+        catch (HttpException $e) {
+            throw new \InvalidArgumentException('failed to forward caused by HttpException', 0, $e);
+        }
+    }
+
+    /**
      * 指定 URL へリダイレクト
      *
      * @param string $url リダイレクト URL
@@ -1032,6 +1103,8 @@ class Controller
     }
 
     protected function construct() { }
+
+    protected function subrequest(Controller $controller) { }
 
     protected function init() { }
 

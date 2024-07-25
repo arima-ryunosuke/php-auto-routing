@@ -251,6 +251,8 @@ class Service implements HttpKernelInterface
      */
     public function handle(Request $request, $type = self::MAIN_REQUEST, $catch = true)
     {
+        $request->attributes->set('request-type', $type);
+
         $dispacher = $this->dispatcher;
 
         try {
