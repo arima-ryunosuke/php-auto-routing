@@ -23,6 +23,10 @@
 - タイプヒントの設定
 - php8 対応が済んだら Attribute 自体に処理を持たせたい
 
+## 1.2.8
+
+- [feature] forward を実装
+
 ## 1.2.7
 
 - [feature] 信頼済みプロキシを自動設定する trustedProxies オプションを追加
