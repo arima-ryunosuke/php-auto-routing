@@ -3,9 +3,9 @@
 require_once __DIR__ . '/../../vendor/autoload.php';
 
 $service = new \ryunosuke\microute\Service([
-    'debug'              => ($_SERVER['HTTP_CACHE_CONTROL'] ?? '') === 'no-cache',
-    'cacher'             => new \ryunosuke\SimpleCache\StreamCache(sys_get_temp_dir() . '/microute-example'),
-    'logger'             => new class extends \Psr\Log\AbstractLogger {
+    'debug'                => ($_SERVER['HTTP_CACHE_CONTROL'] ?? '') === 'no-cache',
+    'cacher'               => new \ryunosuke\SimpleCache\StreamCache(sys_get_temp_dir() . '/microute-example'),
+    'logger'               => new class extends \Psr\Log\AbstractLogger {
         public function log($level, $message, array $context = []): void
         {
             if (isset($context['exception'])) {
@@ -13,8 +13,10 @@ $service = new \ryunosuke\microute\Service([
             }
         }
     },
-    'priority'           => ['rewrite', 'redirect', 'alias', 'default', 'scope', 'regex'],
-    'trustedProxies'     => [
+    'maintenanceFile'      => __DIR__ . '/../app/view/maintenance.php',
+    'maintenanceAccessKey' => 'maintenance-key',
+    'priority'             => ['rewrite', 'redirect', 'alias', 'default', 'scope', 'regex'],
+    'trustedProxies'       => [
         'mynetwork',        // 自セグメントを登録します
         'private',          // プライベートネットワークを登録します
         '100.100.101.0/24', // CIDR を登録します
@@ -25,7 +27,7 @@ $service = new \ryunosuke\microute\Service([
             'filter' => fn($contents) => array_merge(...array_values($contents)),        // フィルターコールバックです
         ],
     ],
-    'sessionStorage'     => function () {
+    'sessionStorage'       => function () {
         return new \Symfony\Component\HttpFoundation\Session\Storage\NativeSessionStorage([
             'cache_limiter' => 'nocache',
         ], new \ryunosuke\microute\http\CookieSessionHandler([
@@ -35,7 +37,7 @@ $service = new \ryunosuke\microute\Service([
             'lifetime'   => 60,
         ]), new \Symfony\Component\HttpFoundation\Session\Storage\MetadataBag('_sf2_meta', PHP_INT_MAX));
     },
-    'controllerLocation' => [
+    'controllerLocation'   => [
         'ryunosuke\\microute\\example\\controller\\' => __DIR__ . '/../app/controller/',
     ],
 ]);

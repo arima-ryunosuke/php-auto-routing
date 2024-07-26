@@ -17,6 +17,11 @@ class ExampleTest extends AbstractTestCase
         ob_end_clean();
     }
 
+    protected function tearDown(): void
+    {
+        @unlink($this->service->maintenanceFile);
+    }
+
     function test_root()
     {
         $client = new HttpKernelBrowser($this->service);
@@ -61,6 +66,21 @@ class ExampleTest extends AbstractTestCase
 
         $this->assertEquals(200, $client->getResponse()->getStatusCode());
         $this->assertStringContainsString('/argument?id=1&amp;name=hoge', $crawler->html());
+    }
+
+    function test_forward()
+    {
+        $client = new HttpKernelBrowser($this->service);
+
+        $crawler = $client->request('GET', '/forward');
+        $this->assertEquals(200, $client->getResponse()->getStatusCode());
+        $this->assertStringContainsString("'id' => 123", $crawler->text());
+        $this->assertStringContainsString("'name' => 'hoge1'", $crawler->text());
+
+        $crawler = $client->request('GET', '/forward-this');
+        $this->assertEquals(200, $client->getResponse()->getStatusCode());
+        $this->assertStringContainsString("'id' => 123", $crawler->text());
+        $this->assertStringContainsString("'name' => 'hoge2'", $crawler->text());
     }
 
     function test_upload()
@@ -189,5 +209,16 @@ class ExampleTest extends AbstractTestCase
 
         $this->assertEquals(404, $client->getResponse()->getStatusCode());
         $this->assertStringContainsString('Stack trace', $crawler->html());
+    }
+
+    function test_503()
+    {
+        file_put_contents($this->service->maintenanceFile, 'maintenance');
+
+        $client = new HttpKernelBrowser($this->service);
+        $crawler = $client->request('GET', '/');
+
+        $this->assertEquals(503, $client->getResponse()->getStatusCode());
+        $this->assertStringContainsString('maintenance', $crawler->html());
     }
 }

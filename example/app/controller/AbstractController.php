@@ -1,6 +1,7 @@
 <?php
 namespace ryunosuke\microute\example\controller;
 
+use ryunosuke\microute\Controller;
 use Symfony\Component\HttpFoundation\Response;
 
 abstract class AbstractController extends \ryunosuke\microute\Controller
@@ -11,6 +12,13 @@ abstract class AbstractController extends \ryunosuke\microute\Controller
     public function construct()
     {
         $this->view = new \stdClass();
+    }
+
+    protected function subrequest(Controller $controller)
+    {
+        if ($this->action === 'argument') {
+            $this->request->attributes->set('id', 123);
+        }
     }
 
     public function render(mixed $action_value): Response

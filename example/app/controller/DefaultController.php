@@ -108,6 +108,18 @@ class DefaultController extends AbstractController
             ], true);
     }
 
+    public function forwardAction()
+    {
+        // このままだとパラメータが足りないが subrequest メソッドで付け足している
+        return $this->forward('/argument?name=hoge1');
+    }
+
+    public function forwardThisAction()
+    {
+        // このままだとパラメータが足りないが subrequest メソッドで付け足している
+        return $this->forwardThis(['name' => 'hoge2'], 'argument');
+    }
+
     #[\ryunosuke\microute\attribute\Argument('file')]
     public function uploadAction($file = null)
     {

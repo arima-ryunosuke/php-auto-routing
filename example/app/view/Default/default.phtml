@@ -47,6 +47,13 @@
         <td><a href="<?php echo $resolver->path() ?>argument?id=1&amp;name=hoge">argument?id=1&amp;name=hoge</a></td>
     </tr>
     <tr>
+        <th>フォワードアクションです。実体は argument ですが URL はそのままです</th>
+        <td>
+            <a href="<?php echo $resolver->path() ?>forward">forwardUrl</a><br>
+            <a href="<?php echo $resolver->path() ?>forward-this">forwardThis</a>
+        </td>
+    </tr>
+    <tr>
         <th>ファイルアップロードフォームです</th>
         <td><a href="<?php echo $resolver->path() ?>upload">upload</a></td>
     </tr>
