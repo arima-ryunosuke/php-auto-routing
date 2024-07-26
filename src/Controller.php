@@ -221,7 +221,7 @@ class Controller
         $parsed = parse_url($url);
 
         if (($parsed['path'][0] ?? '/') !== '/') {
-            $url = $this->service->resolver->url($this) . $parsed['path'];
+            $url = $this->service->resolver->url($this, $parsed['path']);
         }
         parse_str($parsed['query'] ?? '', $query);
 

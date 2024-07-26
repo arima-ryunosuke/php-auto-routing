@@ -264,7 +264,7 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals('POST', $response->getContent());
 
         $this->assertException('failed to forward', function () use ($controller) {
-            $controller->forward('not-found');
+            $controller->forward('/not/found');
         });
     }
 
