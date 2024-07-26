@@ -1,6 +1,7 @@
 <?php
 namespace ryunosuke\Test\stub\Controller;
 
+use ryunosuke\microute\Controller;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -11,7 +12,8 @@ class HogeController extends AbstractController
     #[\ryunosuke\microute\attribute\Method('get')]
     public function defaultAction()
     {
-        return 'default-action';
+        $query = http_build_query($this->request->query->all());
+        return 'default-action' . (strlen($query) ? "?" : '') . $query;
     }
 
     #[\ryunosuke\microute\attribute\Method('get')]
@@ -29,6 +31,7 @@ class HogeController extends AbstractController
     #[\ryunosuke\microute\attribute\Method('get')]
     public function nopostAction()
     {
+        return $this->request->getMethod();
     }
 
     #[\ryunosuke\microute\attribute\Origin('http://allowed1.host', 'http://allowed2.host:1234')]
@@ -225,5 +228,18 @@ class HogeController extends AbstractController
             throw $t;
         }
         return new Response('error');
+    }
+
+    protected function subrequest(Controller $controller)
+    {
+        if ($this->action === 'parameter') {
+            $this->request->attributes->set('arg5', [5]);
+            $this->request->attributes->set('arg6', new \Exception('', 6));
+            $this->request->query->set('arg7', 7);
+            $this->request->query->set('arg8', 8);
+        }
+        if ($this->action === 'nopost') {
+            $this->request->setMethod('POST');
+        }
     }
 }

@@ -1,5 +1,6 @@
-<?xml version="1.0" encoding="utf-8" ?>
-<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.github.com/sebastianbergmann/phpunit/master/phpunit.xsd" bootstrap="bootstrap.php">
+<phpunit
+        bootstrap="bootstrap.php"
+>
     <testsuites>
         <testsuite name="tests">
             <directory>./Test/</directory>
@@ -10,15 +11,9 @@
         <const name="CLOUDFRONT_IPS" value="http://d7uri8nf7uskq.cloudfront.net/tools/list-cloudfront-ips"/>
     </php>
 
-    <filter>
-        <whitelist>
+    <coverage>
+        <include>
             <directory suffix=".php">../src/</directory>
-        </whitelist>
-    </filter>
-
-    <groups>
-        <exclude>
-            <group>exclude</group>
-        </exclude>
-    </groups>
+        </include>
+    </coverage>
 </phpunit>

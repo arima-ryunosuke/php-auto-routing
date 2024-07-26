@@ -243,6 +243,49 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertTrue($storage->isStarted());
     }
 
+    function test_forward()
+    {
+        $controller = new HogeController($this->service, 'default');
+
+        $this->service->router->redirect('/url', '/direct', 301);
+        $response = $controller->forward('/url');
+        $this->assertTrue($response->isRedirect('/direct'));
+
+        $response = $controller->forward('action-simple');
+        $this->assertEquals('simple-action', $response->getContent());
+
+        $response = $controller->forward('/hoge');
+        $this->assertEquals('default-action', $response->getContent());
+
+        $response = $controller->forward('/hoge?id=123');
+        $this->assertEquals('default-action?id=123', $response->getContent());
+
+        $response = $controller->forward('/hoge/nopost');
+        $this->assertEquals('POST', $response->getContent());
+
+        $this->assertException('failed to forward', function () use ($controller) {
+            $controller->forward('not-found');
+        });
+    }
+
+    function test_forwardThis()
+    {
+        $controller = new HogeController($this->service, 'default');
+
+        $response = $controller->forwardThis([]);
+        $this->assertEquals('default-action', $response->getContent());
+
+        $response = $controller->forwardThis([1, 2, 3, 4], 'parameter');
+        $this->assertEquals('[1,"2",true,4,[5],{},"7",8,"defval",null]', $response->getContent());
+
+        $response = $controller->forwardThis('nopost');
+        $this->assertEquals('POST', $response->getContent());
+
+        $this->assertException('failed to forward', function () use ($controller) {
+            $controller->forwardThis('not-found');
+        });
+    }
+
     function test_redirect()
     {
         $controller = new HogeController($this->service, 'action-a');
