@@ -22,6 +22,14 @@
 - DefaultController::errorAction の廃止
 - php8 対応が済んだら Attribute 自体に処理を持たせたい
 
+## 2.0.1
+
+- [feature] メインテナンスページ機能
+- [composer] symfony6 系対応
+- [merge] 1.2.10
+- [merge] 1.2.9
+- [merge] 1.2.8
+
 ## 2.0.0
 
 - [change] php>=8.0
