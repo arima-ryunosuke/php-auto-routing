@@ -6,7 +6,7 @@ $service = new \ryunosuke\microute\Service([
     'debug'              => ($_SERVER['HTTP_CACHE_CONTROL'] ?? '') === 'no-cache',
     'cacher'             => new \ryunosuke\SimpleCache\StreamCache(sys_get_temp_dir() . '/microute-example'),
     'logger'             => new class extends \Psr\Log\AbstractLogger {
-        public function log($level, $message, array $context = [])
+        public function log($level, $message, array $context = []): void
         {
             if (isset($context['exception'])) {
                 printf('これは "logger" でハンドリングされた例外メッセージです（%s:%s）', $message, $context['exception']);

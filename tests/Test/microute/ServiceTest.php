@@ -36,7 +36,7 @@ class ServiceTest extends \ryunosuke\Test\AbstractTestCase
         $service = $this->provideService([
             'debug'              => true,
             'requestClass'       => new class extends Request {
-                public function getContentType() { return 'json'; }
+                public function getContentType(): ?string { return 'json'; }
 
                 public function getContent(bool $asResource = false) { return json_encode(['A' => ['B' => ['C' => 'Z']]]); }
             },

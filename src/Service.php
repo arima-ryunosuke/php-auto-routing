@@ -212,7 +212,7 @@ class Service implements HttpKernelInterface
     /**
      * @inheritDoc
      */
-    public function handle(Request $request, int $type = self::MAIN_REQUEST, bool $catch = true)
+    public function handle(Request $request, int $type = self::MAIN_REQUEST, bool $catch = true): Response
     {
         $request->attributes->set('request-type', $type);
 

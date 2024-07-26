@@ -61,7 +61,7 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
 
         $service = $this->provideService([
             'request' => new class extends Request {
-                public function getBaseUrl() { return '/base/path'; }
+                public function getBaseUrl(): string { return '/base/path'; }
             },
         ]);
         $resolver = $service->resolver;
@@ -79,7 +79,7 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
     {
         $service = $this->provideService([
             'request' => new class extends Request {
-                public function getBaseUrl() { return '/base/path'; }
+                public function getBaseUrl(): string { return '/base/path'; }
             },
         ]);
         $resolver = $service->resolver;

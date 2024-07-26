@@ -13,7 +13,7 @@ class MockLogger extends \Psr\Log\AbstractLogger
         $this->callback = $callback;
     }
 
-    public function log($level, $message, array $context = [])
+    public function log($level, $message, array $context = []): void
     {
         ($this->callback)($level, $message, $context);
     }
