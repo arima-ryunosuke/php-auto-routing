@@ -21,6 +21,37 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertInstanceOf(DefaultController::class, $dispatcher->dispatchedController);
     }
 
+    function test_dispatch_503()
+    {
+        $maintenanceFile = sys_get_temp_dir() . '/maintenance.php';
+        file_put_contents($maintenanceFile, 'maintenance');
+
+        $service = $this->provideService([
+            'request'              => $request = Request::create('/hoge'),
+            'maintenanceFile'      => $maintenanceFile,
+            'maintenanceAccessKey' => 'allow-maintenance-access',
+        ]);
+        $response = $service->dispatcher->dispatch(Request::create('/hoge'));
+        $this->assertEquals(503, $response->getStatusCode());
+
+        $service = $this->provideService([
+            'request'              => $request = Request::create('/hoge/fuga?allow-maintenance-access=1234&a=b'),
+            'maintenanceFile'      => $maintenanceFile,
+            'maintenanceAccessKey' => 'allow-maintenance-access',
+        ]);
+        $response = $service->dispatcher->dispatch($request);
+        $this->assertTrue($response->isRedirect('/hoge/fuga?a=b'));
+
+        $service = $this->provideService([
+            'request'              => $request = Request::create('/hoge', cookies: ['microute-maintenance' => 'OK']),
+            'maintenanceFile'      => $maintenanceFile,
+            'maintenanceAccessKey' => 'allow-maintenance-access',
+        ]);
+        $response = $service->dispatcher->dispatch($request);
+        $this->assertEquals('default-action', $response->getContent());
+
+    }
+
     function test_dispatch_default()
     {
         $request = Request::create('/');

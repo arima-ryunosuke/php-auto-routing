@@ -21,6 +21,8 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
  * @property-read callable[][]            $events
  * @property-read string[]|\Closure       $origin
  * @property-read string[]                $priority
+ * @property-read string                  $maintenanceFile
+ * @property-read string                  $maintenanceAccessKey
  *
  * @property-read Router                  $router
  * @property-read Dispatcher              $dispatcher
@@ -62,6 +64,8 @@ class Service implements HttpKernelInterface
         $values['origin'] ??= [];
         $values['priority'] ??= [Router::ROUTE_REWRITE, Router::ROUTE_REDIRECT, Router::ROUTE_ALIAS, Router::ROUTE_REGEX, Router::ROUTE_SCOPE, Router::ROUTE_DEFAULT];
         $values['events'] ??= [];
+        $values['maintenanceFile'] ??= '';
+        $values['maintenanceAccessKey'] ??= '';
 
         $values['router'] ??= fn() => new Router($this);
         $values['dispatcher'] ??= fn() => new Dispatcher($this);

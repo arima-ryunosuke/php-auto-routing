@@ -1,6 +1,8 @@
 <?php
 namespace ryunosuke\microute;
 
+use Symfony\Component\HttpFoundation\Cookie;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -34,6 +36,31 @@ class Dispatcher
 
     public function dispatch(Request $request): Response
     {
+        // メンテ判定はあらゆるルーティングの前に行う
+        if ($this->service->maintenanceFile && file_exists($this->service->maintenanceFile)) {
+            if ($this->service->maintenanceAccessKey && $ttl = $request->query->getInt($this->service->maintenanceAccessKey)) {
+                $response = new RedirectResponse($this->service->resolver->current([$this->service->maintenanceAccessKey => null]));
+                $response->headers->setCookie(new Cookie('microute-maintenance', 'OK', time() + $ttl));
+
+                return $response;
+            }
+
+            if ($request->cookies->get('microute-maintenance') !== 'OK') {
+                ob_start();
+                $response = include $this->service->maintenanceFile;
+                $content = ob_get_clean();
+
+                if (!$response instanceof Response) {
+                    $response = new Response($content);
+                }
+
+                $response->setStatusCode(503);
+                $response->headers->set('Cache-Control', 'no-cache');
+
+                return $response;
+            }
+        }
+
         $matched = $this->service->router->match($request);
         if ($matched instanceof Response) {
             return $matched;
