@@ -532,13 +532,13 @@ class RouterTest extends \ryunosuke\Test\AbstractTestCase
                 'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::routenameAction',
                 'method' => [],
             ],
-            '/basepath/relay/context.json?id=int(123)'                            => [
+            '/basepath/relay/context.json?id=int(123)'                                => [
                 'route'  => 'alias',
                 'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::context',
                 'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::contextAction',
                 'method' => [],
             ],
-            '/basepath/relay/context.xml?id=int(123)'                             => [
+            '/basepath/relay/context.xml?id=int(123)'                                 => [
                 'route'  => 'alias',
                 'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::context',
                 'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::contextAction',
@@ -563,7 +563,7 @@ class RouterTest extends \ryunosuke\Test\AbstractTestCase
                 'target' => 'ryunosuke\\Test\\stub\\Controller\\SubSub\\ScopedController::hogeAction',
                 'method' => [],
             ],
-            '/basepath/url/all/(?<scoped>[0-9a-z]+)/context.json?id=int(123)'     => [
+            '/basepath/url/all/(?<scoped>[0-9a-z]+)/context.json?id=int(123)'         => [
                 'route'  => 'scope',
                 'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::context',
                 'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::contextAction',

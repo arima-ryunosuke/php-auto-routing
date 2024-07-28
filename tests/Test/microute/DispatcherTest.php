@@ -31,7 +31,7 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
             'maintenanceFile'      => $maintenanceFile,
             'maintenanceAccessKey' => 'allow-maintenance-access',
         ]);
-        $response = $service->dispatcher->dispatch(Request::create('/hoge'));
+        $response = $service->dispatcher->dispatch($request);
         $this->assertEquals(503, $response->getStatusCode());
 
         $service = $this->provideService([
