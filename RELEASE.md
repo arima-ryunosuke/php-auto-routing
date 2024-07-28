@@ -22,6 +22,15 @@
 - DefaultController::errorAction の廃止
 - php8 対応が済んだら Attribute 自体に処理を持たせたい
 
+## 2.0.2
+
+- [fixbug] 一定条件下で cacheEvent が効かない不具合
+- [feature] クッキーストレージを用意
+- [feature] クッキーハンドラーの複数鍵対応
+- [change] グローバル設定の origin の非推奨
+- [feature] IPアドレス制限属性を追加
+- [feature] 複数の名前空間に対応
+
 ## 2.0.1
 
 - [feature] メインテナンスページ機能
