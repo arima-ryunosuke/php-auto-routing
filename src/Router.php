@@ -430,29 +430,29 @@ class Router
 
     private function getControllers()
     {
-        $namespace = $this->service->controllerNamespace;
-        $directory = $this->service->controllerDirectory;
-        $suffix = $this->service->controllerClass::CONTROLLER_SUFFIX;
-
-        $rdi = new \RecursiveDirectoryIterator($directory, \FilesystemIterator::CURRENT_AS_SELF | \FilesystemIterator::SKIP_DOTS);
-        $rii = new \RecursiveIteratorIterator($rdi);
-        $ri = new \RegexIterator($rii, "#$suffix\\.php$#");
-
         $controllers = [];
-        /** @var \RecursiveDirectoryIterator $file */
-        foreach ($ri as $file) {
-            /** @var Controller $class_name */
-            $class_name = $namespace . preg_replace(['#\\.php$#', '#/#'], ['', '\\\\'], $file->getSubPathname());
-            if (!class_exists($class_name)) {
-                continue;
-            }
-            $metadata = $class_name::metadata($this->service->cacher);
-            if ($metadata['abstract']) {
-                continue;
-            }
+        $suffix = $this->service->controllerClass::CONTROLLER_SUFFIX;
+        foreach ($this->service->controllerLocation as $namespace => $directory) {
+            $rdi = new \RecursiveDirectoryIterator($directory, \FilesystemIterator::CURRENT_AS_SELF | \FilesystemIterator::SKIP_DOTS);
+            $rii = new \RecursiveIteratorIterator($rdi);
+            $ri = new \RegexIterator($rii, "#$suffix\\.php$#");
 
-            $controllers[] = $class_name;
+            /** @var \RecursiveDirectoryIterator $file */
+            foreach ($ri as $file) {
+                /** @var Controller $class_name */
+                $class_name = $namespace . preg_replace(['#\\.php$#', '#/#'], ['', '\\\\'], $file->getSubPathname());
+                if (!class_exists($class_name)) {
+                    continue;
+                }
+                $metadata = $class_name::metadata($this->service->cacher);
+                if ($metadata['abstract']) {
+                    continue;
+                }
+
+                $controllers[] = $class_name;
+            }
         }
+
         return $controllers;
     }
 }

@@ -185,6 +185,22 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals(302, $route->getStatusCode());
     }
 
+    function test_dispatch_multiple()
+    {
+        $service = $this->provideService([
+            'controllerLocation' => [
+                'ryunosuke\\Test\\stub\\Controller\\'  => __DIR__ . '/../../stub/Controller/',
+                'ryunosuke\\Test\\stub\\Controller2\\' => __DIR__ . '/../../stub/Controller2/',
+            ],
+        ]);
+
+        $response = $service->dispatcher->dispatch(Request::create('/'));
+        $this->assertEquals('Default/default', $response->getContent());
+
+        $response = $service->dispatcher->dispatch(Request::create('/hoge'));
+        $this->assertEquals('hoge2', $response->getContent());
+    }
+
     function test_error()
     {
         $service = $this->provideService([
@@ -222,7 +238,7 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
     {
         $service = $this->provideService([
             'controllerLocation' => [
-                'ryunosuke\\Test\\Web\\Mock\\Controller2\\' => __DIR__ . '/../../stub/Controller2/',
+                'ryunosuke\\Test\\stub\\Controller2\\' => __DIR__ . '/../../stub/Controller2/',
             ],
         ]);
         $service->cacher->clear();
@@ -354,7 +370,7 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
 
     function test_findController_notfound()
     {
-        $namespace = $this->service->controllerNamespace;
+        $namespace = array_key_first($this->service->controllerLocation);
 
         $ca = $this->service->dispatcher->findController('@@@', 'test');
         $this->assertEquals([404, "{$namespace}@@@Controller class doesn't exist."], $ca);

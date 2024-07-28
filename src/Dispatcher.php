@@ -159,26 +159,34 @@ class Dispatcher
             return $controller_class;
         }
 
-        $namespace = $this->service->controllerNamespace;
         $controller_class = trim(str_replace('/', '\\', $controller_class), '\\');
-        $controller_name = $namespace . $controller_class . $controllerClass::CONTROLLER_SUFFIX;
-        if (!class_exists($controller_name)) {
+        foreach ($this->service->controllerLocation as $namespace => $directory) {
+            $controller_name = $namespace . $controller_class . $controllerClass::CONTROLLER_SUFFIX;
+            if (class_exists($controller_name)) {
+                return $controller_name;
+            }
             $controller_name = $namespace . ltrim("$controller_class\\Default", '\\') . $controllerClass::CONTROLLER_SUFFIX;
-            if (!class_exists($controller_name)) {
-                return null;
+            if (class_exists($controller_name)) {
+                return $controller_name;
             }
         }
-        return $controller_name;
+        return null;
     }
 
     /**
      * 完全修飾クラス名からアプリ固有のコントローラ名に変換する
      */
-    public function shortenController(?string $controller_class): string
+    public function shortenController(?string $controller_class): ?string
     {
-        $prefix = preg_quote($this->service->controllerNamespace, '#');
         $suffix = $this->service->controllerClass::CONTROLLER_SUFFIX;
-        return preg_replace("#^($prefix)|($suffix)$#", '', ltrim($controller_class, '\\'));
+        foreach ($this->service->controllerLocation as $namespace => $directory) {
+            $prefix = preg_quote($namespace, '#');
+            $local_name = preg_replace("#^($prefix)|($suffix)$#", '', ltrim($controller_class, '\\'), -1, $count);
+            if ($count) {
+                return $local_name;
+            }
+        }
+        return $controller_class;
     }
 
     /**
@@ -213,28 +221,30 @@ class Dispatcher
         ];
 
         foreach ($controller_action as $cname => $aname) {
-            $class_name = $this->service->controllerNamespace . $cname . $this->service->controllerClass::CONTROLLER_SUFFIX;
+            foreach ($this->service->controllerLocation as $namespace => $directory) {
+                $class_name = $namespace . $cname . $this->service->controllerClass::CONTROLLER_SUFFIX;
 
-            if (!class_exists($class_name)) {
-                $result = $result ?? [404, "$class_name class doesn't exist."];
-                continue;
+                if (!class_exists($class_name)) {
+                    $result = $result ?? [404, "$class_name class doesn't exist."];
+                    continue;
+                }
+
+                $metadata = $class_name::metadata($this->service->cacher);
+
+                if ($metadata['abstract']) {
+                    $result = $result ?? [404, "$class_name class is abstract."];
+                    continue;
+                }
+                if (!isset($metadata['actions'][$aname])) {
+                    $result = $result ?? [404, "$class_name class doesn't have $aname."];
+                    continue;
+                }
+
+                // 無限に溜まってしまうので見つかったときのみキャッシュする
+                $result = [$class_name, $aname];
+                $this->service->cacher->set($cachekey, $result);
+                return $result;
             }
-
-            $metadata = $class_name::metadata($this->service->cacher);
-
-            if ($metadata['abstract']) {
-                $result = $result ?? [404, "$class_name class is abstract."];
-                continue;
-            }
-            if (!isset($metadata['actions'][$aname])) {
-                $result = $result ?? [404, "$class_name class doesn't have $aname."];
-                continue;
-            }
-
-            // 無限に溜まってしまうので見つかったときのみキャッシュする
-            $result = [$class_name, $aname];
-            $this->service->cacher->set($cachekey, $result);
-            return $result;
         }
 
         return $result;

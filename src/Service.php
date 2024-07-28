@@ -29,9 +29,7 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
  * @property-read Resolver                $resolver
  * @property-read array                   $trustedProxies
  * @property-read Controller              $controllerClass
- * @property-read string                  $controllerNamespace
- * @property-read string                  $controllerDirectory
- * @property-read array|Controller        $controllerLocation
+ * @property-read array|Controller[]      $controllerLocation
  * @property-read array                   $controllerAutoload
  *
  * @property-read callable                $requestFactory
@@ -102,25 +100,29 @@ class Service implements HttpKernelInterface
         $values['authenticationComparator'] ??= fn() => fn($valid_password, $password) => $valid_password === $password;
         $values['authenticationNoncer'] ??= fn() => fn($nonce) => $nonce === null ? sha1(openssl_random_pseudo_bytes(40)) : null;
 
-        if (is_array($values['controllerLocation'])) {
-            foreach ($values['controllerLocation'] as $ns => $dir) {
-                $values['controllerNamespace'] = trim($ns, '\\') . '\\';
-                $values['controllerDirectory'] = rtrim($dir, '\\/') . DIRECTORY_SEPARATOR;
+        $controllerLocation = [];
+        foreach ((array) $values['controllerLocation'] as $ns => $dir) {
+            if (is_int($ns) && is_a($dir, $values['controllerClass'], true)) {
+                $ref = new \ReflectionClass($dir);
+                $ns = $ref->getNamespaceName() . '\\';
+                $dir = dirname($ref->getFileName()) . DIRECTORY_SEPARATOR;
+            }
+            else {
                 spl_autoload_register(function ($class) {
-                    $localname = str_replace($this->controllerNamespace, '', $class);
-                    $localpath = str_replace('\\', DIRECTORY_SEPARATOR, $localname);
-                    $fullpath = $this->controllerDirectory . $localpath . '.php';
-                    if (file_exists($fullpath)) {
-                        include $fullpath;
+                    foreach ($this->controllerLocation as $ns => $dir) {
+                        $localname = str_replace($ns, '', $class);
+                        $localpath = str_replace('\\', DIRECTORY_SEPARATOR, $localname);
+                        $fullpath = $dir . $localpath . '.php';
+                        if (file_exists($fullpath)) {
+                            include $fullpath;
+                        }
                     }
                 });
             }
+
+            $controllerLocation[trim($ns, '\\') . '\\'] = rtrim($dir, '\\/') . DIRECTORY_SEPARATOR;
         }
-        else {
-            $ref = new \ReflectionClass($values['controllerLocation']);
-            $values['controllerNamespace'] = $ref->getNamespaceName() . '\\';
-            $values['controllerDirectory'] = dirname($ref->getFileName()) . DIRECTORY_SEPARATOR;
-        }
+        $values['controllerLocation'] = $controllerLocation;
 
         $this->values = $values;
 

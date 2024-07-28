@@ -43,8 +43,10 @@ class ServiceTest extends \ryunosuke\Test\AbstractTestCase
             'controllerLocation' => DefaultController::class,
         ]);
 
-        $this->assertEquals('ryunosuke\\Test\\stub\\Controller\\', $service->controllerNamespace);
-        $this->assertEquals(realpath(__DIR__ . '/../../stub/Controller') . DIRECTORY_SEPARATOR, $service->controllerDirectory);
+        $controllerLocation = $service->controllerLocation;
+
+        $this->assertEquals('ryunosuke\\Test\\stub\\Controller\\', array_key_first($controllerLocation));
+        $this->assertEquals(realpath(__DIR__ . '/../../stub/Controller') . DIRECTORY_SEPARATOR, reset($controllerLocation));
         $this->assertEquals(['A' => ['B' => ['C' => 'Z']]], $service->request->request->all());
     }
 
