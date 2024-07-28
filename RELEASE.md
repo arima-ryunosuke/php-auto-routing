@@ -53,6 +53,10 @@
     - query のクロージャ対応
       - 更新日時ではなく inode や hash を付与したいこともある
 
+## 1.2.10
+
+- [fixbug] SSE の Cache-Control スペルミス
+
 ## 1.2.9
 
 - [fixbug] forward(url) で Controller+Action がくっついてしまう不具合

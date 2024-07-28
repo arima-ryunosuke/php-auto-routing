@@ -452,7 +452,7 @@ class Controller
             }
         }, $this->response->getStatusCode());
         $response->headers->set('Content-Type', 'text/event-stream; charset=utf-8');
-        $response->headers->set('Cach-Control', 'no-cache');
+        $response->headers->set('Cache-Control', 'no-cache');
         $response->headers->set('X-Accel-Buffering', 'no');
 
         return $this->response($response);
