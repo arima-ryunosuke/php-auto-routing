@@ -23,6 +23,10 @@
 - タイプヒントの設定
 - php8 対応が済んだら Attribute 自体に処理を持たせたい
 
+## 1.2.10
+
+- [fixbug] SSE の Cache-Control スペルミス
+
 ## 1.2.9
 
 - [fixbug] forward(url) で Controller+Action がくっついてしまう不具合
