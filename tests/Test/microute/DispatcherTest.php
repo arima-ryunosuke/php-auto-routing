@@ -405,6 +405,12 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertInstanceOf(HogeController::class, $service->dispatcher->loadController(HogeController::class, 'action_origin', $request));
 
         $request = Request::create('', 'GET');
+        $request->server->set('REMOTE_ADDR', '203.0.113.0');
+        $this->assertInstanceOf(HogeController::class, $service->dispatcher->loadController(HogeController::class, 'action_ip_allow', $request));
+        $request->server->set('REMOTE_ADDR', '203.0.114.0');
+        $this->assertInstanceOf(HogeController::class, $service->dispatcher->loadController(HogeController::class, 'action_ip_deny', $request));
+
+        $request = Request::create('', 'GET');
         $request->headers->set('X-Requested-With', 'XMLHttpRequest');
         $this->assertInstanceOf(HogeController::class, $service->dispatcher->loadController(HogeController::class, 'action_ajax', $request));
 
@@ -442,6 +448,18 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
             $request = Request::create('', 'POST');
             $request->headers->set('origin', 'http://unknown.host');
             $service->dispatcher->loadController(HogeController::class, 'actionSimple', $request);
+        });
+
+        $this->assertException("is not allowed from", function () use ($service) {
+            $request = Request::create('', 'GET');
+            $request->server->set('REMOTE_ADDR', '203.0.114.0');
+            $service->dispatcher->loadController(HogeController::class, 'action_ip_allow', $request);
+        });
+
+        $this->assertException("is denied from", function () use ($service) {
+            $request = Request::create('', 'GET');
+            $request->server->set('REMOTE_ADDR', '203.0.113.0');
+            $service->dispatcher->loadController(HogeController::class, 'action_ip_deny', $request);
         });
 
         $this->assertException("only accepts XmlHttpRequest", function () use ($service) {

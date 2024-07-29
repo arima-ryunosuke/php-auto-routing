@@ -41,6 +41,18 @@ class HogeController extends AbstractController
         return 'origin';
     }
 
+    #[\ryunosuke\microute\attribute\IpAddress(['203.0.113.0/24'], true)]
+    public function action_ip_allowAction()
+    {
+        return 'ip_allow';
+    }
+
+    #[\ryunosuke\microute\attribute\IpAddress(['203.0.113.0/24'], false)]
+    public function action_ip_denyAction()
+    {
+        return 'ip_deny';
+    }
+
     #[\ryunosuke\microute\attribute\Method('get')]
     #[\ryunosuke\microute\attribute\Ajaxable(400)]
     public function action_ajaxAction()

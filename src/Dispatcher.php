@@ -2,6 +2,7 @@
 namespace ryunosuke\microute;
 
 use Symfony\Component\HttpFoundation\Cookie;
+use Symfony\Component\HttpFoundation\IpUtils;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -279,6 +280,17 @@ class Dispatcher
                     }
                     throw new HttpException(403, "$origin is not allowed Origin.");
                     OK:
+                }
+            }
+        }
+
+        if (!$this->service->debug && !$is_error) {
+            $ip_address = $action_data['@ip-address'];
+            foreach ($ip_address as $rule) {
+                $matched = IpUtils::checkIp($request->getClientIp(), $rule['addresses']);
+                if (($rule['defaultDeny'] && !$matched) || (!$rule['defaultDeny'] && $matched)) {
+                    $result = $rule['defaultDeny'] ? 'not allowed' : 'denied';
+                    throw new HttpException(403, "$action_name is $result from {$request->getClientIp()}.");
                 }
             }
         }

@@ -102,6 +102,7 @@ class Controller
                     '@basic-auth'    => attribute\BasicAuth::by($action)[0] ?? null,
                     '@digest-auth'   => attribute\DigestAuth::by($action)[0] ?? null,
                     '@origin'        => attribute\Origin::by($action),
+                    '@ip-address'    => attribute\IpAddress::by($action),
                     '@ajaxable'      => attribute\Ajaxable::by($action)[0] ?? null,
                     '@ratelimit'     => attribute\RateLimit::by($action) ?? [],
                     // パラメータ系
