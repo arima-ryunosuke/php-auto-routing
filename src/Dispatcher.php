@@ -266,9 +266,10 @@ class Dispatcher
         $is_error = $action_name === 'error';
 
         if (!$this->service->debug && !$is_error) {
+            // for compatible. delete global origin config in future scope
             $origins = $this->service->origin;
             if ($origins instanceof \Closure) {
-                $origins = $origins($this->service);
+                $origins = $origins($this->service); // @codeCoverageIgnore
             }
             $origins = array_merge($origins, $action_data['@origin']);
             if ($origins && !$request->isMethodSafe()) {

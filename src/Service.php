@@ -19,7 +19,6 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
  * @property-read CacheInterface          $cacher
  * @property-read LoggerInterface         $logger
  * @property-read callable[][]            $events
- * @property-read string[]|\Closure       $origin
  * @property-read string[]                $priority
  * @property-read string                  $maintenanceFile
  * @property-read string                  $maintenanceAccessKey
@@ -59,7 +58,11 @@ class Service implements HttpKernelInterface
 
         $values['debug'] ??= false;
         $values['logger'] ??= new NullLogger();
+        // for compatible
         $values['origin'] ??= [];
+        if (!empty($values['origin'])) {
+            trigger_error("delete global origin config in future scope", E_USER_DEPRECATED); // @codeCoverageIgnore
+        }
         $values['priority'] ??= [Router::ROUTE_REWRITE, Router::ROUTE_REDIRECT, Router::ROUTE_ALIAS, Router::ROUTE_REGEX, Router::ROUTE_SCOPE, Router::ROUTE_DEFAULT];
         $values['events'] ??= [];
         $values['maintenanceFile'] ??= '';

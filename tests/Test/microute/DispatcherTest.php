@@ -387,17 +387,9 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
 
     function test_loadController()
     {
-        $service = $this->provideService([
-            'origin' => function () {
-                return function () {
-                    return ['http://allowedX.host:1234'];
-                };
-            },
-        ]);
+        $service = $this->provideService([]);
 
         $request = Request::create('', 'POST');
-        $this->assertInstanceOf(HogeController::class, $service->dispatcher->loadController(HogeController::class, 'action_origin', $request));
-        $request->headers->set('origin', 'http://allowedX.host:1234');
         $this->assertInstanceOf(HogeController::class, $service->dispatcher->loadController(HogeController::class, 'action_origin', $request));
         $request->headers->set('origin', 'http://allowed2.host:1234');
         $this->assertInstanceOf(HogeController::class, $service->dispatcher->loadController(HogeController::class, 'action_origin', $request));
@@ -430,24 +422,12 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
 
     function test_loadController_notallowed()
     {
-        $service = $this->provideService([
-            'origin' => function () {
-                return function () {
-                    return ['http://allowedX.host:1234'];
-                };
-            },
-        ]);
+        $service = $this->provideService();
 
         $this->assertException("is not allowed Origin", function () use ($service) {
             $request = Request::create('', 'POST');
             $request->headers->set('origin', 'http://unknown.host');
             $service->dispatcher->loadController(HogeController::class, 'action_origin', $request);
-        });
-
-        $this->assertException("is not allowed Origin", function () use ($service) {
-            $request = Request::create('', 'POST');
-            $request->headers->set('origin', 'http://unknown.host');
-            $service->dispatcher->loadController(HogeController::class, 'actionSimple', $request);
         });
 
         $this->assertException("is not allowed from", function () use ($service) {
