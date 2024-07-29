@@ -1,6 +1,7 @@
 <?php
 namespace ryunosuke\microute\example\controller;
 
+use ryunosuke\microute\attribute\IpAddress;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
@@ -51,6 +52,12 @@ class DefaultController extends AbstractController
     #[\ryunosuke\microute\attribute\Origin('http://localhost', 'http://localhost:8000', 'http://localhost:3000')]
     public function originAction()
     {
+    }
+
+    #[IpAddress(['127.0.0.1', true])]
+    public function denyIpAction()
+    {
+        return 'denyIp';
     }
 
     public function requestAction()

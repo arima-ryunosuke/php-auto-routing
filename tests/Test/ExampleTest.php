@@ -59,6 +59,15 @@ class ExampleTest extends AbstractTestCase
         $this->assertStringContainsString('<a href="background.txt">', $crawler->html());
     }
 
+    function test_denyIp()
+    {
+        $client = new HttpKernelBrowser($this->service);
+        $crawler = $client->request('GET', '/deny-ip');
+
+        $this->assertEquals(200, $client->getResponse()->getStatusCode());
+        $this->assertStringContainsString('denyIp', $crawler->html());
+    }
+
     function test_argument()
     {
         $client = new HttpKernelBrowser($this->service);

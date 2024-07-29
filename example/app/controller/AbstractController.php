@@ -1,6 +1,7 @@
 <?php
 namespace ryunosuke\microute\example\controller;
 
+use ryunosuke\microute\attribute\IpAddress;
 use ryunosuke\microute\Controller;
 use Symfony\Component\HttpFoundation\Response;
 
