@@ -124,6 +124,30 @@ class CookieSessionHandlerTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals('', $actual);
     }
 
+    function test_multiple_keys()
+    {
+        $value = $this->generateLongString(64);
+
+        $cookies = [];
+        $handler = $this->provideHandler($cookies, [
+            'privateKey' => 'key2000',
+        ]);
+        $handler->read('sid');
+        $handler->write('sid', $value);
+
+        $handler = $this->provideHandler($cookies, [
+            'privateKey' => ['key2002', 'key2001', 'key2000'],
+        ]);
+        $actual = $handler->read('sid');
+        $this->assertEquals($value, $actual);
+
+        $handler = $this->provideHandler($cookies, [
+            'privateKey' => fn() => ['key2003', 'key2002', 'key2001'],
+        ]);
+        $actual = $handler->read('sid');
+        $this->assertEquals('', $actual);
+    }
+
     function test_cookie()
     {
         $cookies = [

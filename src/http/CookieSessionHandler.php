@@ -7,7 +7,7 @@ class CookieSessionHandler extends AbstractSessionHandler
 {
     private const VERSION = 2;
 
-    private string $privateKey;
+    private array $privateKeys;
 
     private string $storeName;
     private string $initialStoreName;
@@ -30,7 +30,7 @@ class CookieSessionHandler extends AbstractSessionHandler
     {
         assert(array_key_exists('privateKey', $options));
 
-        $this->privateKey = (string) $options['privateKey'];
+        $this->privateKeys = (array) ($options['privateKey'] instanceof \Closure ? $options['privateKey']() : $options['privateKey']);
         $this->initialStoreName = (string) ($options['storeName'] ?? '');
         $this->initialChunkSize = (int) ($options['chunkSize'] ?? 4095); // ブラウザの最小サイズは 4095 byte
         $this->maxLength = (int) ($options['maxLength'] ?? 19);          // RFC 的には 20 個。ただし個数クッキーで1つ使うので -1
@@ -169,7 +169,7 @@ class CookieSessionHandler extends AbstractSessionHandler
         $taglen = 16;
 
         $keylen = 256 / 8;// openssl_cipher_key_length($algo);
-        $key = hash_hkdf('sha256', $this->privateKey, $keylen);
+        $key = hash_hkdf('sha256', reset($this->privateKeys), $keylen);
 
         $ivlen = openssl_cipher_iv_length($algo);
         $iv = random_bytes($ivlen);
@@ -191,16 +191,20 @@ class CookieSessionHandler extends AbstractSessionHandler
 
         $algo = 'aes-256-gcm';
         $taglen = 16;
+        $keylen = 256 / 8;// openssl_cipher_key_length($algo);
 
         $tag = substr($data, 0, $taglen);
-
-        $keylen = 256 / 8;// openssl_cipher_key_length($algo);
-        $key = hash_hkdf('sha256', $this->privateKey, $keylen);
-
         $ivlen = openssl_cipher_iv_length($algo);
         $iv = substr($data, $taglen, $ivlen);
 
-        $decrypted_data = openssl_decrypt(substr($data, $taglen + $ivlen), $algo, $key, OPENSSL_RAW_DATA, $iv, $tag);
-        return (string) gzinflate($decrypted_data);
+        foreach ($this->privateKeys as $privateKey) {
+            $key = hash_hkdf('sha256', $privateKey, $keylen);
+            $decrypted_data = openssl_decrypt(substr($data, $taglen + $ivlen), $algo, $key, OPENSSL_RAW_DATA, $iv, $tag);
+            if (is_string($decrypted_data)) {
+                return gzinflate($decrypted_data);
+            }
+        }
+
+        return '';
     }
 }
