@@ -784,6 +784,9 @@ class Controller
         // session_cache_limiter を無効化する
         if (PHP_SAPI !== 'cli') {
             // @codeCoverageIgnoreStart
+            // session が始まっていない場合はこれで十分
+            session_cache_limiter('private_no_expire');
+            // 既に始まっている場合はもう送出されているので明示的に消さなければならない
             header_remove('Expires');
             header_remove('Cache-Control');
             header_remove('Pragma');
