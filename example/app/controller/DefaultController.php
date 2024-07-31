@@ -229,7 +229,7 @@ class DefaultController extends AbstractController
         return 'まだレート制限に達してません';
     }
 
-    public function resolverAction($pref_id)
+    public function resolverAction()
     {
     }
 

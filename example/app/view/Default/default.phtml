@@ -3,12 +3,12 @@
 現在のアクセス URL は <code><?php echo $url ?></code> です。
 <table class="table table-responsive table-borderless table-sm">
     <tr>
-        <th>このページです</th>
+        <th>ベースページです</th>
         <td><a href="<?php echo $resolver->path() ?>">/</a></td>
     </tr>
     <tr>
         <th>コントローラ単位の alias ページです</th>
-        <td><a href="<?php echo $resolver->path() ?>alias">alias</a></td>
+        <td><a href="<?php echo $resolver->path() ?>alias/">alias</a></td>
     </tr>
     <tr>
         <th>コントローラ単位の scope ページです</th>
@@ -20,122 +20,122 @@
     </tr>
     <tr>
         <th>URL の一覧ページです</th>
-        <td><a href="<?php echo $resolver->path() ?>urls">urls</a></td>
+        <td><a href="./urls">urls</a></td>
     </tr>
     <tr>
         <th>オリジンヘッダのチェックです</th>
-        <td><a href="<?php echo $resolver->path() ?>origin">origin</a></td>
+        <td><a href="./origin">origin</a></td>
     </tr>
     <tr>
         <th>IPアドレスのチェックです。127.0.0.1 以外はアクセスできません</th>
-        <td><a href="<?php echo $resolver->path() ?>deny-ip">deny-ip</a></td>
+        <td><a href="./deny-ip">deny-ip</a></td>
     </tr>
     <tr>
         <th>リクエストオブジェクトです</th>
-        <td><a href="<?php echo $resolver->path() ?>request">request</a></td>
+        <td><a href="./request">request</a></td>
     </tr>
     <tr>
         <th>セッションデータです</th>
-        <td><a href="<?php echo $resolver->path() ?>session">session</a></td>
+        <td><a href="./session">session</a></td>
     </tr>
     <tr>
         <th>バックグラウンド処理です</th>
-        <td><a href="<?php echo $resolver->path() ?>background">background</a></td>
+        <td><a href="./background">background</a></td>
     </tr>
     <tr>
         <th>JSON の POST です</th>
-        <td><a href="<?php echo $resolver->path() ?>json">json</a></td>
+        <td><a href="./json">json</a></td>
     </tr>
     <tr>
         <th>クエリストリングとアクションパラメータのマップです</th>
-        <td><a href="<?php echo $resolver->path() ?>argument?id=1&amp;name=hoge">argument?id=1&amp;name=hoge</a></td>
+        <td><a href="./argument?id=1&amp;name=hoge">argument?id=1&amp;name=hoge</a></td>
     </tr>
     <tr>
         <th>フォワードアクションです。実体は argument ですが URL はそのままです</th>
         <td>
-            <a href="<?php echo $resolver->path() ?>forward">forwardUrl</a><br>
-            <a href="<?php echo $resolver->path() ?>forward-this">forwardThis</a>
+            <a href="./forward">forwardUrl</a><br>
+            <a href="./forward-this">forwardThis</a>
         </td>
     </tr>
     <tr>
         <th>ファイルアップロードフォームです</th>
-        <td><a href="<?php echo $resolver->path() ?>upload">upload</a></td>
+        <td><a href="./upload">upload</a></td>
     </tr>
     <tr>
         <th>リダイレクトルーティングで外部サイトに飛びます</th>
-        <td><a href="<?php echo $resolver->path() ?>external">external</a></td>
+        <td><a href="./external">external</a></td>
     </tr>
     <tr>
         <th>rewrite, redirect ルーティングです</th>
         <td>
-            <a href="<?php echo $resolver->path() ?>hoge">hoge</a>（redirect 302）<br>
-            <a href="<?php echo $resolver->path() ?>fuga">fuga</a>（redirect 303）<br>
-            <a href="<?php echo $resolver->path() ?>piyo">piyo</a>（rewrite）<br>
+            <a href="./hoge">hoge</a>（redirect 302）<br>
+            <a href="./fuga">fuga</a>（redirect 303）<br>
+            <a href="./piyo">piyo</a>（rewrite）<br>
         </td>
     </tr>
     <tr>
         <th>正規表現ルーティングです</th>
         <td>
-            <a href="<?php echo $resolver->path() ?>regex/123-hoge">regex/123-hoge</a><br>
-            <a href="<?php echo $resolver->path() ?>aplhanum">aplhanum</a><br>
+            <a href="./regex/123-hoge">regex/123-hoge</a><br>
+            <a href="./aplhanum">aplhanum</a><br>
         </td>
     </tr>
     <tr>
         <th>コンテキスト（拡張子）付きアクセスです。json,xml 以外だと 404 になります</th>
         <td>
-            <a href="<?php echo $resolver->path() ?>context.json?id=1">context.json?id=1</a>（json）<br>
-            <a href="<?php echo $resolver->path() ?>context.xml?id=1">context.xml?id=1</a>（xml）<br>
-            <a href="<?php echo $resolver->path() ?>context.html?id=1">context.html?id=1</a>（htmlは404）<br>
-            <a href="<?php echo $resolver->path() ?>context?id=1">context?id=1</a>（拡張子なしは 404）<br>
+            <a href="./context.json?id=1">context.json?id=1</a>（json）<br>
+            <a href="./context.xml?id=1">context.xml?id=1</a>（xml）<br>
+            <a href="./context.html?id=1">context.html?id=1</a>（htmlは404）<br>
+            <a href="./context?id=1">context?id=1</a>（拡張子なしは 404）<br>
         </td>
     </tr>
     <tr>
         <th>ファイルをそのまま返します。 304 キャッシュされます</th>
-        <td><a href="<?php echo $resolver->path() ?>content">content</a></td>
+        <td><a href="./content">content</a></td>
     </tr>
     <tr>
         <th>ファイルをダウンロードします</th>
-        <td><a href="<?php echo $resolver->path() ?>download">download</a></td>
+        <td><a href="./download">download</a></td>
     </tr>
     <tr>
         <th>重いページです。10秒間 304 キャッシュされます</th>
-        <td><a href="<?php echo $resolver->path() ?>cache">cache</a></td>
+        <td><a href="./cache">cache</a></td>
     </tr>
     <tr>
         <th>web キャッシュです。初回以降 web サーバーがレスポンスします</th>
-        <td><a href="<?php echo $resolver->path() ?>public.html">public</a></td>
+        <td><a href="./public.html">public</a></td>
     </tr>
     <tr>
         <th>レート制限（IP）ページです。5リクエスト/10秒間に制限されます</th>
-        <td><a href="<?php echo $resolver->path() ?>ratelimit">ratelimit-ip</a></td>
+        <td><a href="./ratelimit">ratelimit-ip</a></td>
     </tr>
     <tr>
         <th>レート制限（ID）ページです。10リクエスト/20秒間に制限されます</th>
-        <td><a href="<?php echo $resolver->path() ?>ratelimit?id=123">ratelimit-id</a></td>
+        <td><a href="./ratelimit?id=123">ratelimit-id</a></td>
     </tr>
     <tr>
         <th>SSE ページです。3秒ごとにサーバー側から送信されます</th>
-        <td><a href="<?php echo $resolver->path() ?>push">push</a></td>
+        <td><a href="./push">push</a></td>
     </tr>
     <tr>
         <th>resolver のサンプルページです</th>
-        <td><a href="<?php echo $resolver->path() ?>13/resolver?param1=123&amp;param2=456">13/resolver?param1=123&amp;param2=456</a></td>
+        <td><a href="./resolver?param1=123&amp;param2=456">resolver?param1=123&amp;param2=456</a></td>
     </tr>
     <tr>
         <th>trustedProxies の確認ページです</th>
-        <td><a href="<?php echo $resolver->path() ?>proxies">proxies</a></td>
+        <td><a href="./proxies">proxies</a></td>
     </tr>
     <tr>
         <th>$_SERVER の確認ページです</th>
-        <td><a href="<?php echo $resolver->path() ?>server">server</a></td>
+        <td><a href="./server">server</a></td>
     </tr>
     <tr>
         <th>例外を投げます。コントローラレベルで補足されます</th>
-        <td><a href="<?php echo $resolver->path() ?>throw-runtime">throw-runtime</a></td>
+        <td><a href="./throw-runtime">throw-runtime</a></td>
     </tr>
     <tr>
         <th>例外を投げます。エラーアクションで補足されます</th>
-        <td><a href="<?php echo $resolver->path() ?>throw-domain">throw-domain</a></td>
+        <td><a href="./throw-domain">throw-domain</a></td>
     </tr>
 </table>
 <?php $contents = ob_get_clean(); ?>
