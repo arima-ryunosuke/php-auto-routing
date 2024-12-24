@@ -79,7 +79,7 @@ class Router
             // constroller/action に分解
             $paths = strtr(ucwords($path, " \t\r\n\f\v-"), ['-' => '']);
             $parts = array_filter(explode('/', $paths), 'strlen');
-            $action_name = lcfirst(array_pop($parts));
+            $action_name = lcfirst(array_pop($parts) ?? '');
             $controller_name = implode('\\', array_map('ucfirst', $parts));
 
             return [

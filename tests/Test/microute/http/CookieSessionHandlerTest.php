@@ -200,7 +200,7 @@ class CookieSessionHandlerTest extends \ryunosuke\Test\AbstractTestCase
     {
         $handler = $this->provideHandler($cookies);
         $this->assertTrue($handler->updateTimestamp('sessname', ''));
-        $this->assertTrue($handler->gc(0));
+        $this->assertEquals(1, $handler->gc(0));
         $this->assertTrue($handler->close());
     }
 }

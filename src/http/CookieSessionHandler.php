@@ -150,7 +150,7 @@ class CookieSessionHandler extends AbstractSessionHandler
     /**
      * {@inheritdoc}
      */
-    public function gc(int $maxlifetime): bool
+    public function gc(int $maxlifetime): int|false
     {
         return true;
     }
