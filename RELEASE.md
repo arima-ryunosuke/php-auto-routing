@@ -22,6 +22,11 @@
 - DefaultController::errorAction の廃止
 - php8 対応が済んだら Attribute 自体に処理を持たせたい
 
+## 2.0.3
+
+- [refactor] php8.2 の警告を修正
+- Merge tag 'v1.2.11'
+
 ## 2.0.2
 
 - [fixbug] 一定条件下で cacheEvent が効かない不具合
