@@ -395,17 +395,17 @@ class Controller
 
         if ($eitherContentOrFileinfo instanceof \SplFileInfo) {
             $response = new BinaryFileResponse($eitherContentOrFileinfo, $this->response->getStatusCode());
-            $response->headers->set('Content-Type', 'application/octet-stream');
+            // Content-Type は BinaryFileResponse が付けてくれるので不要
             $response->headers->set('Content-Disposition', $attachment($filename ?? $eitherContentOrFileinfo->getFilename()));
         }
         elseif ($eitherContentOrFileinfo instanceof \Closure) {
             $response = new StreamedResponse($eitherContentOrFileinfo, $this->response->getStatusCode());
-            $response->headers->set('Content-Type', 'application/octet-stream');
+            $response->headers->set('Content-Type', $this->response->headers->get('Content-Type', 'application/octet-stream'));
             $response->headers->set('Content-Disposition', $attachment($filename));
         }
         else {
             $response = new Response($eitherContentOrFileinfo, $this->response->getStatusCode());
-            $response->headers->set('Content-Type', 'application/octet-stream');
+            $response->headers->set('Content-Type', $this->response->headers->get('Content-Type', 'application/octet-stream'));
             $response->headers->set('Content-Disposition', $attachment($filename));
             $response->headers->set('Content-Length', strlen($eitherContentOrFileinfo));
         }

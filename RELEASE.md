@@ -70,6 +70,10 @@
     - query のクロージャ対応
       - 更新日時ではなく inode や hash を付与したいこともある
 
+## 1.2.11
+
+- [fixbug] download 時の Content-Type を修正
+
 ## 1.2.10
 
 - [fixbug] SSE の Cache-Control スペルミス

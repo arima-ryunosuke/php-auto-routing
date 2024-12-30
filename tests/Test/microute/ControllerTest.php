@@ -453,6 +453,9 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         $response->send();
         $actual = ob_get_clean();
         $this->assertEquals(file_get_contents(__FILE__), $actual);
+
+        $response->prepare($this->service->request);
+        $this->assertStringStartsWith("text/x-php", $response->headers->get('Content-Type'));
     }
 
     function test_download_closure()
@@ -462,6 +465,7 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
             echo str_repeat('heavy', '3');
         }, 'filename.txt');
         $this->assertEquals('attachment; filename=filename.txt', $response->headers->get('Content-Disposition'));
+        $this->assertStringStartsWith("application/octet-stream", $response->headers->get('Content-Type'));
         ob_start();
         $response->send();
         $actual = ob_get_clean();
@@ -477,13 +481,16 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
     {
         $controller = new HogeController($this->service, 'action-a');
         $controller->response->setDisposition('hoge.txt');
+        $controller->response->headers->set('Content-Type', 'text/plain');
         $response = $controller->download('content');
         $this->assertEquals('attachment; filename=hoge.txt', $response->headers->get('Content-Disposition'));
+        $this->assertStringStartsWith("text/plain", $response->headers->get('Content-Type'));
         $this->assertEquals('content', $response->getContent());
 
         $controller = new HogeController($this->service, 'action-a');
         $response = $controller->download('content', 'filename.txt');
         $this->assertEquals('attachment; filename=filename.txt', $response->headers->get('Content-Disposition'));
+        $this->assertStringStartsWith("application/octet-stream", $response->headers->get('Content-Type'));
         $this->assertEquals('content', $response->getContent());
 
         $controller = new HogeController($this->service, 'action-a');
