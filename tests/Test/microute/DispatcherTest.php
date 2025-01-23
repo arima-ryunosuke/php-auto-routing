@@ -96,6 +96,21 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals('Defaults/Default3/Hoge/Fuga/Piyo/Default/default', $response->getContent());
     }
 
+    function test_dispatch_default_slash()
+    {
+        $request = Request::create('');
+        $response = $this->service->dispatcher->dispatch($request);
+
+        // トップレベルには影響しない
+        $this->assertEquals('Default/default', $response->getContent());
+
+        $request = Request::create('/defaults?test[]=123');
+        $response = $this->service->dispatcher->dispatch($request);
+
+        // / が無いとリダイレクトになるはず
+        $this->assertEquals('/defaults/?test%5B0%5D=123', $response->headers->get('Location'));
+    }
+
     function test_dispatch_nodefault()
     {
         $service = $this->service;

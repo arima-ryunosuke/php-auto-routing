@@ -90,6 +90,7 @@ class Controller
                 return [
                     // ルーティング系
                     '@default-route' => attribute\DefaultRoute::by($action)[0] ?? true,
+                    '@default-slash' => attribute\DefaultSlash::by($action)[0] ?? false, // to true in future scope
                     '@route'         => attribute\Route::by($action),
                     '@redirect'      => attribute\Redirect::by($action),
                     '@rewrite'       => attribute\Rewrite::by($action),

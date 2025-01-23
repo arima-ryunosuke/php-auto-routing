@@ -3,6 +3,7 @@ namespace ryunosuke\Test\stub\Controller;
 
 use Symfony\Component\HttpFoundation\Response;
 
+#[\ryunosuke\microute\attribute\DefaultSlash]
 class DefaultController extends AbstractController
 {
     #[\ryunosuke\microute\attribute\Method('get')]

@@ -75,8 +75,16 @@ class Dispatcher
             $this->dispatchedController = $controller = $this->loadController($controller_class, $action_name, $request);
             $metadata = $controller::metadata($this->service->cacher);
 
-            if ($matched['route'] === 'default' && !$metadata['actions'][$action_name]['@default-route']) {
-                throw new HttpException(404, "$controller_class::$action_name is not allowed default routhing.");
+            if ($matched['route'] === 'default') {
+                if (!$metadata['actions'][$action_name]['@default-route']) {
+                    throw new HttpException(404, "$controller_class::$action_name is not allowed default routhing.");
+                }
+                if ($metadata['actions'][$action_name]['@default-slash'] && $action_name === 'default' && ($request->getPathInfo()[-1] ?? '/') !== '/') {
+                    $basepath = rtrim($request->getBasePath(), '/');
+                    $currentpath = $request->getPathInfo();
+                    $query = $request->getQueryString();
+                    return new RedirectResponse("$basepath$currentpath/" . (strlen($query) ? "?$query" : ''), 301);
+                }
             }
 
             return $this->service->trigger('dispatch', $controller) ?? $controller->dispatch($matched['parameters']);
