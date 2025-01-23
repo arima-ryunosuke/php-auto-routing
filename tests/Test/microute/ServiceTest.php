@@ -38,7 +38,10 @@ class ServiceTest extends \ryunosuke\Test\AbstractTestCase
         $service = $this->provideService([
             'debug'              => true,
             'requestClass'       => new class extends Request {
+                // for compatible symfony 6/7
                 public function getContentType(): ?string { return 'json'; }
+
+                public function getContentTypeFormat(): ?string { return 'json'; }
 
                 public function getContent(bool $asResource = false) { return json_encode(['A' => ['B' => ['C' => 'Z']]]); }
             },

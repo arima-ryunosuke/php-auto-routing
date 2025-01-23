@@ -23,7 +23,7 @@ class CookieSessionStorage extends NativeSessionStorage
         parent::__construct($options, $handler);
     }
 
-    protected function loadSession(array &$session = null)
+    protected function loadSession(array &$session = null): void
     {
         parent::loadSession($session);
 

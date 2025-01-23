@@ -1,6 +1,7 @@
 <?php
 namespace ryunosuke\Test\microute;
 
+use DateTimeInterface;
 use ryunosuke\microute\Controller;
 use ryunosuke\Test\microute\autoload\Hoge;
 use ryunosuke\Test\microute\autoload\Next\Foo;
@@ -890,9 +891,9 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         // 200 のはず
         $this->assertEquals(200, $response->getStatusCode());
         // LastModified が設定されているはず
-        $this->assertInstanceOf('DateTime', $response->getLastModified());
+        $this->assertInstanceOf(DateTimeInterface::class, $response->getLastModified());
         // Expires が設定されているはず
-        $this->assertInstanceOf('DateTime', $response->getExpires());
+        $this->assertInstanceOf(DateTimeInterface::class, $response->getExpires());
         // 中身はあるはず
         $this->assertStringContainsString('cached_response', $response->getContent());
 
@@ -925,9 +926,9 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         // 200 のはず
         $this->assertEquals(200, $response->getStatusCode());
         // LastModified が設定されているはず
-        $this->assertInstanceOf('DateTime', $response->getLastModified());
+        $this->assertInstanceOf(DateTimeInterface::class, $response->getLastModified());
         // Expires が設定されているはず
-        $this->assertInstanceOf('DateTime', $response->getExpires());
+        $this->assertInstanceOf(DateTimeInterface::class, $response->getExpires());
 
         // If-Modified-Since を設定すると・・・
         $controller = new EventController($this->service, 'cacheDirect', $request);
@@ -999,9 +1000,9 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         // 200 のはず
         $this->assertEquals(200, $response->getStatusCode());
         // LastModified が設定されているはず
-        $this->assertInstanceOf('DateTime', $response->getLastModified());
+        $this->assertInstanceOf(DateTimeInterface::class, $response->getLastModified());
         // Expires が設定されているはず
-        $this->assertInstanceOf('DateTime', $response->getExpires());
+        $this->assertInstanceOf(DateTimeInterface::class, $response->getExpires());
         // 中身はあるはず
         $this->assertEquals('publiced_response', $response->getContent());
         // 公開ディレクトリにファイルが出来ているはず

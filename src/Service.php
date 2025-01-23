@@ -83,7 +83,9 @@ class Service implements HttpKernelInterface
             $requestClass = $this->requestClass;
             $request = new $requestClass($query, $request, $attributes, $cookies, $files, $server, $content);
 
-            $conv = $this->requestTypes[$request->getContentType()] ?? null;
+            // for compatible symfony 6/7
+            $ctype = method_exists($request, 'getContentTypeFormat') ? $request->getContentTypeFormat(): $request->getContentType();
+            $conv = $this->requestTypes[$ctype] ?? null;
             if ($conv !== null) {
                 $request->request->replace($conv($request->getContent()) ?? []);
             }
