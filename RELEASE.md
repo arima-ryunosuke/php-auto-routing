@@ -22,6 +22,12 @@
 - DefaultController::errorAction の廃止
 - php8 対応が済んだら Attribute 自体に処理を持たせたい
 
+## 2.0.4
+
+- [feature] refresh ヘッダー機能
+- [feature] DefaultSlash 属性を追加
+- [feature] symfony 6/7 両対応
+
 ## 2.0.3
 
 - [refactor] php8.2 の警告を修正

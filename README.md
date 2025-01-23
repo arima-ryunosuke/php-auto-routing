@@ -388,6 +388,11 @@ subrequest は内部リクエストが実行された時に元のコントロー
 - `#[DefaultRoute(true)]`
     - デフォルトルーティングの有効/無効を設定します（後述）
     - `[DefaultRoute(false)]` とするとデフォルトルーティングが無効になります
+- `#[DefaultSlash(true)]`
+    - デフォルトアクションの `/` を強制します
+    - `#[DefaultSlash(true)]` とすると `controller/default` に `controller` でアクセスした際に `controller/` にリダイレクトされます
+    - コントローラをディレクトリに見立てたときの apache の DirectorySlash のようなものです
+    - 現状ではデフォルトで無効ですが、後方互換性のためで将来的にはデフォルトで有効になります
 - `#[Route]`
     - ルートに名前を付けます
     - `#[Route('hoge')]` とすると 'hoge' でリバースルーティングしたときにこのアクションの URL を返すようになります
