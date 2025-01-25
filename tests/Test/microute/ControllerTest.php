@@ -1073,6 +1073,7 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         $response = $controller->action([]);
         $this->assertEquals('"cors"', $response->getContent());
         $this->assertEquals('*', $response->headers->get('Access-Control-Allow-Origin'));
+        $this->assertEquals('3; url=/refresh', $response->headers->get('Refresh'));
         $this->assertStringStartsWith('hoge=HOGE;', $response->headers->get('set-cookie'));
     }
 }

@@ -223,6 +223,7 @@ class HogeController extends AbstractController
 
     public function headerAction()
     {
+        $this->response->setRefresh(3, '/refresh');
         $this->response->setCookie($this->cookie([
             'name'  => 'hoge',
             'value' => 'HOGE',

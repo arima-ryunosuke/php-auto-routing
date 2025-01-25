@@ -47,6 +47,17 @@ class ResponseTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals('attachment; filename=filename.txt', $response->headers->get('Content-Disposition'));
     }
 
+    function test_setRefresh()
+    {
+        $response = new Response();
+
+        $response->setRefresh('3');
+        $this->assertEquals('3', $response->headers->get('Refresh'));
+
+        $response->setRefresh('3', '/refresh');
+        $this->assertEquals('3; url=/refresh', $response->headers->get('Refresh'));
+    }
+
     function test_setCors()
     {
         $response = new Response();

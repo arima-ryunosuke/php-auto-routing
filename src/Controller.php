@@ -904,6 +904,10 @@ class Controller
             $response->setStatusCode($this->response->getStatusCode());
         }
 
+        if (($refresh = $this->response->headers->get('Refresh')) !== null) {
+            $response->headers->set('Refresh', $refresh);
+        }
+
         foreach ($this->response->headers->getCookies() as $cookie) {
             $response->headers->setCookie($cookie);
         }

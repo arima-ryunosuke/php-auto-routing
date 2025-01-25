@@ -38,6 +38,14 @@ class Response extends HttpFoundation\Response
         return $this;
     }
 
+    public function setRefresh(int $seconds = 0, ?string $url = null): static
+    {
+        $header = $seconds . ($url === null ? '' : "; url=$url");
+        $this->headers->set('Refresh', $header);
+
+        return $this;
+    }
+
     public function setCors(array $cors): static
     {
         if (array_key_exists('origin', $cors) && $cors['origin']) {
