@@ -1072,6 +1072,9 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         $controller = new HogeController($this->service, 'header');
         $response = $controller->action([]);
         $this->assertEquals('"cors"', $response->getContent());
+        $this->assertEquals(false, $response->headers->has('LastModified'));
+        $this->assertEquals('value1', $response->headers->get('X-My-Header1'));
+        $this->assertEquals('value2', $response->headers->get('X-My-Header2'));
         $this->assertEquals('*', $response->headers->get('Access-Control-Allow-Origin'));
         $this->assertEquals('3; url=/refresh', $response->headers->get('Refresh'));
         $this->assertStringStartsWith('hoge=HOGE;', $response->headers->get('set-cookie'));

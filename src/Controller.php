@@ -585,7 +585,7 @@ class Controller
                     }
                     return $this->response($response);
                 }
-                throw new \RuntimeException('Controller#error is must be return Response.');
+                throw new \RuntimeException('Controller#error is must be return Response.', 0, $t);
             }
             throw $t;
         }
@@ -608,8 +608,8 @@ class Controller
         try {
             $result = ([$this, $this->action . static::ACTION_SUFFIX])(...$args);
         }
-        catch (\TypeError) {
-            throw new HttpException(404, 'parameter is not match type.');
+        catch (\TypeError $t) {
+            throw new HttpException(404, 'parameter is not match type.', $t);
         }
 
         // 返り値が string ならレスポンンスボディ
@@ -906,6 +906,12 @@ class Controller
 
         if (($refresh = $this->response->headers->get('Refresh')) !== null) {
             $response->headers->set('Refresh', $refresh);
+        }
+
+        foreach ($this->response->headers->allPreserveCaseWithoutCookies() as $name => $value) {
+            if (stripos($name, 'x-') === 0) {
+                $response->headers->set($name, $value);
+            }
         }
 
         foreach ($this->response->headers->getCookies() as $cookie) {

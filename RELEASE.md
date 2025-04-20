@@ -81,6 +81,11 @@
     - query のクロージャ対応
       - 更新日時ではなく inode や hash を付与したいこともある
 
+## 1.2.12
+
+- [feature] response 引継ぎで X-ヘッダも対象とする
+- [fixbug] コントローラレベルの例外で引継ぎがなく、何が原因が分からない
+
 ## 1.2.11
 
 - [fixbug] download 時の Content-Type を修正
