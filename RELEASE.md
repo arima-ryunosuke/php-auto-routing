@@ -22,6 +22,11 @@
 - DefaultController::errorAction の廃止
 - php8 対応が済んだら Attribute 自体に処理を持たせたい
 
+## 2.0.5
+
+- [fixbug] basepath が空の時に version クエリがつかない不具合
+- Merge tag 'v1.2.12'
+
 ## 2.0.4
 
 - [feature] refresh ヘッダー機能
