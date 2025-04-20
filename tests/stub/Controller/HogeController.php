@@ -262,6 +262,11 @@ class HogeController extends AbstractController
 
     public function headerAction()
     {
+        $this->response->setHeaders([
+            'LastModified' => time(),
+            'x-my-header1' => 'value1',
+            'X-My-Header2' => 'value2',
+        ]);
         $this->response->setCookie($this->cookie([
             'name'  => 'hoge',
             'value' => 'HOGE',

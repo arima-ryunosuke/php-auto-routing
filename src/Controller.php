@@ -1087,6 +1087,12 @@ class Controller
             $response->setStatusCode($this->response->getStatusCode());
         }
 
+        foreach ($this->response->headers->allPreserveCaseWithoutCookies() as $name => $value) {
+            if (stripos($name, 'x-') === 0) {
+                $response->headers->set($name, $value);
+            }
+        }
+
         foreach ($this->response->headers->getCookies() as $cookie) {
             $response->headers->setCookie($cookie);
         }
