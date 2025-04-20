@@ -764,7 +764,7 @@ class Controller
                     }
                     return $this->response($response);
                 }
-                throw new \RuntimeException('Controller#error is must be return Response.');
+                throw new \RuntimeException('Controller#error is must be return Response.', 0, $t);
             }
             throw $t;
         }
