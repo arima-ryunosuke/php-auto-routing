@@ -195,7 +195,7 @@ class Resolver
         }
 
         if (!isset($fullpath)) {
-            $fullpath = "$docroot/" . parse_url($filename, PHP_URL_PATH);
+            $fullpath = "$docroot/" . parse_url(ltrim($filename, '/'), PHP_URL_PATH);
             $filename = preg_replace('#/+#', '/', $filename);
         }
 

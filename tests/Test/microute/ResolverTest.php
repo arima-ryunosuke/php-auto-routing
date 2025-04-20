@@ -216,6 +216,25 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
 
         $url = $resolver->path('//js/script.js?a=b', ['v' => fn($v) => sha1_file($v), 'a' => ['a' => 'A'], 'n' => null]);
         $this->assertEquals("/js/script.js?a=b&v=$script_js_sha1&a%5Ba%5D=A", $url);
+
+        // basePath が空文字の挙動が怪しいので追加テスト
+        $ref->setValue($request, '');
+        $resolver = $service->resolver;
+
+        $url = $resolver->path();
+        $this->assertEquals('/', $url);
+
+        $url = $resolver->path('css');
+        $this->assertEquals('/controller/css', $url);
+
+        $url = $resolver->path('/css');
+        $this->assertEquals('/css', $url);
+
+        $url = $resolver->path('/css/notfound.css');
+        $this->assertEquals('/css/notfound.css', $url);
+
+        $url = $resolver->path('/css/style.css', 'version');
+        $this->assertEquals("/css/style.css?version=$style_css_mtime", $url);
     }
 
     function test_query()
