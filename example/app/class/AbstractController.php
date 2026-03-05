@@ -1,8 +1,6 @@
 <?php
-namespace ryunosuke\microute\example\controller;
+namespace example\application;
 
-use ryunosuke\microute\attribute\IpAddress;
-use ryunosuke\microute\Controller;
 use Symfony\Component\HttpFoundation\Response;
 
 abstract class AbstractController extends \ryunosuke\microute\Controller
@@ -15,7 +13,7 @@ abstract class AbstractController extends \ryunosuke\microute\Controller
         $this->view = new \stdClass();
     }
 
-    protected function subrequest(Controller $controller)
+    protected function subrequest(\ryunosuke\microute\Controller $controller)
     {
         if ($this->action === 'argument') {
             $this->request->attributes->set('id', 123);
@@ -31,7 +29,7 @@ abstract class AbstractController extends \ryunosuke\microute\Controller
         $vars['action'] = $this->action;
         extract($vars);
         ob_start();
-        include(__DIR__ . '/../view/' . $this->location() . '.phtml');
+        include($this->viewFile('.phtml'));
         return $this->response->setContent(ob_get_clean());
     }
 }

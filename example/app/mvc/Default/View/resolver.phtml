@@ -1,6 +1,6 @@
 <?php
 
-use ryunosuke\microute\example\controller\DefaultController;
+use example\application\mvc;
 
 ob_start(); ?>
 Resolver のサンプルです。結果しか表示していないので「何がどうなるのか？」は phtml を見て確認してください。
@@ -15,7 +15,7 @@ Resolver のサンプルです。結果しか表示していないので「何�
     </tr>
     <tr>
         <th>URL 生成（通常の action [クエリパラメータ]）</th>
-        <td><code><?php echo $resolver->action(DefaultController::class, 'argument', ['id' => 123, 'name' => 'hoge']) ?></code></td>
+        <td><code><?php echo $resolver->action(mvc\Default\Controller::class, 'argument', ['id' => 123, 'name' => 'hoge']) ?></code></td>
     </tr>
     <tr>
         <th>URL 生成（短縮コントローラ名）</th>
@@ -63,14 +63,14 @@ Resolver のサンプルです。結果しか表示していないので「何�
     </tr>
     <tr>
         <th>DATA URI（画像ファイル）</th>
-        <td><img src="<?php echo $resolver->data(__DIR__ . '/../../resource/image.png') ?>" alt=""></td>
+        <td><img src="<?php echo $resolver->data(__DIR__ . '/../../../resource/image.png') ?>" alt=""></td>
     </tr>
     <tr>
         <th>DATA URI（テキストファイル）</th>
         <td>
-            <iframe src="<?php echo $resolver->data(__DIR__ . '/../../resource/iframe.html') ?>">
+            <iframe src="<?php echo $resolver->data(__DIR__ . '/../../../resource/iframe.html') ?>">
         </td>
     </tr>
 </table>
 <?php $contents = ob_get_clean(); ?>
-<?php include __DIR__ . '/../layout.phtml'; ?>
+<?php include __DIR__ . '/../../../resource/view/layout.phtml'; ?>

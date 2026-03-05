@@ -34,7 +34,8 @@
   },
   "autoload-dev": {
     "psr-4": {
-      "ryunosuke\\Test\\": "tests/Test"
+      "ryunosuke\\Test\\": "tests/Test",
+      "example\\application\\": "example/app/class/"
     }
   },
   "scripts": {

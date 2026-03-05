@@ -13,7 +13,7 @@ $service = new \ryunosuke\microute\Service([
             }
         }
     },
-    'maintenanceFile'      => __DIR__ . '/../app/view/maintenance.php',
+    'maintenanceFile'      => __DIR__ . '/../app/resource/view/maintenance.php',
     'maintenanceAccessKey' => 'maintenance-key',
     'priority'             => ['rewrite', 'redirect', 'alias', 'default', 'scope', 'regex'],
     'trustedProxies'       => [
@@ -36,8 +36,8 @@ $service = new \ryunosuke\microute\Service([
             'lifetime'   => 60,
         ],
     ]),
-    'controllerLocation'   => [
-        'ryunosuke\\microute\\example\\controller\\' => __DIR__ . '/../app/controller/',
+    'mvcLocation'   => [
+        'example\\application\\mvc\\' => __DIR__ . '/../app/mvc/',
     ],
 ]);
 

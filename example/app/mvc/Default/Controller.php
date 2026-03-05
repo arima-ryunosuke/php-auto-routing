@@ -1,13 +1,15 @@
 <?php
-namespace ryunosuke\microute\example\controller;
+namespace example\application\mvc\Default;
 
+use ryunosuke\microute\attribute\Ajaxable;
 use ryunosuke\microute\attribute\IpAddress;
+use example\application\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 #[\ryunosuke\microute\attribute\Alias('/alias')]
 #[\ryunosuke\microute\attribute\Scope('(?<pref_id>\d+)/')]
-class DefaultController extends AbstractController
+class Controller extends AbstractController
 {
     protected function catch(\Throwable $t)
     {
@@ -93,9 +95,15 @@ class DefaultController extends AbstractController
         $now = date('Y-m-d H:i:s');
         $this->background(function () use ($now) {
             sleep(5);
-            file_put_contents(__DIR__ . '/../../public/background.txt', "$now\n", FILE_APPEND);
+            file_put_contents(__DIR__ . '/../../../public/background.txt', "$now\n", FILE_APPEND);
         });
         return "fpm の場合、この処理は即座に帰りますが、5秒後に<a href='background.txt'>background.txt</a>に「{$now}」が追記されます";
+    }
+
+    #[Ajaxable]
+    public function ajaxAction()
+    {
+        return $this->json('ajaxed');
     }
 
     public function jsonAction()
@@ -154,6 +162,15 @@ class DefaultController extends AbstractController
         return '$id は名前付きキャプチャ、$name は2番目マッチで2番目の引数に渡ってきます<pre>' . var_export([
                 'url'       => $this->request->getRequestUri(),
                 'parameter' => compact('id', 'name'),
+            ], true);
+    }
+
+    #[\ryunosuke\microute\attribute\Regex('(?<pref_id>\d+)/(?<city_id>\d+)', true)]
+    public function locationAction(int $pref_id, int $city_id)
+    {
+        return '/ 区切りのパスパラメータ（いわゆる slug）が渡ってきます<pre>' . var_export([
+                'url'       => $this->request->getRequestUri(),
+                'parameter' => compact('pref_id', 'city_id'),
             ], true);
     }
 

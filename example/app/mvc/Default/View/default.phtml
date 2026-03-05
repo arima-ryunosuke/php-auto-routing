@@ -43,6 +43,19 @@
         <td><a href="./background">background</a></td>
     </tr>
     <tr>
+        <th>Ajax 以外を拒否します</th>
+        <td>
+            <a href="./ajax">navigation</a><br>
+            <a href="./ajax" id="ajax">fetch</a>
+            <script>
+                document.querySelector('#ajax').addEventListener('click', async function (e) {
+                    e.preventDefault();
+                    alert(`response ${await (await fetch(e.target.href)).json()}`);
+                });
+            </script>
+        </td>
+    </tr>
+    <tr>
         <th>JSON の POST です</th>
         <td><a href="./json">json</a></td>
     </tr>
@@ -77,6 +90,7 @@
         <th>正規表現ルーティングです</th>
         <td>
             <a href="./regex/123-hoge">regex/123-hoge</a><br>
+            <a href="./location/123/456">location/13/13101</a><br>
             <a href="./aplhanum">aplhanum</a><br>
         </td>
     </tr>
@@ -139,4 +153,4 @@
     </tr>
 </table>
 <?php $contents = ob_get_clean(); ?>
-<?php include __DIR__ . '/../layout.phtml'; ?>
+<?php include __DIR__ . '/../../../resource/view/layout.phtml'; ?>

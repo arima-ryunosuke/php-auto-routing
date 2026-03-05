@@ -143,6 +143,15 @@ class ExampleTest extends AbstractTestCase
         $this->assertStringContainsString('/regex/123-hoge', $crawler->html());
     }
 
+    function test_location()
+    {
+        $client = new HttpKernelBrowser($this->service);
+        $crawler = $client->request('GET', '/location/13/13101');
+
+        $this->assertEquals(200, $client->getResponse()->getStatusCode());
+        $this->assertStringContainsString('/location/13/13101', $crawler->html());
+    }
+
     function test_ratelimit()
     {
         $client = new HttpKernelBrowser($this->service);
