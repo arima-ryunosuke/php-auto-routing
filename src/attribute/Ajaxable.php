@@ -2,6 +2,7 @@
 namespace ryunosuke\microute\attribute;
 
 use Attribute;
+use ryunosuke\microute\http\Request;
 
 #[Attribute(Attribute::TARGET_CLASS | Attribute::TARGET_METHOD)]
 class Ajaxable extends AbstractAttribute
@@ -16,5 +17,13 @@ class Ajaxable extends AbstractAttribute
     public function merge(array &$result)
     {
         $result[] = $this->response_code;
+    }
+
+    public static function checkAjax(?int $ajaxable, Request $request): string
+    {
+        if ($ajaxable !== null && !$request->isXmlHttpRequest()) {
+            return "only accepts XmlHttpRequest.";
+        }
+        return "";
     }
 }

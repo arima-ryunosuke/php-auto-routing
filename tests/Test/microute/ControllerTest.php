@@ -3,6 +3,8 @@ namespace ryunosuke\Test\microute;
 
 use DateTimeInterface;
 use ryunosuke\microute\Controller;
+use ryunosuke\microute\http\Request;
+use ryunosuke\microute\http\Response;
 use ryunosuke\Test\microute\autoload\Auto;
 use ryunosuke\Test\microute\autoload\Next\Foo;
 use ryunosuke\Test\stub\mvc\Default\Controller as DefaultController;
@@ -11,8 +13,6 @@ use ryunosuke\Test\stub\mvc\Event\Controller as EventController;
 use ryunosuke\Test\stub\mvc\Hoge\Controller as HogeController;
 use ryunosuke\Test\stub\mvc\SubSub\FooBar\Controller as FooBarController;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Session\Storage\MockFileSessionStorage;
 
 class ControllerTest extends \ryunosuke\Test\AbstractTestCase
@@ -762,6 +762,12 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals('OK', $controller->action([])->getContent());
         $hx = $this->assertStatusCode(429, [$controller, 'action'], []);
         $this->assertEquals(1, $hx->getHeaders()['Retry-After']);
+
+        // レンジ外は無関係
+        $request->server->set('REMOTE_ADDR', '192.168.1.1');
+        $this->assertEquals('OK', $controller->action([])->getContent());
+        $this->assertEquals('OK', $controller->action([])->getContent());
+        $this->assertEquals('OK', $controller->action([])->getContent());
 
         // 同じ IP でも認証すると 2req/2sec なので2回は成功する
         $request->server->set('REMOTE_ADDR', '127.0.0.1');

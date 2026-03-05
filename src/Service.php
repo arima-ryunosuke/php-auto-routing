@@ -106,6 +106,9 @@ class Service implements HttpKernelInterface
         $values['parameterContexts'] ??= [];
 
         $values['authenticationProvider'] ??= [];
+        if (is_array($values['authenticationProvider'])) {
+            $values['authenticationProvider'] = fn() => fn($username) => $values['authenticationProvider'][$username] ?? null;
+        }
         $values['authenticationComparator'] ??= fn() => fn($valid_password, $password) => $valid_password === $password;
         $values['authenticationNoncer'] ??= fn() => fn($nonce) => $nonce === null ? sha1(openssl_random_pseudo_bytes(40)) : null;
 

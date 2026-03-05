@@ -198,7 +198,7 @@ class Controller extends AbstractController
     }
 
     #[\ryunosuke\microute\attribute\RateLimit(2, 2, 'attributes:id')]
-    #[\ryunosuke\microute\attribute\RateLimit(1, 1, 'ip')]
+    #[\ryunosuke\microute\attribute\RateLimit(1, 1, 'ip:127.0.0.1/8')]
     public function ratelimitAction()
     {
         return 'OK';

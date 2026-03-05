@@ -5,7 +5,6 @@ use Psr\SimpleCache\CacheInterface;
 use ryunosuke\microute\http\ThrowableResponse;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Cookie;
-use Symfony\Component\HttpFoundation\IpUtils;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -498,31 +497,10 @@ class Controller
         $datasources = [];
 
         // @argument に基いて見るべきパラメータを導出
-        $argumentmap = [
-            'GET'    => ['query'],
-            'POST'   => ['request'],
-            'FILE'   => ['files'],
-            'COOKIE' => ['cookies'],
-            'ATTR'   => ['attributes'],
-        ];
-        foreach ($metadata['actions'][$this->action]['@argument'] as $argument) {
-            foreach ($argumentmap[$argument] ?? [] as $source) {
-                $datasources += $this->request->$source->all();
-            }
-        }
+        $datasources += attribute\Argument::getArguments($metadata['actions'][$this->action]['@argument'], $this->request);
+
         // @method に基いて見るべきパラメータを導出
-        $actionmap = [
-            'GET'    => ['query', 'attributes'],                     // GET で普通は body は来ない
-            'POST'   => ['request', 'files', 'query', 'attributes'], // POST はかなり汎用的なのですべて見る
-            'PUT'    => ['request', 'query', 'attributes'],          // PUT は body が単一みたいなもの（symfony が面倒見てくれてる）
-            'DELETE' => ['query', 'attributes'],                     // DELETE で普通は body は来ない
-            '*'      => ['query', 'request', 'files', 'attributes'], // 全部
-        ];
-        foreach ($metadata['actions'][$this->action]['@method'] ?: ['*'] as $action) {
-            foreach ($actionmap[$action] ?? [] as $source) {
-                $datasources += $this->request->$source->all();
-            }
-        }
+        $datasources += attribute\Method::getArguments($metadata['actions'][$this->action]['@method'] ?: ['*'], $this->request);
 
         // ReflectionParameter に基いてパラメータを確定
         $parameters = [];
@@ -555,24 +533,13 @@ class Controller
         // 利便性が高いので attribute に入れておく
         $this->request->attributes->set('parameter', $parameters);
 
-        // 認証
-        $authentications = [
-            'basic'  => $metadata['actions'][$this->action]['@basic-auth'] ?? null,
-            'digest' => $metadata['actions'][$this->action]['@digest-auth'] ?? null,
-        ];
-        foreach ($authentications as $authmethod => $option) {
-            if (strlen($authmethod) && $option) {
-                $this->request->attributes->remove('authname');
-                $authname = $this->authenticate($authmethod, $option['realm']);
-                if (!strlen($authname ?? '')) {
-                    return $this->response;
-                }
-                $this->request->attributes->set('authname', $authname);
-            }
-        }
-
         // 5大イベントディスパッチ
         try {
+            // 認証
+            if (!is_null($authname = $this->authenticate())) {
+                $this->request->attributes->set('authname', $authname);
+            }
+
             // init は初期化処理（Response の返却を許す）
             $this->service->logger->info(get_class($this) . " init");
             $response = $this->init();
@@ -680,116 +647,63 @@ class Controller
         return null;
     }
 
-    /**
-     * 認証ヘッダを返す
-     */
-    protected function authenticate(string $method, string $realm): ?string
+    private function authenticate(): ?string
     {
-        // クオートは RFC 的に規定はされているようだが、詳細な情報を見つけられなかった
-        // そもそも Edge では正しく解釈してくれない挙動を示したのでいっその事不可とする
-        if (strpos($realm, '"') !== false) {
-            throw new \DomainException('realm should not be contains \'"\'');
-        }
-
         $provider = $this->service->authenticationProvider;
-        $passworder = function ($username) use ($provider) {
-            if ($provider instanceof \Closure) {
-                return $provider($username);
+        $metadata = static::metadata($this->service->cacher);
+        $realmer = function ($realm) {
+            // クオートは RFC 的に規定はされているようだが、詳細な情報を見つけられなかった
+            // そもそも Edge では正しく解釈してくれない挙動を示したのでいっその事不可とする
+            if (strpos($realm, '"') !== false) {
+                throw new \DomainException('realm should not be contains \'"\'');
             }
-            else {
-                return isset($provider[$username]) ? $provider[$username] : null;
-            }
+            return $realm;
         };
 
-        $methods = [
-            'basic'  => [
-                'verify' => function () use ($passworder) {
-                    $username = $this->request->server->get('PHP_AUTH_USER');
-                    $password = $this->request->server->get('PHP_AUTH_PW');
-                    $comparator = $this->service->authenticationComparator;
-                    return $comparator($passworder($username) ?? '', $password ?? '') ? $username : null;
-                },
-                'header' => fn() => sprintf('Basic realm="%s"', $realm),
-            ],
-            'digest' => [
-                'verify' => function () use ($passworder, $realm) {
-                    $md5implode = static fn($_) => md5(implode(':', func_get_args()));
-                    $keys = ['response', 'nonce', 'nc', 'cnonce', 'qop', 'uri', 'username'];
-                    $digest = $this->request->server->get('PHP_AUTH_DIGEST') ?? '';
-
-                    preg_match_all('@(' . implode('|', $keys) . ')=(?:([\'"])([^\2]+?)\2|([^\s,]+))@', $digest, $matches, PREG_SET_ORDER);
-                    $data = array_reduce($matches, static function ($data, $m) {
-                        $data[$m[1]] = $m[3] ?: $m[4];
-                        return $data;
-                    }, array_fill_keys($keys, ''));
-
-                    $counter = $this->service->authenticationNoncer;
-                    $ncount = $counter($data['nonce']);
-                    $ncount = $ncount === null ? $data['nc'] : sprintf('%08x', $ncount);
-
-                    $username = $data['username'];
-                    $password = $passworder($username);
-                    $response = $md5implode(
-                        $md5implode($username, $realm, $password),
-                        $data['nonce'],
-                        $ncount,
-                        $data['cnonce'],
-                        $data['qop'],
-                        $md5implode($this->request->getMethod(), $this->request->getRequestUri())
-                    );
-                    return hash_equals($response, $data['response']) ? $data['username'] : null;
-                },
-                'header' => function () use ($realm) {
-                    $counter = $this->service->authenticationNoncer;
-                    return sprintf('Digest realm="%s", nonce="%s", algorithm=MD5, qop="auth"', $realm, $counter(null));
-                },
-            ],
-        ];
-
-        $username = $methods[$method]['verify']();
-        if (!strlen($username ?? '')) {
-            $this->response->headers->set('WWW-Authenticate', $methods[$method]['header']());
-            $this->response->setStatusCode(401);
-            return null;
+        $basic = $metadata['actions'][$this->action]['@basic-auth'] ?? null;
+        if ($basic !== null) {
+            $realm = $realmer($basic['realm']);
+            $username = attribute\BasicAuth::authenticate($this->request, $provider, $this->service->authenticationComparator);
+            if ($username === null) {
+                $this->response->headers->set('WWW-Authenticate', attribute\BasicAuth::getHeader($realm));
+                $this->response->setStatusCode(401);
+                throw new ThrowableResponse($this->response);
+            }
+            return $username;
         }
-        return $username;
+
+        $digest = $metadata['actions'][$this->action]['@digest-auth'] ?? null;
+        if ($digest !== null) {
+            $realm = $realmer($digest['realm']);
+            $username = attribute\DigestAuth::authenticate($realm, $this->request, $provider, $this->service->authenticationNoncer);
+            if ($username === null) {
+                $this->response->headers->set('WWW-Authenticate', attribute\DigestAuth::getHeader($realm, $this->service->authenticationNoncer));
+                $this->response->setStatusCode(401);
+                throw new ThrowableResponse($this->response);
+            }
+            return $username;
+        }
+
+        return null;
     }
 
-    protected function ratelimit()
+    private function ratelimit()
     {
         $ratelimits = static::metadata($this->service->cacher)['actions'][$this->action]['@ratelimit'];
         foreach ($ratelimits as $ratelimit) {
-            $keys = [];
-            foreach ($ratelimit['request_keys'] as [$request, $key]) {
-                if ($request === 'ip') {
-                    $value = $this->request->getClientIp();
-                    $break = $key !== '' && $key !== '*' && !IpUtils::checkIp($value, $key);
+            $keys = attribute\RateLimit::getRate($ratelimit, $this->request);
+            if ($keys) {
+                $cachekey = self::CACHE_KEY . '.ratelimit.' . strtr(static::class, ['\\' => '%']) . sha1(json_encode($keys));
+
+                $times = $this->service->cacher->get($cachekey, []);
+                if (!is_null($after = attribute\RateLimit::checkLimit($ratelimit, $times))) {
+                    throw new HttpException(429, '', null, [
+                        'Retry-After' => $after,
+                    ]);
                 }
-                else {
-                    $value = $this->request->{$request}->get($key);
-                    $break = !is_scalar($value) || strlen($value) > 64;
-                }
-                if ($break) {
-                    continue 2;
-                }
-                $keys["$request:$key"] = $value;
+                $this->service->cacher->set($cachekey, $times);
+                break;
             }
-
-            $cachekey = self::CACHE_KEY . '.ratelimit.' . strtr(static::class, ['\\' => '%']) . sha1(json_encode($keys));
-
-            $now = microtime(true);
-            $times = $this->service->cacher->get($cachekey, []);
-            $times[] = $now;
-            $count = count($times);
-
-            if (($now - $times[0]) <= $ratelimit['second'] && $count > $ratelimit['count']) {
-                throw new HttpException(429, '', null, [
-                    'Retry-After' => intval($ratelimit['second'] - ($now - $times[0])) + 1,
-                ]);
-            }
-
-            $this->service->cacher->set($cachekey, array_slice($times, max(0, $count - $ratelimit['count'])));
-            break;
         }
     }
 

@@ -2,12 +2,12 @@
 namespace ryunosuke\Test\microute;
 
 use MockLogger;
+use ryunosuke\microute\http\Request;
+use ryunosuke\microute\http\Response;
 use ryunosuke\Test\stub\mvc\Default\Controller as DefaultController;
 use ryunosuke\Test\stub\mvc\Hoge\Controller as HogeController;
 use ryunosuke\Test\stub\mvc\SubSub;
 use Symfony\Component\HttpFoundation\RedirectResponse;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
@@ -446,19 +446,19 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
     {
         $service = $this->provideService();
 
-        $this->assertException("is not allowed Origin", function () use ($service) {
+        $this->assertException("not allowed Origin", function () use ($service) {
             $request = Request::create('', 'POST');
             $request->headers->set('origin', 'http://unknown.host');
             $service->dispatcher->loadController(HogeController::class, 'action_origin', $request);
         });
 
-        $this->assertException("is not allowed from", function () use ($service) {
+        $this->assertException("not allowed from", function () use ($service) {
             $request = Request::create('', 'GET');
             $request->server->set('REMOTE_ADDR', '203.0.114.0');
             $service->dispatcher->loadController(HogeController::class, 'action_ip_allow', $request);
         });
 
-        $this->assertException("is denied from", function () use ($service) {
+        $this->assertException("denied from", function () use ($service) {
             $request = Request::create('', 'GET');
             $request->server->set('REMOTE_ADDR', '203.0.113.0');
             $service->dispatcher->loadController(HogeController::class, 'action_ip_deny', $request);
@@ -469,12 +469,12 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
             $service->dispatcher->loadController(HogeController::class, 'action_ajax', $request);
         });
 
-        $this->assertException("doesn't allow POST method", function () use ($service) {
+        $this->assertException("not allow POST method", function () use ($service) {
             $request = Request::create('', 'POST');
             $service->dispatcher->loadController(HogeController::class, 'nopost', $request);
         });
 
-        $this->assertException("doesn't allow 'html' context", function () use ($service) {
+        $this->assertException("not allow 'html' context", function () use ($service) {
             $request = Request::create('', 'GET');
             $request->attributes->set('context', 'html');
             $service->dispatcher->loadController(HogeController::class, 'action_emptycontext', $request);
