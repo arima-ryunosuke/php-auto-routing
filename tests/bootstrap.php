@@ -2,7 +2,14 @@
 
 error_reporting(~E_DEPRECATED);
 
-require_once __DIR__ . '/../vendor/autoload.php';
+if (getenv('PHPVERSION')) {
+    require_once __DIR__ . '/versions/' . getenv('PHPVERSION') . '/vendor/autoload.php';
+}
+else {
+    require_once __DIR__ . '/../vendor/autoload.php';
+}
+
+printf("test symfony/http-kernel: %s\n", \Symfony\Component\HttpKernel\Kernel::VERSION);
 
 class MockLogger extends \Psr\Log\AbstractLogger
 {

@@ -1,0 +1,11 @@
+{
+  "config": {
+    "platform": {
+      "php": "7.4"
+    }
+  },
+  "require": {
+    "symfony/http-kernel": "5.*",
+    "symfony/mime": "5.*"
+  }
+}
