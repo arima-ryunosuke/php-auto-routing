@@ -160,6 +160,42 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals('basic', $response->getContent());
     }
 
+    function test_authenticate_bearer()
+    {
+        $service = $this->provideService([
+            'authenticationProvider'   => ['user' => 'id'],
+        ]);
+        $service->cacher->clear();
+        $metadata = new \ReflectionProperty(Controller::class, 'metadata');
+        $metadata->setAccessible(true);
+        $metadata->setValue([]);
+
+        $request = new Request();
+
+        $controller = new HogeController($service, 'bearer', $request);
+        $response = $controller->dispatch();
+        $this->assertEquals(null, $request->attributes->get('authname'));
+        $this->assertEquals('Bearer realm="Enter username and password", error="token_required"', $response->headers->get('www-authenticate'));
+        $this->assertEquals(401, $response->getStatusCode());
+        $this->assertEquals('', $response->getContent());
+
+        $request->headers->set('Authorization', 'Bearer dummy');
+        $controller = new HogeController($service, 'bearer', $request);
+        $response = $controller->dispatch();
+        $this->assertEquals(null, $request->attributes->get('authname'));
+        $this->assertEquals('Bearer realm="Enter username and password", error="invalid_token"', $response->headers->get('www-authenticate'));
+        $this->assertEquals(401, $response->getStatusCode());
+        $this->assertEquals('', $response->getContent());
+
+        $request->headers->set('Authorization', 'Bearer user');
+        $controller = new HogeController($service, 'bearer', $request);
+        $response = $controller->dispatch();
+        $this->assertEquals('id', $request->attributes->get('authname'));
+        $this->assertEquals(null, $response->headers->get('www-authenticate'));
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('bearer', $response->getContent());
+    }
+
     function test_authenticate_digest()
     {
         $digest = function ($authheader, $username, $password) {

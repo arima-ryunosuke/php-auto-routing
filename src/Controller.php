@@ -100,6 +100,7 @@ class Controller
                     '@argument'      => attribute\Argument::by($action),
                     // メタデータ系
                     '@basic-auth'    => attribute\BasicAuth::by($action)[0] ?? null,
+                    '@bearer-auth'   => attribute\BearerAuth::by($action)[0] ?? null,
                     '@digest-auth'   => attribute\DigestAuth::by($action)[0] ?? null,
                     '@origin'        => attribute\Origin::by($action),
                     '@ip-address'    => attribute\IpAddress::by($action),
@@ -666,6 +667,18 @@ class Controller
             $username = attribute\BasicAuth::authenticate($this->request, $provider, $this->service->authenticationComparator);
             if ($username === null) {
                 $this->response->headers->set('WWW-Authenticate', attribute\BasicAuth::getHeader($realm));
+                $this->response->setStatusCode(401);
+                throw new ThrowableResponse($this->response);
+            }
+            return $username;
+        }
+
+        $bearer = $metadata['actions'][$this->action]['@bearer-auth'] ?? null;
+        if ($bearer !== null) {
+            $realm = $realmer($bearer['realm']);
+            [$username, $exists] = attribute\BearerAuth::authenticate($this->request, $provider);
+            if ($username === null) {
+                $this->response->headers->set('WWW-Authenticate', attribute\BearerAuth::getHeader($realm, $exists));
                 $this->response->setStatusCode(401);
                 throw new ThrowableResponse($this->response);
             }

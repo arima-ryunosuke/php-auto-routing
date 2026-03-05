@@ -183,6 +183,12 @@ class Controller extends AbstractController
         return 'basic';
     }
 
+    #[\ryunosuke\microute\attribute\BearerAuth()]
+    public function bearerAction()
+    {
+        return 'bearer';
+    }
+
     #[\ryunosuke\microute\attribute\Method('get')]
     #[\ryunosuke\microute\attribute\DigestAuth('This page is required DIGEST auth')]
     public function digestAction()
