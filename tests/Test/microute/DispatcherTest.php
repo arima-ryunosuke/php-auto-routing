@@ -2,9 +2,9 @@
 namespace ryunosuke\Test\microute;
 
 use MockLogger;
-use ryunosuke\Test\stub\Controller\DefaultController;
-use ryunosuke\Test\stub\Controller\HogeController;
-use ryunosuke\Test\stub\Controller\SubSub;
+use ryunosuke\Test\stub\mvc\Default\Controller as DefaultController;
+use ryunosuke\Test\stub\mvc\Hoge\Controller as HogeController;
+use ryunosuke\Test\stub\mvc\SubSub;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -203,9 +203,9 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
     function test_dispatch_multiple()
     {
         $service = $this->provideService([
-            'controllerLocation' => [
-                'ryunosuke\\Test\\stub\\Controller\\'  => __DIR__ . '/../../stub/Controller/',
-                'ryunosuke\\Test\\stub\\Controller2\\' => __DIR__ . '/../../stub/Controller2/',
+            'mvcLocation' => [
+                'ryunosuke\\Test\\stub\\mvc\\'  => __DIR__ . '/../../stub/mvc/',
+                'ryunosuke\\Test\\stub\\mvc2\\' => __DIR__ . '/../../stub/mvc2/',
             ],
         ]);
 
@@ -252,8 +252,8 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
     function test_error_top()
     {
         $service = $this->provideService([
-            'controllerLocation' => [
-                'ryunosuke\\Test\\stub\\Controller2\\' => __DIR__ . '/../../stub/Controller2/',
+            'mvcLocation' => [
+                'ryunosuke\\Test\\stub\\mvc2\\' => __DIR__ . '/../../stub/mvc2/',
             ],
         ]);
         $service->cacher->clear();
@@ -362,8 +362,8 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals(HogeController::class, $dispatcher->resolveController(new HogeController($this->service, '')));
         $this->assertEquals(HogeController::class, $dispatcher->resolveController(HogeController::class));
         $this->assertEquals(HogeController::class, $dispatcher->resolveController('Hoge'));
-        $this->assertEquals(SubSub\FooBarController::class, $dispatcher->resolveController('SubSub/FooBar'));
-        $this->assertEquals(SubSub\DefaultController::class, $dispatcher->resolveController('SubSub'));
+        $this->assertEquals(SubSub\FooBar\Controller::class, $dispatcher->resolveController('SubSub/FooBar'));
+        $this->assertEquals(SubSub\Default\Controller::class, $dispatcher->resolveController('SubSub'));
         $this->assertEquals(DefaultController::class, $dispatcher->resolveController(''));
         $this->assertEquals(null, $dispatcher->resolveController('SubSubSub'));
     }
@@ -373,8 +373,8 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
         $dispatcher = $this->service->dispatcher;
         $this->assertEquals('Hoge', $dispatcher->shortenController(new HogeController($this->service, '')));
         $this->assertEquals('Hoge', $dispatcher->shortenController(HogeController::class));
-        $this->assertEquals('SubSub\\FooBar', $dispatcher->shortenController(SubSub\FooBarController::class));
-        $this->assertEquals('SubSub\Default', $dispatcher->shortenController(SubSub\DefaultController::class));
+        $this->assertEquals('SubSub\\FooBar', $dispatcher->shortenController(SubSub\FooBar\Controller::class));
+        $this->assertEquals('SubSub\Default', $dispatcher->shortenController(SubSub\Default\Controller::class));
         $this->assertEquals('Default', $dispatcher->shortenController(DefaultController::class));
     }
 
@@ -385,19 +385,26 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
 
     function test_findController_notfound()
     {
-        $namespace = array_key_first($this->service->controllerLocation);
+        $service = $this->service;
 
-        $ca = $this->service->dispatcher->findController('@@@', 'test');
-        $this->assertEquals([404, "{$namespace}@@@Controller class doesn't exist."], $ca);
+        $ca = $service->dispatcher->findController('@@@', 'test');
+        $this->assertEquals([404, "ryunosuke\\Test\\stub\\mvc\\@@@\\Controller class doesn't exist."], $ca);
 
-        $ca = $this->service->dispatcher->findController('notfoundclass', 'test');
-        $this->assertEquals([404, "{$namespace}notfoundclassController class doesn't exist."], $ca);
+        $ca = $service->dispatcher->findController('notfoundclass', 'test');
+        $this->assertEquals([404, "ryunosuke\\Test\\stub\\mvc\\notfoundclass\\Controller class doesn't exist."], $ca);
 
-        $ca = $this->service->dispatcher->findController('Abstract', 'test');
-        $this->assertEquals([404, "{$namespace}AbstractController class is abstract."], $ca);
+        $ca = $service->dispatcher->findController('Hoge', 'notfound');
+        $this->assertEquals([404, "ryunosuke\\Test\\stub\\mvc\\Hoge\\Controller class doesn't have notfound."], $ca);
 
-        $ca = $this->service->dispatcher->findController('Hoge', 'notfound');
-        $this->assertEquals([404, "{$namespace}HogeController class doesn't have notfound."], $ca);
+        $service = $this->provideService([
+            'mvcLocation'        => [],
+            'controllerLocation' => [
+                'ryunosuke\\Test\\stub\\controller\\' => __DIR__ . '/../../stub/controller/',
+            ],
+        ]);
+
+        $ca = $service->dispatcher->findController('Abstract', 'test');
+        $this->assertEquals([404, "ryunosuke\\Test\\stub\\controller\\AbstractController class is abstract."], $ca);
     }
 
     function test_loadController()

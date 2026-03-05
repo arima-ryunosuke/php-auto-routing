@@ -1,10 +1,11 @@
 <?php
 namespace ryunosuke\Test\microute;
 
-use ryunosuke\Test\stub\Controller\DefaultController;
-use ryunosuke\Test\stub\Controller\HogeController;
-use ryunosuke\Test\stub\Controller\HTMLManagerController;
-use ryunosuke\Test\stub\Controller\ResolverController;
+use ryunosuke\Test\stub\mvc\Default\Controller as DefaultController;
+use ryunosuke\Test\stub\mvc\Hoge\Controller as HogeController;
+use ryunosuke\Test\stub\mvc\HTMLManager\Controller as HTMLManagerController;
+use ryunosuke\Test\stub\mvc\Resolver\Controller as ResolverController;
+use ryunosuke\Test\stub\mvc\SubSub\Default\Controller as SubSubDefaultController;
 use Symfony\Component\HttpFoundation\Request;
 
 class ResolverTest extends \ryunosuke\Test\AbstractTestCase
@@ -50,14 +51,14 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
         $resolver = $service->resolver;
         $this->assertEquals('/', $resolver->url(DefaultController::class, 'default'));
         $this->assertEquals('/index', $resolver->url(DefaultController::class, 'index'));
-        $this->assertEquals('/sub-sub/index', $resolver->url(\ryunosuke\Test\stub\Controller\SubSub\DefaultController::class, 'index'));
+        $this->assertEquals('/sub-sub/index', $resolver->url(SubSubDefaultController::class, 'index'));
         $this->assertEquals('/hoge/', $resolver->url(HogeController::class));
         $this->assertEquals('/hoge/', $resolver->url(HogeController::class, 'default'));
         $this->assertEquals('/hoge/action', $resolver->url(HogeController::class, 'action'));
         $this->assertEquals('/hoge/action-id?id=123&name=hoge', $resolver->url(HogeController::class, 'actionId', ['id' => 123, 'name' => 'hoge']));
 
         $resuest->attributes->set('parameter', ['id' => 123]);
-        $this->assertEquals('/sub-sub/123/index', $resolver->url(\ryunosuke\Test\stub\Controller\SubSub\DefaultController::class, 'index'));
+        $this->assertEquals('/sub-sub/123/index', $resolver->url(SubSubDefaultController::class, 'index'));
 
         $service = $this->provideService([
             'request' => new class(server: $_SERVER) extends Request {

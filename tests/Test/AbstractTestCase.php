@@ -22,9 +22,9 @@ abstract class AbstractTestCase extends TestCase
     function provideService($options = [])
     {
         $defaults = [
-            'cacher'             => new StreamCache(sys_get_temp_dir() . '/microute'),
-            'controllerLocation' => [
-                '\\ryunosuke\\Test\\stub\\Controller\\' => __DIR__ . '/../stub/Controller/',
+            'cacher'      => new StreamCache(sys_get_temp_dir() . '/microute'),
+            'mvcLocation' => [
+                '\\ryunosuke\\Test\\stub\\mvc\\' => __DIR__ . '/../stub/mvc/',
             ],
         ];
         return new Service($options + $defaults);

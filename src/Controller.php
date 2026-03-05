@@ -155,6 +155,11 @@ class Controller
             return $this->request->getSession();
         }
 
+        $model = $this->modelObject($name);
+        if ($model !== null) {
+            return $model;
+        }
+
         // オートロード空間から一致するクラスを返す
         foreach (self::$namespaces as $namespace => $ctor_args) {
             if (class_exists($class = "$namespace\\$name") && (new \ReflectionClass($class))->getName() === $class) {
@@ -168,6 +173,31 @@ class Controller
     public function __toString(): string
     {
         return static::class;
+    }
+
+    public function modelObject(string $name): ?object
+    {
+        foreach ($this->service->mvcLocation as $namespace => $location) {
+            $class = trim($namespace, '\\') . "\\$name\\{$this->service->mvcModelName}";
+            if (class_exists($class) && (new \ReflectionClass($class))->getName() === $class) {
+                return self::$instances[$class] ??= new $class();
+            }
+        }
+
+        if ($name === $this->service->mvcModelName) {
+            $class = (new \ReflectionClass($this))->getNamespaceName() . "\\$name";
+            if (class_exists($class)) {
+                return self::$instances[$class] ??= new $class();
+            }
+        }
+
+        return null;
+    }
+
+    public function viewFile(string $suffix): string
+    {
+        $dirname = dirname((new \ReflectionClass($this))->getFileName());
+        return "{$dirname}/{$this->service->mvcViewName}/{$this->action}{$suffix}";
     }
 
     /**
@@ -883,7 +913,7 @@ class Controller
                 extract(func_get_arg(1));
                 include func_get_arg(0);
                 return ob_get_clean();
-            })('/path/to/view/' . $this->location() . '.phtml', $this->request->attributes->get('parameter', [])));
+            })($this->viewFile('.phtml'), $this->request->attributes->get('parameter', [])));
         }
     }
 

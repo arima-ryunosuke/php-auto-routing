@@ -2,7 +2,7 @@
 namespace ryunosuke\Test\microute;
 
 use ryunosuke\microute\Router;
-use ryunosuke\Test\stub\Controller\HogeController;
+use ryunosuke\Test\stub\mvc\Hoge\Controller as HogeController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -276,11 +276,11 @@ class RouterTest extends \ryunosuke\Test\AbstractTestCase
         $service = $this->service;
 
         $service->dispatcher->dispatch(Request::create('/hoge/default'));
-        $this->assertEquals('ryunosuke\\Test\\stub\\Controller\\HogeController::default', $service->router->currentRoute());
+        $this->assertEquals('ryunosuke\\Test\\stub\\mvc\\Hoge\\Controller::default', $service->router->currentRoute());
 
         $service->router->regex('detail/(?<seq>[0-9]+)', HogeController::class, 'actionSimple');
         $service->dispatcher->dispatch(Request::create('/hoge/detail/123'));
-        $this->assertEquals('ryunosuke\\Test\\stub\\Controller\\HogeController::actionSimple', $service->router->currentRoute());
+        $this->assertEquals('ryunosuke\\Test\\stub\\mvc\\Hoge\\Controller::actionSimple', $service->router->currentRoute());
     }
 
     function test_reverseRoute()
@@ -398,181 +398,181 @@ class RouterTest extends \ryunosuke\Test\AbstractTestCase
             // デフォルトルーティング
             '/basepath/url/all/default-on'                                            => [
                 'route'  => 'default',
-                'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::defaultOn',
-                'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::defaultOnAction',
+                'name'   => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::defaultOn',
+                'target' => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::defaultOnAction',
                 'method' => [],
             ],
             '/basepath/url/all/parameter?arg1=string&arg2=array'                      => [
                 'route'  => 'default',
-                'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::parameter',
-                'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::parameterAction',
+                'name'   => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::parameter',
+                'target' => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::parameterAction',
                 'method' => [],
             ],
             '/basepath/url/all/post'                                                  => [
                 'route'  => 'default',
-                'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::post',
-                'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::postAction',
+                'name'   => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::post',
+                'target' => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::postAction',
                 'method' => ['POST'],
             ],
             '/basepath/url/all/redirect'                                              => [
                 'route'  => 'default',
-                'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::redirect',
-                'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::redirectAction',
+                'name'   => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::redirect',
+                'target' => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::redirectAction',
                 'method' => [],
             ],
             '/basepath/url/all/regex'                                                 => [
                 'route'  => 'default',
-                'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::regex',
-                'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::regexAction',
+                'name'   => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::regex',
+                'target' => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::regexAction',
                 'method' => [],
             ],
             '/basepath/url/all/rewrite'                                               => [
                 'route'  => 'default',
-                'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::rewrite',
-                'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::rewriteAction',
+                'name'   => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::rewrite',
+                'target' => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::rewriteAction',
                 'method' => [],
             ],
             '/basepath/url/all/routename'                                             => [
                 'route'  => 'default',
                 'name'   => 'mappingRoute',
-                'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::routenameAction',
+                'target' => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::routenameAction',
                 'method' => [],
             ],
             // リダイレクト
             '/basepath/mapping/redirect1'                                             => [
                 'route'  => 'redirect',
-                'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::redirect',
-                'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::redirectAction',
+                'name'   => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::redirect',
+                'target' => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::redirectAction',
                 'method' => [],
             ],
             '/basepath/mapping/redirect2'                                             => [
                 'route'  => 'redirect',
-                'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::redirect',
-                'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::redirectAction',
+                'name'   => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::redirect',
+                'target' => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::redirectAction',
                 'method' => [],
             ],
             // 正規表現
             '/basepath/mapping/regex1'                                                => [
                 'route'  => 'regex',
-                'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::regex',
-                'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::regexAction',
+                'name'   => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::regex',
+                'target' => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::regexAction',
                 'method' => [],
             ],
             '/basepath/mapping/regex2'                                                => [
                 'route'  => 'regex',
-                'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::regex',
-                'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::regexAction',
+                'name'   => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::regex',
+                'target' => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::regexAction',
                 'method' => [],
             ],
             '/basepath/mapping/route'                                                 => [
                 'route'  => 'regex',
                 'name'   => 'mappingRoute',
-                'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::routenameAction',
+                'target' => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::routenameAction',
                 'method' => [],
             ],
             // リライト
             '/basepath/mapping/rewrite1'                                              => [
                 'route'  => 'rewrite',
-                'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::rewrite',
-                'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::rewriteAction',
+                'name'   => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::rewrite',
+                'target' => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::rewriteAction',
                 'method' => [],
             ],
             '/basepath/mapping/rewrite2'                                              => [
                 'route'  => 'rewrite',
-                'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::rewrite',
-                'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::rewriteAction',
+                'name'   => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::rewrite',
+                'target' => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::rewriteAction',
                 'method' => [],
             ],
             // エイリアス
             '/basepath/relay/default-off'                                             => [
                 'route'  => 'alias',
-                'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::defaultOff',
-                'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::defaultOffAction',
+                'name'   => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::defaultOff',
+                'target' => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::defaultOffAction',
                 'method' => [],
             ],
             '/basepath/relay/default-on'                                              => [
                 'route'  => 'alias',
-                'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::defaultOn',
-                'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::defaultOnAction',
+                'name'   => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::defaultOn',
+                'target' => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::defaultOnAction',
                 'method' => [],
             ],
             '/basepath/relay/parameter?arg1=string&arg2=array'                        => [
                 'route'  => 'alias',
-                'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::parameter',
-                'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::parameterAction',
+                'name'   => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::parameter',
+                'target' => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::parameterAction',
                 'method' => [],
             ],
             '/basepath/relay/post'                                                    => [
                 'route'  => 'alias',
-                'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::post',
-                'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::postAction',
+                'name'   => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::post',
+                'target' => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::postAction',
                 'method' => ['POST',],
             ],
             '/basepath/relay/redirect'                                                => [
                 'route'  => 'alias',
-                'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::redirect',
-                'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::redirectAction',
+                'name'   => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::redirect',
+                'target' => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::redirectAction',
                 'method' => [],
             ],
             '/basepath/relay/regex'                                                   => [
                 'route'  => 'alias',
-                'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::regex',
-                'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::regexAction',
+                'name'   => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::regex',
+                'target' => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::regexAction',
                 'method' => [],
             ],
             '/basepath/relay/rewrite'                                                 => [
                 'route'  => 'alias',
-                'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::rewrite',
-                'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::rewriteAction',
+                'name'   => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::rewrite',
+                'target' => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::rewriteAction',
                 'method' => [],
             ],
             '/basepath/relay/routename'                                               => [
                 'route'  => 'alias',
                 'name'   => 'mappingRoute',
-                'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::routenameAction',
+                'target' => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::routenameAction',
                 'method' => [],
             ],
             '/basepath/relay/context.json?id=int(123)'                                => [
                 'route'  => 'alias',
-                'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::context',
-                'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::contextAction',
+                'name'   => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::context',
+                'target' => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::contextAction',
                 'method' => [],
             ],
             '/basepath/relay/context.xml?id=int(123)'                                 => [
                 'route'  => 'alias',
-                'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::context',
-                'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::contextAction',
+                'name'   => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::context',
+                'target' => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::contextAction',
                 'method' => [],
             ],
             // スコープ（抜粋）
             '/basepath/sub-sub/(?<id>[0-9]+)/index'                                   => [
                 'route'  => 'scope',
-                'name'   => 'ryunosuke\\Test\\stub\\Controller\\SubSub\\DefaultController::index',
-                'target' => 'ryunosuke\\Test\\stub\\Controller\\SubSub\\DefaultController::indexAction',
+                'name'   => 'ryunosuke\\Test\\stub\\mvc\\SubSub\\Default\\Controller::index',
+                'target' => 'ryunosuke\\Test\\stub\\mvc\\SubSub\\Default\\Controller::indexAction',
                 'method' => [],
             ],
             '/basepath/sub-sub/scoped/(?<type>[a-z]+)/'                               => [
                 'route'  => 'scope',
-                'name'   => 'ryunosuke\\Test\\stub\\Controller\\SubSub\\ScopedController::default',
-                'target' => 'ryunosuke\\Test\\stub\\Controller\\SubSub\\ScopedController::defaultAction',
+                'name'   => 'ryunosuke\\Test\\stub\\mvc\\SubSub\\Scoped\\Controller::default',
+                'target' => 'ryunosuke\\Test\\stub\\mvc\\SubSub\\Scoped\\Controller::defaultAction',
                 'method' => [],
             ],
             '/basepath/sub-sub/scoped/(?<type>[a-z]+)/hoge'                           => [
                 'route'  => 'scope',
-                'name'   => 'ryunosuke\\Test\\stub\\Controller\\SubSub\\ScopedController::hoge',
-                'target' => 'ryunosuke\\Test\\stub\\Controller\\SubSub\\ScopedController::hogeAction',
+                'name'   => 'ryunosuke\\Test\\stub\\mvc\\SubSub\\Scoped\\Controller::hoge',
+                'target' => 'ryunosuke\\Test\\stub\\mvc\\SubSub\\Scoped\\Controller::hogeAction',
                 'method' => [],
             ],
             '/basepath/url/all/(?<scoped>[0-9a-z]+)/context.json?id=int(123)'         => [
                 'route'  => 'scope',
-                'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::context',
-                'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::contextAction',
+                'name'   => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::context',
+                'target' => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::contextAction',
                 'method' => [],
             ],
             '/basepath/url/all/(?<scoped>[0-9a-z]+)/parameter?arg1=string&arg2=array' => [
                 'route'  => 'scope',
-                'name'   => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::parameter',
-                'target' => 'ryunosuke\\Test\\stub\\Controller\\Url\\AllController::parameterAction',
+                'name'   => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::parameter',
+                'target' => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::parameterAction',
                 'method' => [],
             ],
         ];

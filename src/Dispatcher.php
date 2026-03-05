@@ -168,13 +168,15 @@ class Dispatcher
             return $controller_class;
         }
 
-        $controller_class = trim(str_replace('/', '\\', $controller_class), '\\');
+        $suffix = $this->service->mvcControllerName;
+        $suffix = $this->service->mvcLocation ? "\\$suffix" : $suffix;
+        $controller_class = str_replace('/', '\\', $controller_class);
         foreach ($this->service->controllerLocation as $namespace => $directory) {
-            $controller_name = $namespace . $controller_class . $controllerClass::CONTROLLER_SUFFIX;
+            $controller_name = preg_replace('#\\\\{2,}#', '\\', $namespace . $controller_class . $suffix);
             if (class_exists($controller_name)) {
                 return $controller_name;
             }
-            $controller_name = $namespace . ltrim("$controller_class\\Default", '\\') . $controllerClass::CONTROLLER_SUFFIX;
+            $controller_name = preg_replace('#\\\\{2,}#', '\\', $namespace . "$controller_class\\Default" . $suffix);
             if (class_exists($controller_name)) {
                 return $controller_name;
             }
@@ -187,7 +189,8 @@ class Dispatcher
      */
     public function shortenController(?string $controller_class): ?string
     {
-        $suffix = $this->service->controllerClass::CONTROLLER_SUFFIX;
+        $suffix = $this->service->mvcControllerName;
+        $suffix = preg_quote($this->service->mvcLocation ? "\\$suffix" : $suffix, '#');
         foreach ($this->service->controllerLocation as $namespace => $directory) {
             $prefix = preg_quote($namespace, '#');
             $local_name = preg_replace("#^($prefix)|($suffix)$#", '', ltrim($controller_class, '\\'), -1, $count);
@@ -223,15 +226,18 @@ class Dispatcher
         // hoge/fuga/piyo だとして・・・
         $uname = ucfirst($action_name);
         $controller_action = [
-            trim("$controller_name", '\\')                  => $action_name, // Hoge\FugaController#piyoAction になる
-            trim("$controller_name\\Default", '\\')         => $action_name, // Hoge\Fuga\DefaultController#piyoAction になる
-            trim("$controller_name\\$uname", '\\')          => 'default',    // Hoge\Fuga\PiyoController#defaultAction になる
-            trim("$controller_name\\$uname\\Default", '\\') => 'default',    // Hoge\Fuga\piyo\DefaultController#defaultAction になる
+            "$controller_name"                  => $action_name, // Hoge\Fuga\Controller#piyoAction になる
+            "$controller_name\\Default"         => $action_name, // Hoge\Fuga\Default\Controller#piyoAction になる
+            "$controller_name\\$uname"          => 'default',    // Hoge\Fuga\Piyo\Controller#defaultAction になる
+            "$controller_name\\$uname\\Default" => 'default',    // Hoge\Fuga\piyo\Default\Controller#defaultAction になる
         ];
 
+        $suffix = $this->service->mvcControllerName;
+        $suffix = $this->service->mvcLocation ? "\\$suffix" : $suffix;
         foreach ($controller_action as $cname => $aname) {
             foreach ($this->service->controllerLocation as $namespace => $directory) {
-                $class_name = $namespace . $cname . $this->service->controllerClass::CONTROLLER_SUFFIX;
+                /** @var class-string<Controller> $class_name */
+                $class_name = preg_replace('#\\\\{2,}#', '\\', $namespace . $cname . $suffix);
 
                 if (!class_exists($class_name)) {
                     $result = $result ?? [404, "$class_name class doesn't exist."];

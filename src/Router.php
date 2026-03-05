@@ -431,7 +431,7 @@ class Router
     private function getControllers()
     {
         $controllers = [];
-        $suffix = $this->service->controllerClass::CONTROLLER_SUFFIX;
+        $suffix = $this->service->mvcControllerName;
         foreach ($this->service->controllerLocation as $namespace => $directory) {
             $rdi = new \RecursiveDirectoryIterator($directory, \FilesystemIterator::CURRENT_AS_SELF | \FilesystemIterator::SKIP_DOTS);
             $rii = new \RecursiveIteratorIterator($rdi);

@@ -3,12 +3,13 @@ namespace ryunosuke\Test\microute;
 
 use DateTimeInterface;
 use ryunosuke\microute\Controller;
-use ryunosuke\Test\microute\autoload\Hoge;
+use ryunosuke\Test\microute\autoload\Auto;
 use ryunosuke\Test\microute\autoload\Next\Foo;
-use ryunosuke\Test\stub\Controller\DispatchController;
-use ryunosuke\Test\stub\Controller\EventController;
-use ryunosuke\Test\stub\Controller\HogeController;
-use ryunosuke\Test\stub\Controller\SubSub\FooBarController;
+use ryunosuke\Test\stub\mvc\Default\Controller as DefaultController;
+use ryunosuke\Test\stub\mvc\Dispatch\Controller as DispatchController;
+use ryunosuke\Test\stub\mvc\Event\Controller as EventController;
+use ryunosuke\Test\stub\mvc\Hoge\Controller as HogeController;
+use ryunosuke\Test\stub\mvc\SubSub\FooBar\Controller as FooBarController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -49,11 +50,11 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
 
         $controller1 = new HogeController($service, 'default');
         $controller2 = new FooBarController($service, 'default');
-        $this->assertSame($controller1->Hoge, $controller2->Hoge);
-        $this->assertInstanceOf(Hoge::class, $controller1->Hoge);
-        $this->assertEquals(['a', 'b', 'c'], $controller1->Hoge->ctor_args);
+        $this->assertSame($controller1->Auto, $controller2->Auto);
+        $this->assertInstanceOf(Auto::class, $controller1->Auto);
+        $this->assertEquals(['a', 'b', 'c'], $controller1->Auto->ctor_args);
         $this->assertEquals(['x', 'y', 'z'], $controller2->Foo->ctor_args);
-        $this->assertEquals(1, Hoge::$newCount);
+        $this->assertEquals(1, Auto::$newCount);
         $this->assertEquals(1, Foo::$newCount);
 
         $this->assertException(new \DomainException('hoge is undefined'), function () use ($controller1) {
@@ -69,6 +70,14 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertInstanceOf(Response::class, $controller->response);
         $this->assertEquals('action-a', $controller->action);
         $this->assertSame($this->service, $controller->service);
+
+        $controller2 = new DefaultController($this->service, 'default');
+        $this->assertSame($controller->Hoge, $controller2->Hoge);
+        $this->assertSame($controller2->Hoge, $controller->Hoge);
+        $this->assertSame($controller2->Hoge, $controller->Model);
+        $this->assertSame($controller->Default, $controller2->Default);
+        $this->assertSame($controller2->Default, $controller->Default);
+        $this->assertSame($controller2->Model, $controller->Default);
     }
 
     function test___toString()

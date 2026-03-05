@@ -4,7 +4,6 @@ namespace ryunosuke\Test\microute;
 use MockLogger;
 use ryunosuke\microute\Controller;
 use ryunosuke\microute\Service;
-use ryunosuke\Test\stub\Controller\DefaultController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -45,13 +44,13 @@ class ServiceTest extends \ryunosuke\Test\AbstractTestCase
 
                 public function getContent(bool $asResource = false) { return json_encode(['A' => ['B' => ['C' => 'Z']]]); }
             },
-            'controllerLocation' => DefaultController::class,
+            'mvcLocation' => \ryunosuke\Test\stub\mvc\Default\Controller::class,
         ]);
 
         $controllerLocation = $service->controllerLocation;
 
-        $this->assertEquals('ryunosuke\\Test\\stub\\Controller\\', array_key_first($controllerLocation));
-        $this->assertEquals(realpath(__DIR__ . '/../../stub/Controller') . DIRECTORY_SEPARATOR, reset($controllerLocation));
+        $this->assertEquals('ryunosuke\\Test\\stub\\mvc\\Default\\', array_key_first($controllerLocation));
+        $this->assertEquals(realpath(__DIR__ . '/../../stub/mvc/Default') . DIRECTORY_SEPARATOR, reset($controllerLocation));
         $this->assertEquals(['A' => ['B' => ['C' => 'Z']]], $service->request->request->all());
     }
 
@@ -130,7 +129,7 @@ class ServiceTest extends \ryunosuke\Test\AbstractTestCase
     {
         $service = $this->service;
         $response = $service->handle(Request::create('sub-sub/foo-bar/notfound'));
-        $this->assertEquals('ryunosuke\\Test\\stub\\Controller\\SubSub\\DefaultController::errorAction', $response->getContent());
+        $this->assertEquals('ryunosuke\\Test\\stub\\mvc\\SubSub\\Default\\Controller::errorAction', $response->getContent());
     }
 
     function test_event()

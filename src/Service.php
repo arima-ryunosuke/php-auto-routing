@@ -30,6 +30,10 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
  * @property-read Controller              $controllerClass
  * @property-read array|Controller[]      $controllerLocation
  * @property-read array                   $controllerAutoload
+ * @property-read array|Controller[]      $mvcLocation
+ * @property-read string                  $mvcModelName
+ * @property-read string                  $mvcViewName
+ * @property-read string                  $mvcControllerName
  *
  * @property-read callable                $requestFactory
  * @property-read Request                 $requestClass
@@ -105,8 +109,14 @@ class Service implements HttpKernelInterface
         $values['authenticationComparator'] ??= fn() => fn($valid_password, $password) => $valid_password === $password;
         $values['authenticationNoncer'] ??= fn() => fn($nonce) => $nonce === null ? sha1(openssl_random_pseudo_bytes(40)) : null;
 
+        $values['mvcLocation'] ??= [];
+        $values['mvcModelName'] ??= 'Model';
+        $values['mvcViewName'] ??= 'View';
+        $values['mvcControllerName'] ??= $values['controllerClass']::CONTROLLER_SUFFIX;
+        $values['controllerLocation'] ??= [];
+
         $controllerLocation = [];
-        foreach ((array) $values['controllerLocation'] as $ns => $dir) {
+        foreach (array_merge((array) $values['controllerLocation'], (array) $values['mvcLocation']) as $ns => $dir) {
             if (is_int($ns) && is_a($dir, $values['controllerClass'], true)) {
                 $ref = new \ReflectionClass($dir);
                 $ns = $ref->getNamespaceName() . '\\';
