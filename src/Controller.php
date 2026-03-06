@@ -534,7 +534,7 @@ class Controller
             if (strlen($authmethod) && $option) {
                 $this->request->attributes->remove('authname');
                 $authname = $this->authenticate($authmethod, $option['realm']);
-                if (!strlen($authname)) {
+                if (!strlen($authname ?? '')) {
                     return $this->response;
                 }
                 $this->request->attributes->set('authname', $authname);
@@ -677,7 +677,7 @@ class Controller
                     $username = $this->request->server->get('PHP_AUTH_USER');
                     $password = $this->request->server->get('PHP_AUTH_PW');
                     $comparator = $this->service->authenticationComparator;
-                    return $comparator($passworder($username), $password) ? $username : null;
+                    return $comparator($passworder($username) ?? '', $password ?? '') ? $username : null;
                 },
                 'header' => fn() => sprintf('Basic realm="%s"', $realm),
             ],
@@ -685,7 +685,7 @@ class Controller
                 'verify' => function () use ($passworder, $realm) {
                     $md5implode = static fn($_) => md5(implode(':', func_get_args()));
                     $keys = ['response', 'nonce', 'nc', 'cnonce', 'qop', 'uri', 'username'];
-                    $digest = $this->request->server->get('PHP_AUTH_DIGEST');
+                    $digest = $this->request->server->get('PHP_AUTH_DIGEST') ?? '';
 
                     preg_match_all('@(' . implode('|', $keys) . ')=(?:([\'"])([^\2]+?)\2|([^\s,]+))@', $digest, $matches, PREG_SET_ORDER);
                     $data = array_reduce($matches, static function ($data, $m) {
@@ -717,7 +717,7 @@ class Controller
         ];
 
         $username = $methods[$method]['verify']();
-        if (!strlen($username)) {
+        if (!strlen($username ?? '')) {
             $this->response->headers->set('WWW-Authenticate', $methods[$method]['header']());
             $this->response->setStatusCode(401);
             return null;

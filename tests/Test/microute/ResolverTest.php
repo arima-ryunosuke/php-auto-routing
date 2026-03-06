@@ -60,7 +60,7 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals('/sub-sub/123/index', $resolver->url(\ryunosuke\Test\stub\Controller\SubSub\DefaultController::class, 'index'));
 
         $service = $this->provideService([
-            'request' => new class extends Request {
+            'request' => new class(server: $_SERVER) extends Request {
                 public function getBaseUrl(): string { return '/base/path'; }
             },
         ]);
@@ -78,7 +78,7 @@ class ResolverTest extends \ryunosuke\Test\AbstractTestCase
     function test_url_alias()
     {
         $service = $this->provideService([
-            'request' => new class extends Request {
+            'request' => new class(server: $_SERVER) extends Request {
                 public function getBaseUrl(): string { return '/base/path'; }
             },
         ]);

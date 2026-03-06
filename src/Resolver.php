@@ -284,7 +284,7 @@ class Resolver
         if ($charset === null && $texttype) {
             $charset = mb_internal_encoding();
         }
-        if (strlen($charset)) {
+        if (strlen($charset ?? '')) {
             $charset = "charset=$charset";
         }
 
@@ -304,6 +304,6 @@ class Resolver
         }
 
         // RFC: data:[<MIME-type>][;charset=<encoding>][;base64],<data>
-        return 'data:' . implode(';', array_filter([$mimetype, $charset, $encode], 'strlen')) . ",$data";
+        return 'data:' . implode(';', array_filter([$mimetype, $charset, $encode], fn($v) => strlen($v ?? ''))) . ",$data";
     }
 }

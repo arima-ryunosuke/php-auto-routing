@@ -1,7 +1,5 @@
 <?php
 
-error_reporting(~E_DEPRECATED);
-
 if (getenv('PHPVERSION')) {
     require_once __DIR__ . '/versions/' . getenv('PHPVERSION') . '/vendor/autoload.php';
 }

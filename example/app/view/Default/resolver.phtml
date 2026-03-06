@@ -53,7 +53,7 @@ Resolver のサンプルです。結果しか表示していないので「何�
     <tr>
         <th>クエリ生成</th>
         <td>
-            <code><?php echo '?' . htmlspecialchars($request->getQueryString()) ?></code>（現在のクエリストリング）<br>
+            <code><?php echo '?' . htmlspecialchars($request->getQueryString() ?? '') ?></code>（現在のクエリストリング）<br>
             <code><?php echo htmlspecialchars($resolver->query([
                     'param1' => 789,
                     'param2' => null,

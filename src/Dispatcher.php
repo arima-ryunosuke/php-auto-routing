@@ -140,7 +140,7 @@ class Dispatcher
 
     public function finish(Response $response, Request $request): Response
     {
-        if (!strlen($response->headers->get('Content-Type', ''))) {
+        if (!strlen($response->headers->get('Content-Type', '') ?? '')) {
             $contexts = $this->service->parameterContexts;
             $context = $request->attributes->get('context');
             if (is_callable($contexts) && ($cx = $contexts($context))) {
@@ -281,7 +281,7 @@ class Dispatcher
             }
             $origins = array_merge($origins, $action_data['@origin']);
             if ($origins && !$request->isMethodSafe()) {
-                if (strlen($origin = $request->headers->get('origin'))) {
+                if (strlen($origin = $request->headers->get('origin') ?? '')) {
                     foreach ($origins as $allowed) {
                         if (fnmatch($allowed, $origin)) {
                             goto OK;
