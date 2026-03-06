@@ -22,6 +22,22 @@
 - DefaultController::errorAction の廃止
 - php8 対応が済んだら Attribute 自体に処理を持たせたい
 
+## 2.0.6
+
+- [change] 5大ディスパッチイベントのログレベルを info から debug に変更
+- [feature] パラメータがなかったら例外を投げる require メソッド
+- [feature] Regex の slug オプション
+- [feature] isAsynchronous メソッドを追加
+- [feature] HttpException を json で返す機能
+- [feature] 一部の symfony 例外を HttpException に読み替える
+- [feature] bearer-auth 属性を追加
+- [refacctor] コントラクタで副作用のある処理は書かない
+- [refactor] ロジックを持つ属性は属性自体に持たせる
+- [feature] MVC をディレクトリにまとめる機能
+- [fixbug] php8.1 の deprecated を修正
+- [composer] symfony 7 対応
+- Merge tag 'v1.2.13'
+
 ## 2.0.5
 
 - [fixbug] basepath が空の時に version クエリがつかない不具合

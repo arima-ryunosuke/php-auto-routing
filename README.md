@@ -9,8 +9,8 @@ MVC の MV 的な機能は一切ありません。
 基本機能は下記だけです。
 
 - Controller の php 名前空間をそのまま URL へマッピングします（基底は変更可）
-    - `Hoge\Fuga\PiyoController::actionAction` は `hoge/fuga/piyo/action` になります
-    - CamelCase(`HogeFugaController::FooBarAction`) は chain-case(`hoge-fuga/foo-bar`) に変換されます
+    - `Hoge\Fuga\Piyo\Controller::actionAction` は `hoge/fuga/piyo/action` になります
+    - CamelCase(`HogeFuga\Controller::FooBarAction`) は chain-case(`hoge-fuga/foo-bar`) に変換されます
     - 上記がデフォルトルーティングでコントローラを配置すれば自動でルーティングされます。他の能動的なルーティングとしては下記があります
         - rewrite ルーティング
             - 「ある URL をある URL へリライトする」機能です。apache における「mod_rewrite」と完全に同じ意味です
@@ -23,12 +23,12 @@ MVC の MV 的な機能は一切ありません。
         - scope ルーティング
             - 「あるプレフィックスをある Controller として動作させる」機能です。apache における「mod_alias」とほぼ同じ意味です（URL パラメータが使える）
     - ルーティングの設定の仕方は3つあります
-        - デフォルトルーティング（CamelCase(`HogeFugaController::FooBarAction`) を chain-case(`hoge-fuga/foo-bar`) に変換）
+        - デフォルトルーティング（CamelCase(`HogeFuga\Controller::FooBarAction`) を chain-case(`hoge-fuga/foo-bar`) に変換）
         - `#[Redirect('fromurl')]`, `#[Regex('#pattern#')]` などの属性によるルーティング
         - Router インスタンスの `redirect・regex` などのメソッドを使用して個別にルーティング
 - コントローラ単位のエラーハンドリング
     - アクションメソッド内で例外がスローされた時、そのコントローラ内の catch メソッドで捕捉できます
-    - その上で catch メソッドが例外を投げると DefaultController#errorAction へ回されます
+    - その上で catch メソッドが例外を投げると Default\Controller#errorAction へ回されます
 - よく使う機能は属性化してあります
     - `#[Ajaxable]` すると ajax リクエストしか受け付けなくなります
     - `#[Context('json')]` すると `.json` という拡張子アクセスを受け付けるようになります
@@ -58,14 +58,14 @@ composer example
 
 ## Usage
 
-然るべきコントローラを配置し、 `Service` クラスを生成して `run` すれば OK です。
+然るべき MVC を配置し、 `Service` クラスを生成して `run` すれば OK です。
 
 ```php
 $service = new \ryunosuke\microute\Service([
     /* オプション配列 */
-    'debug'              => false,
-    'controllerLocation' => [
-        '\\namespace\\to\\controller' => '/directory/to/controller',
+    'debug'       => false,
+    'mvcLocation' => [
+        '\\namespace\\to\\mvc' => '/directory/to/mvc',
     ],
     // ・・・
 ]);
@@ -157,6 +157,7 @@ $service->run();
 - authenticationProvider: `array|callable`
     - 認証情報プロバイダを指定します
     - 単純な `['user1' => 'pass1', 'user2' => 'pass2']` のような配列か、$username を受け取ってパスワードを返すクロージャを指定します
+    - Bearer 認証の場合は $username を受け取って何らかの id を返すクロージャを指定します
     - デフォルトは `[]` です
 - authenticationComparator: `callable`
     - 認証情報の比較方法を指定します
@@ -167,17 +168,40 @@ $service->run();
     - nonce を受け取り、 nc を返す callable を指定します
     - デフォルトは nc 検証なしです
 - **controllerLocation**: array|string
-    - 起動アプリケーションの「名前空間→ディレクトリ」の対応を指定します
+    - 起動アプリケーションの「名前空間→コントローラ」の対応を指定します
     - 配列で `['\\vendor\\app\\controller' => '/app/controller'] ` のように指定します（要するに psr4 と同じ形式です）
         - この場合、オートローダは自動で登録されます
     - あるいは基底コントローラのクラス名を指定します
         - その場合、オートローダは自動登録されません。 composer の `autoload` を活用したい場合に使用します
     - いずれにしても複数登録できます。複数の場合順に試行するので全く相関のないコントローラを分離配置できます
     - デフォルトはありません。必須です
+- **mvcLocation**: array|string
+    - 起動アプリケーションの「名前空間→MVCディレクトリ」の対応を指定します
+    - 配列で `['\\vendor\\app\\mvc' => '/app/mvc'] ` のように指定します（要するに psr4 と同じ形式です）
+        - この場合、オートローダは自動で登録されます
+    - あるいは基底コントローラのクラス名を指定します
+        - その場合、オートローダは自動登録されません。 composer の `autoload` を活用したい場合に使用します
+    - いずれにしても複数登録できます。複数の場合順に試行するので全く相関のないコントローラを分離配置できます
+    - デフォルトはありません。必須です
+- mvcModelName: string
+    - Model となるクラス名を指定します
+    - ここで指定したクラスはコントローラ内で `$this->Hoge` で参照できるようになります
+        - `'UseCase'` などがふさわしい場合もあるでしょう
+    - デフォルトは `'Model'` です
+- mvcViewName: string
+    - View となるディレクトリ名を指定します
+    - ここで指定したディレクトリ名の配下に view ファイルを置いていくことになります
+        - `'phtml'` などがふさわしい場合もあるでしょう
+        - コントローラの階層構造を考慮して `'@phtml'` などの記号を加えるのもよいでしょう
+    - デフォルトは `'View'` です
+- mvcControllerName: string
+    - Controller となるクラス名を指定します
+        - `'Action'` などがふさわしい場合もあるでしょう
+    - デフォルトは `'Controller'` です
 
 根本の動作に関わる重要なものや必須・準必須なものは太字にしてあります。
 
-例えば `controllerLocation` は必須です。これがないとコントローラのロードができず、あらゆる処理が失敗します。
+例えば `controllerLocation`, `mvcLocation` は必須です。これがないとコントローラのロードができず、あらゆる処理が失敗します。
 `debug` 等は必須ではないですが、指定しないと動作速度に影響が出たり開発が不便になったりします。
 
 すべての要素はクロージャを渡すと初回参照時のみ実行され、以後その結果を示すようになります。
@@ -185,34 +209,74 @@ $service->run();
 
 ## Specification
 
+### controllerLocation と mvcLocation
+
+`controllerLocation` を指定すると技術駆動パッケージで配置できます。
+
+- controller/
+    - ArticleControler.php
+    - UserControler.php
+
+この時、MV には口出ししません。
+普通に new Class したり、render で別の場所にある phtml を render したりします。
+
+`mvcLocation` を指定すると関心駆動パッケージで配置できます。
+
+- mvc/
+    - Article/
+        - Controler.php
+        - Model.php
+        - View/
+            - index.phtml
+            - detail.phtml
+    - User/
+        - Controler.php
+        - Model.php
+        - View/
+            - index.phtml
+            - detail.phtml
+
+この時、Model は別に必須ではありませんが、配置しておくと Controller 内で `$this->Model`, `$this->User` などで参照することができます。
+`controllerAutoload` を決め打ちで指定しているイメージです。
+
+View に関しても管理下に置かれるので、`$this->viewFile()` で view ファイルのフルパスが得られます。
+
+-----
+
+基本的に修正時は MVC のすべてを触ることが多いため、近い場所にあった方が修正がしやすいです。
+つまり、いわゆる凝縮度を高めた `mvcLocation` の方が管理がしやすいと思います。
+（`controllerLocation` だとあっち行ってこっち行って…となりがち）。
+
+排他的なものではなく、同時に指定しても問題はありません（ただし、管理上そのようなことはすべきではない）。
+
 ### コントローラの階層構造
 
 コントローラは下記の階層を持ちます。
 
-- /DefaultController
+- /(Default/)Controller
     - トップレベル名前空間のデフォルトコントローラです
     - `/` アクセスされた場合、`defaultAction` がディスパッチされます
     - `/hoge` アクセスされた場合、`hogeAction` がディスパッチされます
     - トップレベル名前空間で未キャッチ例外が捕捉された場合、`errorAction` がディスパッチされます
     - 最低限 errorAction メソッドを持つ必要があります
-- /HogeController
+- /Hoge/Controller
     - トップレベル名前空間のユーザ実装のコントローラです
     - `/hoge/foo` アクセスされた場合、`fooAction` がディスパッチされます
-- /Namespace/DefaultController
+- /Namespace/(Default/)Controller
     - `Namespace` 名前空間のデフォルトコントローラです
     - `/namespace/` アクセスされた場合、`defaultAction` がディスパッチされます
     - `/namespace/hoge` アクセスされた場合、`hogeAction` がディスパッチされます
     - `Namespace` 名前空間で未キャッチ例外が補足された場合、`errorAction` がディスパッチされます
-- /Namespace/FugaController
+- /Namespace/Fuga/Controller
     - `Namespace` 名前空間のユーザ実装のコントローラです
     - `/namespace/fuga/foo` アクセスされた場合、`fooAction` がディスパッチされます
 
-その名前空間内に DefaultController が存在しない場合、ひとつ上の階層の DefaultController を探しに行きます。
-上の例で言えば、 `/Namespace/DefaultController` が存在しない場合、未キャッチ例外の捕捉は `/DefaultController` が担います。
-トップレベルに DefaultController が存在しない場合はエラーになります。
+その名前空間内に (Default)Controller が存在しない場合、ひとつ上の階層の (Default)Controller を探しに行きます。
+上の例で言えば、 `/Namespace/(Default/)Controller` が存在しない場合、未キャッチ例外の捕捉は `/(Default/)Controller` が担います。
+トップレベルに `(Default/)Controller` が存在しない場合はエラーになります。
 
 ただし、探しに行くのは `errorAction` だけです。 `defaultAction` は探しに行きません。
-その代わり、例えば `/hoge/fuga` アクセスは `Hoge\\FugaController#defaultAction` に対応します。
+その代わり、例えば `/hoge/fuga` アクセスは `Hoge\Fuga\Controller#defaultAction` に対応します。
 「Contoller へのアクションなしアクセスは `defaultAction` と対応する」とも言えます。
 
 上記の
@@ -223,10 +287,10 @@ $service->run();
 
 は矛盾しています。例えば「hoge/fuga/piyo」という URL は
 
-- Hoge\FugaController#piyoAction (Hoge 名前空間の Fuga コントローラの piyo アクション)
-- Hoge\Fuga\DefaultController#piyoAction (Hoge\Fuga 名前空間の Default コントローラの piyo アクション)
-- Hoge\Fuga\PiyoController#defaultAction (Hoge\Fuga 名前空間の Piyo コントローラの default アクション)
-- Hoge\Fuga\Piyo\DefaultController#defaultAction (Hoge\Fuga\Piyo 名前空間の Default コントローラの default アクション)
+- Hoge\Fuga\Controller#piyoAction (Hoge 名前空間の Fuga コントローラの piyo アクション)
+- Hoge\Fuga\(Default\)Controller#piyoAction (Hoge\Fuga 名前空間の Default コントローラの piyo アクション)
+- Hoge\Fuga\Piyo\Controller#defaultAction (Hoge\Fuga 名前空間の Piyo コントローラの default アクション)
+- Hoge\Fuga\Piyo\(Default\)Controller#defaultAction (Hoge\Fuga\Piyo 名前空間の Default コントローラの default アクション)
 
 の4つに解釈し得ます。この場合は上から順に優先されます。
 「なるべく default を使わないように優先される」と言ってもいいでしょう。
@@ -264,7 +328,7 @@ $service->run();
 - catch
     - 上記の init ～ finish の流れの過程で throw された例外はこのメソッドで catch されます
     - 引数として throw された例外が渡ってきます
-    - このメソッドが更に例外を送出するとさらに DefaultController#errorAction へ委譲されます
+    - このメソッドが更に例外を送出するとさらに Default\Controller#errorAction へ委譲されます
 - finally
     - 上記の init ～ catch の流れの過程を問わず必ずコールされます
     - 引数として Response が渡ってきます
@@ -362,8 +426,8 @@ subrequest は内部リクエストが実行された時に元のコントロー
     - `#[Context('*')]` のように * を含めるとあらゆる拡張子アクセスを受け付けます
     - 未指定時は `.` 付きアクセスを受け付けません
     - 値省略時は `.` 付きアクセスを受け付けません
-- `#[BasicAuth]`/`#[DigestAuth]`
-    - basic/digest 認証が行われるようになります
+- `#[BasicAuth]`/`#[DigestAuth]`/`#[BearerAuth]`
+    - basic/digest/bearer 認証が行われるようになります
     - この属性による認証は簡易的なもので例えば下記の問題があります。用途はあくまで「簡易的にちょっとそのページを守りたい」程度です
         - アクションごとにユーザを使い分けるようなことは出来ない
         - いわゆる認可機構がない
@@ -406,6 +470,9 @@ subrequest は内部リクエストが実行された時に元のコントロー
     - pattern にマッチする時に regex されてこのアクションへ到達します
     - `/` から始まると絶対パスでマッチします
     - `/` 以外から始まると「本来そのコントローラが持つ URL（CamelCase -> chain-case のデフォルトルーティング）」からの相対パスでマッチします
+        - HogeFuga\Controller::fooBarAction なら `/hoge-fuga` が起点になります。つまりアクション自体を書き換えられます
+    - `/` 以外から始まり、第2引数に true を渡すと「本来そのコントローラ・アクションが持つ URL（CamelCase -> chain-case のデフォルトルーティング）」からの相対パスでマッチします
+        - HogeFuga\Controller::fooBarAction なら `/hoge-fuga/foo-bar` が起点になります。本当の URL に付け足しができます（つまりいわゆる slug に使えます）
 - `#[Alias('/url')]`
     - /url アクセス時に alias されてこの**コントローラへ**到達します
 - `#[Scope('/pattern')]`
@@ -425,7 +492,7 @@ Alias は「URL → Controller」のルーティングなのでメソッドで�
 
 ```php
 #[Alias('/fuga')]
-class HogeController extends \ryunosuke\microute\Web\Controller
+class Controller extends \ryunosuke\microute\Controller
 {
     public function fooAction() {}
 }
@@ -438,7 +505,7 @@ class HogeController extends \ryunosuke\microute\Web\Controller
 
 ```php
 #[Scope('(?<pref_id>\d+)/')]
-class HogeController extends \ryunosuke\microute\Web\Controller
+class Hoge\Controller extends \ryunosuke\microute\Controller
 {
     public function fooAction($pref_id) {}
 }
@@ -540,7 +607,7 @@ foo だけではなく、他にアクションが生えていれば到達しま�
 
 #### ルーティング
 
-あらゆるルーティングは、基本である「Controller の名前空間をそのまま URL へマッピング（`Hoge\Fuga\PiyoController::actionAction` → `hoge/fuga/piyo/action`）」という前提を崩しません。
+あらゆるルーティングは、基本である「Controller の名前空間をそのまま URL へマッピング（`Hoge\Fuga\Piyo\Controller::actionAction` → `hoge/fuga/piyo/action`）」という前提を崩しません。
 リダイレクトを設定しようと正規表現ルーティングを設定しようと上記の URL も生きていてアクセス可能です。
 これを無効にするには `#[DefaultRoute]` 属性を使用する必要があります。
 
