@@ -3,6 +3,7 @@ namespace ryunosuke\Test\stub\mvc\Dispatch;
 
 use ryunosuke\microute\http\ThrowableResponse;
 use ryunosuke\Test\stub\mvc\AbstractController;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -54,7 +55,7 @@ class Controller extends AbstractController
     #[\ryunosuke\microute\attribute\Method('get')]
     public function thrown1Action()
     {
-        throw new \UnexpectedValueException('catch');
+        throw new \RangeException('catch');
     }
 
     #[\ryunosuke\microute\attribute\Method('get')]
@@ -68,9 +69,14 @@ class Controller extends AbstractController
         throw new HttpException(404, '', null, ['X-Custom' => 123]);
     }
 
+    public function thrown4Action()
+    {
+        throw new BadRequestException('BadRequest');
+    }
+
     public function catch(\Throwable $t)
     {
-        if ($t instanceof \UnexpectedValueException || $t instanceof HttpException) {
+        if ($t instanceof \RangeException || $t instanceof HttpException) {
             return new JsonResponse('error-response');
         }
         throw $t;

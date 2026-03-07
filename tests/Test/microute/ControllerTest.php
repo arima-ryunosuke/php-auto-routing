@@ -759,6 +759,16 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals('123', $response->headers->get('X-Custom'));
     }
 
+    function test_dispatch_catch_symfony()
+    {
+        $request = Request::createFromGlobals();
+        $controller = new DispatchController($this->service, 'thrown4', $request);
+        $response = $controller->dispatch();
+
+        $this->assertInstanceOf(JsonResponse::class, $response);
+        $this->assertEquals('error-response', json_decode($response->getContent()));
+    }
+
     function test_dispatch_finally()
     {
         $request = Request::createFromGlobals();

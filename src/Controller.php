@@ -5,6 +5,7 @@ use Psr\SimpleCache\CacheInterface;
 use ryunosuke\microute\http\ThrowableResponse;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Cookie;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -576,7 +577,10 @@ class Controller
             // コントローラレベルの例外ハンドリング
             if ($error_handling) {
                 $this->service->logger->info(get_class($this) . " error");
-                $response = $this->catch($t);
+                $response = $this->catch(match (true) {
+                    default                           => $t,
+                    $t instanceof BadRequestException => new HttpException(400, "raise BadRequestException({$t->getMessage()})", $t),
+                });
                 if ($response instanceof Response) {
                     if ($t instanceof HttpException) {
                         $response->headers->add($t->getHeaders());
