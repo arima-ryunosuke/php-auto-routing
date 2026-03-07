@@ -1,6 +1,7 @@
 <?php
 namespace ryunosuke\microute\http;
 
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\InputBag;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
@@ -48,6 +49,56 @@ class Request extends \Symfony\Component\HttpFoundation\Request
         }
 
         return $default;
+    }
+
+    /**
+     * パラメータから指定したものを返し、無かったら例外を投げる
+     *
+     * 存在しない or filter_var による検証が失敗した場合は例外を投げる。
+     * filter_var の引数体系はかなり特殊なので、options と flags は引数を分けてかつ名前付き引数で指定する。
+     *
+     * $bags 引数でどのパラメータから取得するかを指定できる（省略時は GET/POST/COOKIE 全て）。
+     * 本来は InputBag 自体に生やしたいメソッドだが、symfony が認めていないので苦肉の引数。
+     * https://github.com/symfony/symfony/issues/62443
+     */
+    public function require(
+        string              $key,
+        int                 $filter = FILTER_DEFAULT,
+        null|InputBag|array $bags = null,
+        null|int|float      $min_range = null, // for FILTER_VALIDATE_INT, FILTER_VALIDATE_FLOAT
+        null|int|float      $max_range = null, // for FILTER_VALIDATE_INT, FILTER_VALIDATE_FLOAT
+        null|string         $decimal = null,   // for FILTER_VALIDATE_FLOAT
+        null|string         $regexp = null,    // for FILTER_VALIDATE_REGEXP
+        null|int            $flags = null,
+        mixed               ...$otherOptions,
+    ): mixed {
+        $bags ??= [$this->get, $this->post, $this->cookies];
+        $bags = is_array($bags) ? $bags : [$bags];
+
+        $options = array_filter(array_replace($otherOptions, [
+            'min_range' => $min_range,
+            'max_range' => $max_range,
+            'decimal'   => $decimal,
+            'regexp'    => $regexp,
+        ]), fn($v) => $v !== null);
+
+        $flags ??= FILTER_FLAG_NONE;
+        $flags |= FILTER_NULL_ON_FAILURE;
+
+        foreach ($bags as $bag) {
+            $value = $bag->has($key) ? $bag->all()[$key] : $this;
+            if ($value === $this) {
+                continue;
+            }
+
+            $value = filter_var($value, $filter, ['options' => $options, 'flags' => $flags]);
+            if ($value === null) {
+                continue;
+            }
+
+            return $value;
+        }
+        throw new BadRequestException(sprintf('Input value "%s" is missing or mismatch.', $key));
     }
 
     /**

@@ -54,6 +54,55 @@ class RequestTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals('defval', $request->input('undefined', 'defval'));
     }
 
+    function test_require()
+    {
+        $request = new Request([
+            'bool'         => false,
+            'bool-string'  => 'on',
+            'int'          => 123,
+            'int-string'   => '123',
+            'float'        => 3.14,
+            'float-string' => '3.14',
+            'string'       => 'hoge',
+            'array'        => [1, 2, 3],
+        ], [
+            'post-only' => 'posted',
+        ]);
+
+        $this->assertSame('', $request->require('bool'));
+        $this->assertSame(false, $request->require('bool', FILTER_VALIDATE_BOOL));
+        $this->assertSame('on', $request->require('bool-string'));
+        $this->assertSame(true, $request->require('bool-string', FILTER_VALIDATE_BOOL));
+
+        $this->assertSame('123', $request->require('int'));
+        $this->assertSame(123, $request->require('int', FILTER_VALIDATE_INT));
+        $this->assertSame('123', $request->require('int-string'));
+        $this->assertSame(123, $request->require('int-string', FILTER_VALIDATE_INT));
+
+        $this->assertSame('3.14', $request->require('float'));
+        $this->assertSame(3.14, $request->require('float', FILTER_VALIDATE_FLOAT));
+        $this->assertSame('3.14', $request->require('float-string'));
+        $this->assertSame(3.14, $request->require('float-string', FILTER_VALIDATE_FLOAT));
+
+        $this->assertSame('hoge', $request->require('string'));
+        $this->assertSame(['1', '2', '3'], $request->require('array', FILTER_DEFAULT, flags: FILTER_REQUIRE_ARRAY));
+        $this->assertSame([1, 2, 3], $request->require('array', FILTER_VALIDATE_INT, flags: FILTER_REQUIRE_ARRAY));
+
+        $this->assertSame('posted', $request->require('post-only', bags: $request->post));
+        $this->assertException('is missing', fn() => $request->require('post-only', bags: $request->get));
+
+        $this->assertException('is missing', fn() => $request->require('undefined'));
+        $this->assertException('is missing', fn() => $request->require('string', FILTER_VALIDATE_BOOL));
+        $this->assertException('is missing', fn() => $request->require('string', FILTER_VALIDATE_INT));
+        $this->assertException('is missing', fn() => $request->require('string', FILTER_VALIDATE_FLOAT));
+        $this->assertException('is missing', fn() => $request->require('array'));
+
+        $this->assertException('is missing', fn() => $request->require('int', FILTER_VALIDATE_INT, min_range: 200));
+        $this->assertException('is missing', fn() => $request->require('float', FILTER_VALIDATE_FLOAT, max_range: 3));
+        $this->assertException('is missing', fn() => $request->require('float-string', FILTER_VALIDATE_FLOAT, decimal: ','));
+        $this->assertException('is missing', fn() => $request->require('string', FILTER_VALIDATE_REGEXP, regexp: '#\d+#'));
+    }
+
     function test_any()
     {
         $request = new Request(['hoge' => 'HOGE', 'fuga' => 'FUGA', 'array' => [1, 2, 3]]);
