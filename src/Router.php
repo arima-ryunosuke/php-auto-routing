@@ -62,7 +62,7 @@ class Router
                         $this->rewrite($from, $controller, $action);
                     }
                     foreach ($action_data["@regex"] as $regex => $option) {
-                        $this->regex($regex, $controller, $action);
+                        $this->regex($regex, $controller, $action, $option);
                     }
                 }
             }
@@ -250,10 +250,11 @@ class Router
     /**
      * 正規表現ルート定義
      */
-    public function regex(string $regex, string $controller, string $action): static
+    public function regex(string $regex, string $controller, string $action, array $option = []): static
     {
         if ($regex[0] !== '/') {
-            $regex = rtrim($this->service->resolver->url($controller, '', [], ''), '/') . '/' . $regex;
+            $relativeAction = ($option['slug'] ?? false) ? $action : '';
+            $regex = rtrim($this->service->resolver->url($controller, $relativeAction, [], ''), '/') . '/' . $regex;
         }
         $this->service->logger->debug(self::ROUTE_REGEX . " $regex: $controller@$action");
         $this->routings[self::ROUTE_REGEX][$regex] = [$controller, $action];

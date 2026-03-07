@@ -41,6 +41,11 @@ class Controller extends \ryunosuke\Test\stub\mvc\AbstractController
     {
     }
 
+    #[\ryunosuke\microute\attribute\Regex('\\d+/\\d+', true)]
+    public function slugAction()
+    {
+    }
+
     #[\ryunosuke\microute\attribute\Route('mappingRoute')]
     #[\ryunosuke\microute\attribute\Regex('/mapping/route')]
     public function routenameAction()

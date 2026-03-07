@@ -202,6 +202,24 @@ class RouterTest extends \ryunosuke\Test\AbstractTestCase
         ], $route);
     }
 
+    function test_regex_slug()
+    {
+        $service = $this->service;
+
+        $service->router->regex('(?<seq>[0-9]+)', HogeController::class, 'actionSimple', ['slug' => true]);
+        $route = $service->router->match(Request::create('/hoge/action-simple/123'));
+        $this->assertEquals([
+            'controller' => 'Hoge',
+            'action'     => 'actionSimple',
+            'context'    => '',
+            'parameters' => [
+                0     => '123',
+                'seq' => '123',
+            ],
+            'route'      => 'regex',
+        ], $route);
+    }
+
     function test_priority()
     {
         $service = $this->service;
@@ -573,6 +591,12 @@ class RouterTest extends \ryunosuke\Test\AbstractTestCase
                 'route'  => 'scope',
                 'name'   => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::parameter',
                 'target' => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::parameterAction',
+                'method' => [],
+            ],
+            '/basepath/url/all/slug/\d+/\d+'                                          => [
+                'route'  => 'regex',
+                'name'   => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::slug',
+                'target' => 'ryunosuke\\Test\\stub\\mvc\\Url\\All\\Controller::slugAction',
                 'method' => [],
             ],
         ];
