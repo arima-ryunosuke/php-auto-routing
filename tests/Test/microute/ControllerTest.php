@@ -14,6 +14,7 @@ use ryunosuke\Test\stub\mvc\Hoge\Controller as HogeController;
 use ryunosuke\Test\stub\mvc\SubSub\FooBar\Controller as FooBarController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Session\Storage\MockFileSessionStorage;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class ControllerTest extends \ryunosuke\Test\AbstractTestCase
 {
@@ -407,6 +408,14 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
     "status": true,
     "message": "ok"
 }', $response->getContent());
+
+        $response = $controller->json(new HttpException(429, 'busy', null, ['retry-after' => 60], 101), JSON_PRETTY_PRINT);
+        $this->assertEquals('{
+    "code": 101,
+    "message": "busy"
+}', $response->getContent());
+        $this->assertEquals(429, $response->getStatusCode());
+        $this->assertEquals('60', $response->headers->get('retry-after'));
     }
 
     function test_content()

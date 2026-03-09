@@ -384,6 +384,15 @@ class Controller
      */
     public function json(mixed $data = [], int $jsonOptions = JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE): JsonResponse
     {
+        // HttpException をハンドリングして json で返すケースが非常に多いので特別扱いする
+        if ($data instanceof HttpException) {
+            $jsonData = json_encode([
+                'code'    => $data->getCode(),
+                'message' => $data->getMessage(),
+            ], $jsonOptions);
+            return $this->response(new JsonResponse($jsonData, $data->getStatusCode(), $data->getHeaders(), true));
+        }
+
         // JsonResponse は後から setEncodingOptions を呼ぶと decode/encode が走るので注意すること
         $jsonData = json_encode($data, $jsonOptions);
         return $this->response(new JsonResponse($jsonData, 200, [], true));
