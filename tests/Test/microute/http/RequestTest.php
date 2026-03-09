@@ -119,6 +119,25 @@ class RequestTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals('referrer', $request->getReferer());
     }
 
+    function test_isAsynchronous()
+    {
+        $request = new Request([], [], [], [], [], [
+            'HTTP_Sec-Fetch-Dest' => 'empty',
+        ]);
+        $this->assertEquals(true, $request->isAsynchronous());
+
+        $request = new Request([], [], [], [], [], [
+            'HTTP_X-Requested-With' => 'XMLHttpRequest',
+        ]);
+        $this->assertEquals(true, $request->isAsynchronous());
+
+        $request = new Request([], [], [], [], [], [
+            'HTTP_Sec-Fetch-Dest'   => 'document',
+            'HTTP_X-Requested-With' => 'fetch',
+        ]);
+        $this->assertEquals(false, $request->isAsynchronous());
+    }
+
     function test_getClientHints()
     {
         $request = new Request([], [], [], [

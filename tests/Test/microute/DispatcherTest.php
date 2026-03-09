@@ -464,7 +464,7 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
             $service->dispatcher->loadController(HogeController::class, 'action_ip_deny', $request);
         });
 
-        $this->assertException("only accepts XmlHttpRequest", function () use ($service) {
+        $this->assertException("only accepts AsynchronousRequest", function () use ($service) {
             $request = Request::create('', 'GET');
             $service->dispatcher->loadController(HogeController::class, 'action_ajax', $request);
         });

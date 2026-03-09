@@ -21,8 +21,8 @@ class Ajaxable extends AbstractAttribute
 
     public static function checkAjax(?int $ajaxable, Request $request): string
     {
-        if ($ajaxable !== null && !$request->isXmlHttpRequest()) {
-            return "only accepts XmlHttpRequest.";
+        if ($ajaxable !== null && !$request->isAsynchronous()) {
+            return "only accepts AsynchronousRequest.";
         }
         return "";
     }

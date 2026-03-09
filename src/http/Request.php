@@ -106,6 +106,11 @@ class Request extends \Symfony\Component\HttpFoundation\Request
         return $this->headers->get('REFERER');
     }
 
+    public function isAsynchronous(): bool
+    {
+        return $this->headers->get('sec-fetch-dest') === 'empty' || $this->isXmlHttpRequest();
+    }
+
     public function getClientHints(bool $raw = false, string $alternativeCookie = 'client_hints'): array
     {
         // @see https://developer.mozilla.org/ja/docs/Web/HTTP/Headers/Accept-CH
