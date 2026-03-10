@@ -552,25 +552,25 @@ class Controller
             }
 
             // init は初期化処理（Response の返却を許す）
-            $this->service->logger->info(get_class($this) . " init");
+            $this->service->logger->debug(get_class($this) . " init");
             $response = $this->init();
             if ($response instanceof Response) {
                 return $this->response($response);
             }
 
             // before は共通事前処理
-            $this->service->logger->info(get_class($this) . " before");
+            $this->service->logger->debug(get_class($this) . " before");
             $this->before();
 
             // action はメイン処理
-            $this->service->logger->info(get_class($this) . " action");
+            $this->service->logger->debug(get_class($this) . " action");
             $this->response($this->action($parameters));
 
             // after は共通事後処理
             $this->after();
 
             // finish は後始末処理（Response の返却を許す）
-            $this->service->logger->info(get_class($this) . " finish");
+            $this->service->logger->debug(get_class($this) . " finish");
             $response = $this->finish();
             if ($response instanceof Response) {
                 return $this->response($response);
@@ -579,13 +579,13 @@ class Controller
             return $this->response;
         }
         catch (ThrowableResponse $response) {
-            $this->service->logger->info(get_class($this) . " throw");
+            $this->service->logger->debug(get_class($this) . " throw");
             return $this->response($response->response());
         }
         catch (\Throwable $t) {
             // コントローラレベルの例外ハンドリング
             if ($error_handling) {
-                $this->service->logger->info(get_class($this) . " error");
+                $this->service->logger->debug(get_class($this) . " error");
                 $response = $this->catch(match (true) {
                     default                           => $t,
                     $t instanceof BadRequestException => new HttpException(400, "raise BadRequestException({$t->getMessage()})", $t),
