@@ -143,60 +143,6 @@ class Service implements HttpKernelInterface
         $values['controllerLocation'] = $controllerLocation;
 
         $this->values = $values;
-
-        Request::setFactory($this->requestFactory);
-
-        if ($this->trustedProxies) {
-            $proxies = [];
-            foreach ($this->trustedProxies as $key => $proxy) {
-                if ($proxy === 'mynetwork') {
-                    $selfaddr = $this->request->server->get('SERVER_ADDR', '');
-                    $addrmap = array_column(array_merge(...array_column(net_get_interfaces(), 'unicast')), 'netmask', 'address');
-                    if (isset($addrmap[$selfaddr])) {
-                        $netmask = strspn(decbin(ip2long($addrmap[$selfaddr])), '1');
-                        $proxies[] = "$selfaddr/$netmask";
-                    }
-                }
-                elseif ($proxy === 'private') {
-                    $proxies[] = "10.0.0.0/8";
-                    $proxies[] = "172.16.0.0/12";
-                    $proxies[] = "192.168.0.0/16";
-                }
-                elseif (is_string($proxy) && filter_var(explode('/', $proxy, 2)[0], FILTER_VALIDATE_IP)) {
-                    $proxies[] = $proxy;
-                }
-                elseif (is_string($proxy) || is_array($proxy)) {
-                    $proxy = array_replace([
-                        'ttl'    => 60 * 60 * 24,
-                        'filter' => fn($v) => $v,
-                    ], is_string($proxy) ? ['url' => $proxy] : $proxy);
-
-                    $cachekey = self::CACHE_KEY . '.trustedProxy.' . $key;
-                    $list = $this->cacher->get($cachekey, $this);
-                    if ($list === $this) {
-                        $this->cacher->set($cachekey, $list = (function () use ($proxy) {
-                            $contents = file_get_contents($proxy['url']);
-
-                            $ext = pathinfo($proxy['url'], PATHINFO_EXTENSION);
-                            if (!strlen($ext)) {
-                                $http_response_header ??= ["content-type:" . mime_content_type($proxy['url'])];
-                                $ctypes = preg_filter('#^content-type:\s*(.*)#i', '$1', $http_response_header);
-                                $ext = (string) $this->request->getFormat(end($ctypes));
-                            }
-                            $conv = $this->requestTypes[strtolower($ext ?: 'json')] ?? fn() => null;
-                            $list = $conv($contents);
-                            return $list ? $proxy['filter']($list) : [];
-                        })(), $proxy['ttl']);
-                    }
-                    $proxies = array_merge($proxies, $list);
-                }
-            }
-            Request::setTrustedProxies(array_merge(Request::getTrustedProxies(), $proxies), Request::getTrustedHeaderSet());
-        }
-
-        if ($this->debug) {
-            $this->cacher->clear();
-        }
     }
 
     public function __isset(string $name): bool
@@ -213,6 +159,60 @@ class Service implements HttpKernelInterface
             $this->frozen[$name] = $value instanceof \Closure ? $value($this) : $value;
         }
         return $this->frozen[$name];
+    }
+
+    public function initialize()
+    {
+        $getTrustedProxy = function ($setting) {
+            if ($setting === 'mynetwork') {
+                $selfaddr = $this->request->server->get('SERVER_ADDR', '');
+                $addrmap = array_column(array_merge(...array_column(net_get_interfaces(), 'unicast')), 'netmask', 'address');
+                if (isset($addrmap[$selfaddr])) {
+                    $netmask = strspn(decbin(ip2long($addrmap[$selfaddr])), '1');
+                    return [["$selfaddr/$netmask"], 60 * 60 * 24];
+                }
+            }
+            elseif ($setting === 'private') {
+                return [["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"], 60 * 60 * 24 * 365];
+            }
+            elseif (is_string($setting) && filter_var(explode('/', $setting, 2)[0], FILTER_VALIDATE_IP)) {
+                return [[$setting], 60 * 60 * 24];
+            }
+            elseif (is_string($setting) || is_array($setting)) {
+                $setting = array_replace([
+                    'ttl'    => 60 * 60 * 24,
+                    'filter' => fn($v) => $v,
+                ], is_string($setting) ? ['url' => $setting] : $setting);
+
+                $contents = file_get_contents($setting['url']);
+
+                $ext = pathinfo($setting['url'], PATHINFO_EXTENSION);
+                if (!strlen($ext)) {
+                    $http_response_header ??= ["content-type:" . mime_content_type($setting['url'])];
+                    $ctypes = preg_filter('#^content-type:\s*(.*)#i', '$1', $http_response_header);
+                    $ext = (string) $this->request->getFormat(end($ctypes));
+                }
+                $conv = $this->requestTypes[strtolower($ext ?: 'json')] ?? fn() => null;
+                $list = $conv($contents);
+                return $list ? [$setting['filter']($list), $setting['ttl']] : [];
+            }
+            return [[], 0];
+        };
+
+        Request::setFactory($this->requestFactory);
+        Request::setTrustedProxies(array_merge(Request::getTrustedProxies(), array_reduce(array_keys($this->trustedProxies), function ($carry, $key) use ($getTrustedProxy) {
+            $cachekey = self::CACHE_KEY . '.trustedProxy.' . $key;
+            $cache = $this->cacher->get($cachekey, $this);
+            if ($cache === $this) {
+                [$cache, $ttl] = $getTrustedProxy($this->trustedProxies[$key]);
+                $this->cacher->set($cachekey, $cache, $ttl);
+            }
+            return array_merge($carry, $cache);
+        }, [])), Request::getTrustedHeaderSet());
+
+        if ($this->debug) {
+            $this->cacher->clear();
+        }
     }
 
     public function trigger(string $name, ...$args)
@@ -261,6 +261,8 @@ class Service implements HttpKernelInterface
     public function run(): static
     {
         try {
+            $this->initialize();
+
             $request = $this->request;
             $response = $this->handle($request);
         }

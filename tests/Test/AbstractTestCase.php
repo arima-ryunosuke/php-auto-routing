@@ -27,7 +27,9 @@ abstract class AbstractTestCase extends TestCase
                 '\\ryunosuke\\Test\\stub\\mvc\\' => __DIR__ . '/../stub/mvc/',
             ],
         ];
-        return new Service($options + $defaults);
+        $service = new Service($options + $defaults);
+        $service->initialize();
+        return $service;
     }
 
     public static function assertJsonStringEquals($expected, string $actualJson, string $message = ''): void
