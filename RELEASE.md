@@ -86,6 +86,10 @@
     - query のクロージャ対応
       - 更新日時ではなく inode や hash を付与したいこともある
 
+## 1.2.13
+
+- [fixbug] 一定条件下で cacheEvent が効かない不具合
+
 ## 1.2.12
 
 - [feature] response 引継ぎで X-ヘッダも対象とする
