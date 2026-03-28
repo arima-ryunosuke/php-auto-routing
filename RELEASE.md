@@ -23,6 +23,10 @@
 - タイプヒントの設定
 - php8 対応が済んだら Attribute 自体に処理を持たせたい
 
+## 1.2.13
+
+- [fixbug] 一定条件下で cacheEvent が効かない不具合
+
 ## 1.2.12
 
 - [feature] response 引継ぎで X-ヘッダも対象とする
