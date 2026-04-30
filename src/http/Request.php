@@ -17,14 +17,26 @@ class Request extends \Symfony\Component\HttpFoundation\Request
 
     public InputBag $input;
 
-    public function __construct(array $query = [], array $request = [], array $attributes = [], array $cookies = [], array $files = [], array $server = [], $content = null)
+    private function _customize(): static
     {
-        parent::__construct($query, $request, $attributes, $cookies, $files, $server, $content);
-
         $this->get = $this->query;
         $this->post = $this->request;
         $this->body = $this->request;
         $this->input = $this->isMethod('GET') ? $this->query : $this->request;
+
+        return $this;
+    }
+
+    public function duplicate(?array $query = null, ?array $request = null, ?array $attributes = null, ?array $cookies = null, ?array $files = null, ?array $server = null): static
+    {
+        return parent::duplicate($query, $request, $attributes, $cookies, $files, $server)->_customize();
+    }
+
+    public function __construct(array $query = [], array $request = [], array $attributes = [], array $cookies = [], array $files = [], array $server = [], $content = null)
+    {
+        parent::__construct($query, $request, $attributes, $cookies, $files, $server, $content);
+
+        $this->_customize();
     }
 
     public function __get(string $name): mixed

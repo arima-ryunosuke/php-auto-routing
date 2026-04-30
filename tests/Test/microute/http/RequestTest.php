@@ -7,6 +7,23 @@ use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
 
 class RequestTest extends \ryunosuke\Test\AbstractTestCase
 {
+    function test_duplicate()
+    {
+        $request1 = new Request();
+        $request1->query->set('dummy', 'DUMMY1');
+        $request1->get->set('dummy', 'DUMMY1');
+        $request2 = $request1->duplicate();
+
+        $this->assertEquals('DUMMY1', $request2->query->get('dummy'));
+        $this->assertEquals('DUMMY1', $request2->get->get('dummy'));
+
+        $request1->query->set('dummy', 'DUMMY2');
+        $request1->get->set('dummy', 'DUMMY2');
+
+        $this->assertEquals('DUMMY1', $request2->query->get('dummy'));
+        $this->assertEquals('DUMMY1', $request2->get->get('dummy'));
+    }
+
     function test___get()
     {
         $request = new Request();
