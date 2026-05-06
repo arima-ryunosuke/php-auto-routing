@@ -24,6 +24,14 @@ class Request extends \Symfony\Component\HttpFoundation\Request
         $this->body = $this->request;
         $this->input = $this->isMethod('GET') ? $this->query : $this->request;
 
+        $files = $this->files->all();
+        array_walk_recursive($files, function (&$value) {
+            if ($value instanceof \Symfony\Component\HttpFoundation\File\UploadedFile) {
+                $value = UploadedFile::fromSymfonyFile($value);
+            }
+        });
+        $this->files->replace($files);
+
         return $this;
     }
 
