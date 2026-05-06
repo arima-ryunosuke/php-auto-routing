@@ -66,7 +66,6 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
     function test___get()
     {
         $controller = new HogeController($this->service, 'action-a');
-        $this->assertInstanceOf(\Symfony\Component\HttpFoundation\Session\Session::class, $controller->session);
         $this->assertInstanceOf(Request::class, $controller->request);
         $this->assertInstanceOf(Response::class, $controller->response);
         $this->assertEquals('action-a', $controller->action);
@@ -79,6 +78,7 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertSame($controller->Default, $controller2->Default);
         $this->assertSame($controller2->Default, $controller->Default);
         $this->assertSame($controller2->Model, $controller->Default);
+        $this->assertSame($this->service->request->duplicate()->getSession(), $controller->session);
     }
 
     function test___toString()

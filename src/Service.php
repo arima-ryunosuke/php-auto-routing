@@ -15,36 +15,37 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
 /**
  * サービスロケータクラス
  *
- * @property-read bool                    $debug
- * @property-read CacheInterface          $cacher
- * @property-read LoggerInterface         $logger
- * @property-read callable[][]            $events
- * @property-read string[]                $priority
- * @property-read string                  $maintenanceFile
- * @property-read string                  $maintenanceAccessKey
+ * @property-read bool                        $debug
+ * @property-read CacheInterface              $cacher
+ * @property-read LoggerInterface             $logger
+ * @property-read callable[][]                $events
+ * @property-read string[]                    $priority
+ * @property-read string                      $maintenanceFile
+ * @property-read string                      $maintenanceAccessKey
  *
- * @property-read Router                  $router
- * @property-read Dispatcher              $dispatcher
- * @property-read Resolver                $resolver
- * @property-read array                   $trustedProxies
- * @property-read Controller              $controllerClass
- * @property-read array|Controller[]      $controllerLocation
- * @property-read array                   $controllerAutoload
- * @property-read array|Controller[]      $mvcLocation
- * @property-read string                  $mvcModelName
- * @property-read string                  $mvcViewName
- * @property-read string                  $mvcControllerName
+ * @property-read Router                      $router
+ * @property-read Dispatcher                  $dispatcher
+ * @property-read Resolver                    $resolver
+ * @property-read array                       $trustedProxies
+ * @property-read Controller                  $controllerClass
+ * @property-read array|Controller[]          $controllerLocation
+ * @property-read array                       $controllerAutoload
+ * @property-read array|Controller[]          $mvcLocation
+ * @property-read string                      $mvcModelName
+ * @property-read string                      $mvcViewName
+ * @property-read string                      $mvcControllerName
  *
- * @property-read callable                $requestFactory
- * @property-read Request                 $requestClass
- * @property-read Request                 $request
- * @property-read callable[]              $requestTypes
- * @property-read SessionStorageInterface $sessionStorage
- * @property-read array|\Closure          $parameterContexts
+ * @property-read callable                    $requestFactory
+ * @property-read Request                     $requestClass
+ * @property-read Request                     $request
+ * @property-read callable[]                  $requestTypes
+ * @property-read Session|callable(): Session $session
+ * @property-read SessionStorageInterface     $sessionStorage
+ * @property-read array|\Closure              $parameterContexts
  *
- * @property-read array|\Closure          $authenticationProvider
- * @property-read \Closure                $authenticationComparator
- * @property-read \Closure                $authenticationNoncer
+ * @property-read array|\Closure              $authenticationProvider
+ * @property-read \Closure                    $authenticationComparator
+ * @property-read \Closure                    $authenticationNoncer
  */
 // @formatter:on
 class Service implements HttpKernelInterface
@@ -94,7 +95,7 @@ class Service implements HttpKernelInterface
                 $request->request->replace($conv($request->getContent()) ?? []);
             }
 
-            $request->setSessionFactory(fn() => new Session($this->sessionStorage));
+            $request->setSessionFactory($this->session);
             return $request;
         };
         $values['requestClass'] ??= \ryunosuke\microute\http\Request::class;
@@ -102,6 +103,10 @@ class Service implements HttpKernelInterface
         $values['requestTypes'] ??= [
             'json' => fn($content) => json_decode($content, true),
         ];
+        $values['session'] ??= fn() => function () {
+            static $session = null;
+            return $session ??= new Session($this->sessionStorage);
+        };
         $values['sessionStorage'] ??= fn() => new NativeSessionStorage();
         $values['parameterContexts'] ??= [];
 
