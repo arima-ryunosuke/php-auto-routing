@@ -46,9 +46,9 @@
       "@test"
     ],
     "test": [
-      "PHPVERSION=php7.4 vendor/bin/phpunit --configuration=tests/phpunit.xml",
-      "PHPVERSION=php8.1 vendor/bin/phpunit --configuration=tests/phpunit.xml",
-      "PHPVERSION=php8.2 vendor/bin/phpunit --configuration=tests/phpunit.xml"
+      "SYMFONY_VERSION=5 vendor/bin/phpunit --configuration=tests/phpunit.xml",
+      "SYMFONY_VERSION=6 vendor/bin/phpunit --configuration=tests/phpunit.xml",
+      "SYMFONY_VERSION=7 vendor/bin/phpunit --configuration=tests/phpunit.xml"
     ]
   }
 }

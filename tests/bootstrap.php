@@ -1,7 +1,7 @@
 <?php
 
-if (getenv('PHPVERSION')) {
-    require_once __DIR__ . '/versions/' . getenv('PHPVERSION') . '/vendor/autoload.php';
+if (getenv('SYMFONY_VERSION')) {
+    require_once __DIR__ . '/versions/' . getenv('SYMFONY_VERSION') . '/vendor/autoload.php';
 }
 else {
     require_once __DIR__ . '/../vendor/autoload.php';

@@ -426,7 +426,7 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         $response = $controller->content(__FILE__);
         $response->prepare($request);
         $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('text/x-php; charset=UTF-8', $response->headers->get('content-type'));
+        $this->assertEqualsIgnoringCase('text/x-php; charset=UTF-8', $response->headers->get('content-type'));
         $this->assertEquals('private, must-revalidate', $response->headers->get('cache-control'));
         $this->assertTrue($response->headers->has('last-modified'));
         ob_start();
