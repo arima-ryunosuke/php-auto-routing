@@ -22,6 +22,15 @@
 - DefaultController::errorAction の廃止
 - php8 対応が済んだら Attribute 自体に処理を持たせたい
 
+## 2.0.7
+
+- [feature] salt で privateKey を固有にする機能
+- [feature] content-type に応じて多様なボディを返す payload を追加
+- [feature] UploadedFile が psr-7 に未対応だったので対応
+- [fixbug] セッション開始前に forward するとセッションエラーが出る不具合
+- [fixbug] duplicate したときに独自フィールドが分離できていない不具合
+- [test] バージョンテストは php ではなく symfony で銘打つべき
+
 ## 2.0.6
 
 - [change] 5大ディスパッチイベントのログレベルを info から debug に変更
