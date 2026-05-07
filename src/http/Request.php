@@ -7,6 +7,7 @@ use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 /**
  * @property-read SessionInterface $session
+ * @property-read PayloadBag $payload
  */
 class Request extends \Symfony\Component\HttpFoundation\Request
 {
@@ -16,6 +17,8 @@ class Request extends \Symfony\Component\HttpFoundation\Request
     public InputBag $body;
 
     public InputBag $input;
+
+    private PayloadBag $payload;
 
     private function _customize(): static
     {
@@ -51,6 +54,11 @@ class Request extends \Symfony\Component\HttpFoundation\Request
     {
         if ($name === 'session') {
             return $this->getSession();
+        }
+        // 使わない場合は完全に無駄となるので遅延取得する（symfony が getPayload としているのもそのためだと思う）
+        // @todo php8.4 ならプロパティフックで対応できるはず…
+        if ($name === 'payload') {
+            return $this->payload ??= new PayloadBag($this);
         }
         throw new \InvalidArgumentException("$name is not supported property");
     }

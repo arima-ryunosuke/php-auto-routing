@@ -2,6 +2,7 @@
 namespace ryunosuke\Test\microute\http;
 
 use ryunosuke\microute\http\Request;
+use ryunosuke\microute\http\UploadedFile;
 use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
 
@@ -69,6 +70,25 @@ class RequestTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals('FUGA', $request->input('fuga'));
         $this->assertEquals('PIYO', $request->input('piyo'));
         $this->assertEquals('defval', $request->input('undefined', 'defval'));
+    }
+
+    function test_payload()
+    {
+        $request = new Request(
+            request: ['post' => 'data'],
+            files  : [
+                'file' => [
+                    'name'     => 'local-name.txt',
+                    'type'     => '',
+                    'tmp_name' => __FILE__,
+                    'error'    => UPLOAD_ERR_OK,
+                    'size'     => 0,
+                ],
+            ],
+        );
+
+        $this->assertEquals('data', $request->payload->get('post'));
+        $this->assertInstanceOf(UploadedFile::class, $request->payload->get('file'));
     }
 
     function test_require()
