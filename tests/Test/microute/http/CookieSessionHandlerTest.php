@@ -56,6 +56,7 @@ class CookieSessionHandlerTest extends \ryunosuke\Test\AbstractTestCase
         $handler->write('sid', $value);
         $this->assertJsonStringEquals([
             'version' => 2,
+            'token'   => null,
             'length'  => 4,
             'ctime'   => time(),
             'atime'   => time(),
@@ -75,6 +76,7 @@ class CookieSessionHandlerTest extends \ryunosuke\Test\AbstractTestCase
         $handler->write('sid', $value);
         $this->assertJsonStringEquals([
             'version' => 2,
+            'token'   => null,
             'length'  => 4,
             'ctime'   => time(),
             'atime'   => time(),
@@ -90,6 +92,7 @@ class CookieSessionHandlerTest extends \ryunosuke\Test\AbstractTestCase
         $handler->write('sid', $value);
         $this->assertJsonStringEquals([
             'version' => 2,
+            'token'   => null,
             'length'  => 4,
             'ctime'   => time(),
             'atime'   => time(),
@@ -186,6 +189,7 @@ class CookieSessionHandlerTest extends \ryunosuke\Test\AbstractTestCase
         $handler->write('sid', 'hogera');
         $this->assertJsonStringEquals([
             'version' => 2,
+            'token'   => null,
             'length'  => 1,
             'ctime'   => time(),
             'atime'   => time(),
@@ -194,6 +198,25 @@ class CookieSessionHandlerTest extends \ryunosuke\Test\AbstractTestCase
 
         $this->assertTrue($handler->destroy('sessname'));
         $this->assertArrayNotHasKey('sessname', $cookies);
+    }
+
+    function test_salt()
+    {
+        $handler = $this->provideHandler($cookies, [
+            'salt' => fn() => 'salt1',
+        ]);
+        $handler->read('sid');
+        $handler->write('sid', 'hoge');
+
+        $handler1 = $this->provideHandler($cookies, [
+            'salt' => fn() => 'salt1',
+        ]);
+        $handler2 = $this->provideHandler($cookies, [
+            'salt' => fn() => 'salt2',
+        ]);
+
+        $this->assertEquals('hoge', $handler1->read('sid'));
+        $this->assertEquals('', $handler2->read('sid'));
     }
 
     function test_misc()

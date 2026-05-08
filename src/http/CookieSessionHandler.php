@@ -7,8 +7,11 @@ class CookieSessionHandler extends AbstractSessionHandler
 {
     private const VERSION = 2;
 
-    private array $privateKeys;
+    private \Closure $salt;
+    private string   $storageKey;
+    private array    $privateKeys;
 
+    private string $tokenName;
     private string $storeName;
     private string $initialStoreName;
 
@@ -30,7 +33,10 @@ class CookieSessionHandler extends AbstractSessionHandler
     {
         assert(array_key_exists('privateKey', $options));
 
+        $this->salt = \Closure::fromCallable($options['salt'] ?? fn() => '');
+        $this->storageKey = (string) ($options['storageKey'] ?? '_sf2_attributes');
         $this->privateKeys = (array) ($options['privateKey'] instanceof \Closure ? $options['privateKey']() : $options['privateKey']);
+        $this->tokenName = (string) ($options['tokenName'] ?? '');
         $this->initialStoreName = (string) ($options['storeName'] ?? '');
         $this->initialChunkSize = (int) ($options['chunkSize'] ?? 4095); // ブラウザの最小サイズは 4095 byte
         $this->maxLength = (int) ($options['maxLength'] ?? 19);          // RFC 的には 20 個。ただし個数クッキーで1つ使うので -1
@@ -61,6 +67,7 @@ class CookieSessionHandler extends AbstractSessionHandler
     {
         $this->metadata = (array) json_decode($this->cookieInput[$this->storeName] ?? '{}', true);
         $this->metadata['version'] = (int) ($this->metadata['version'] ?? self::VERSION);
+        $this->metadata['token'] = $this->metadata['token'] ?? null;
         $this->metadata['length'] = (int) min($this->metadata['length'] ?? 0, $this->maxLength);
         $this->metadata['ctime'] = (int) ($this->metadata['ctime'] ?? time());
         $this->metadata['atime'] = (int) ($this->metadata['atime'] ?? time());
@@ -81,7 +88,7 @@ class CookieSessionHandler extends AbstractSessionHandler
         for ($i = 0; $i < $this->metadata['length']; $i++) {
             $data .= $this->cookieInput[$this->storeName . $i] ?? '';
         }
-        return @$this->decode($data);
+        return @$this->decode($data, $this->metadata['token']);
     }
 
     /**
@@ -89,7 +96,9 @@ class CookieSessionHandler extends AbstractSessionHandler
      */
     protected function doWrite(string $sessionId, string $data): bool
     {
-        $chunks = array_values(array_filter(str_split($this->encode($data), $this->chunkSize), fn($v) => strlen($v)));
+        $token = $_SESSION[$this->storageKey][$this->tokenName] ?? null;
+
+        $chunks = array_values(array_filter(str_split($this->encode($data, $token), $this->chunkSize), fn($v) => strlen($v)));
         $length = count($chunks);
         if ($length > $this->maxLength) {
             return false;
@@ -97,6 +106,7 @@ class CookieSessionHandler extends AbstractSessionHandler
 
         $this->cookieOutput[$this->storeName] = json_encode(array_replace($this->metadata, [
             'version' => self::VERSION,
+            'token'   => $token,
             'length'  => $length,
             'atime'   => time(),
             'mtime'   => time(),
@@ -163,13 +173,14 @@ class CookieSessionHandler extends AbstractSessionHandler
         return true;
     }
 
-    private function encode(string $decrypted_data): string
+    private function encode(string $decrypted_data, ?string $token): string
     {
         $algo = 'aes-256-gcm';
         $taglen = 16;
-
         $keylen = 256 / 8;// openssl_cipher_key_length($algo);
-        $key = hash_hkdf('sha256', reset($this->privateKeys), $keylen);
+
+        $salt = (string) ($this->salt)($token);
+        $key = hash_hkdf('sha256', reset($this->privateKeys), $keylen, '', $salt);
 
         $ivlen = openssl_cipher_iv_length($algo);
         $iv = random_bytes($ivlen);
@@ -182,7 +193,7 @@ class CookieSessionHandler extends AbstractSessionHandler
         ]);
     }
 
-    private function decode(string $encrypted_data): string
+    private function decode(string $encrypted_data, ?string $token): string
     {
         $data = base64_decode(strtr($encrypted_data, [
             '_' => '/',
@@ -197,8 +208,9 @@ class CookieSessionHandler extends AbstractSessionHandler
         $ivlen = openssl_cipher_iv_length($algo);
         $iv = substr($data, $taglen, $ivlen);
 
+        $salt = (string) ($this->salt)($token);
         foreach ($this->privateKeys as $privateKey) {
-            $key = hash_hkdf('sha256', $privateKey, $keylen);
+            $key = hash_hkdf('sha256', $privateKey, $keylen, '', $salt);
             $decrypted_data = openssl_decrypt(substr($data, $taglen + $ivlen), $algo, $key, OPENSSL_RAW_DATA, $iv, $tag);
             if (is_string($decrypted_data)) {
                 return gzinflate($decrypted_data);
