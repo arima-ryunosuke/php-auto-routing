@@ -70,23 +70,31 @@ class Controller extends AbstractController
             ], true);
     }
 
-    public function sessionAction()
+    public function sessionAction(?string $user_id = null)
     {
+        if ($user_id !== null) {
+            $this->session->set('user_id', $user_id);
+        }
         $times = $this->session->get('times', []);
         $times[] = intval(time() / 5) * 5;
         $this->session->set('times', array_unique($times));
         $cookie = array_filter($_COOKIE, function ($k) { return strpos($k, 'SID') === 0; }, ARRAY_FILTER_USE_KEY);
         uksort($cookie, function ($a, $b) { return strnatcmp($a, $b); });
-        return 'セッションデータです。'
+        return '<form><input name="user_id" placeholder="user_id"></form>'
+            . 'セッションデータです。'
             . '<p>セッションは cookie ストレージで、1分間継続、256バイト毎に分割されるように設定されています</p>'
             . '<p>1分間継続は最後のアクセスから計測されます。かつセッションクッキーであり、ブラウザを閉じると削除されます</p>'
             . '<p>session.lazy_write が有効だと同じセッションデータの場合は set-cookie を発行しません（このサンプルだと5秒間クッキーを吐きません）</p>'
+            . '<p>user_id に "dummy" と入れると salt が変更されたとみなされ、セッションが継続しません。別ブラウザなどで dummy を入力してみてください</p>'
             . '<pre>'
             . "<strong>cookie data</strong>\n"
             . var_export($cookie, true)
             . "\n"
             . "<strong>session data</strong>\n"
             . var_export($this->session->all(), true)
+            . "\n"
+            . "<strong>raw session data</strong>\n"
+            . var_export($_SESSION, true)
             . "\n";
     }
 

@@ -30,6 +30,11 @@ $service = new \ryunosuke\microute\Service([
     'sessionStorage'       => new \ryunosuke\microute\http\CookieSessionStorage([
         'cache_limiter' => 'nocache',
         'handler'       => [
+            'tokenName'  => 'user_id',
+            'salt'       => fn($user_id) => match ($user_id) {
+                default => $user_id,
+                'dummy' => rand(0, 9999),
+            },
             'privateKey' => 'secretkey',
             'storeName'  => 'SID',
             'chunkSize'  => 256,
