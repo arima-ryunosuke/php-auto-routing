@@ -175,6 +175,50 @@ class Request extends \Symfony\Component\HttpFoundation\Request
         return array_diff_key($this->input->all(), array_flip($keys));
     }
 
+    /**
+     * 指定パス以下をパスパラメータとして扱って連想配列で返す
+     *
+     * basepath が一致しない場合は null を返す。
+     *
+     * キーのみで値が無い場合は null を返す。
+     * ただし、/ で終わる場合は空文字が指定されているとみなして空文字を返す。
+     *
+     * - e.g. /base/hoge/1/fuga/2/piyo/3 => ["hoge" => "1", "fuga" => "2", "piyo" => "3]
+     * - e.g. /base/hoge/1/fuga/2/piyo/ => ["hoge" => "1", "fuga" => "2", "piyo" => ""]
+     * - e.g. /base/hoge/1/fuga/2/piyo => ["hoge" => "1", "fuga" => "2", "piyo" => null]
+     * - e.g. /not-base/hoge/1/fuga/2/piyo => null
+     */
+    public function getPathParameters(string $basePath, bool $stripExtension): ?array
+    {
+        $basepath = rtrim($this->getBasePath(), '/');
+        $currentpath = $this->getPathInfo();
+        $pathInfo = $basepath . $currentpath;
+        if (!str_starts_with($pathInfo, $basePath)) {
+            return null;
+        }
+
+        if ($stripExtension) {
+            $extension = pathinfo($pathInfo, PATHINFO_EXTENSION);
+            $pathInfo = preg_replace('#\\.' . preg_quote($extension) . '$#', '', $pathInfo);
+        }
+
+        $basePath = rtrim($basePath, '/') . '/';
+        $remainder = substr($pathInfo, strlen($basePath));
+        $segments = explode('/', $remainder);
+        if ($segments === ['']) {
+            return [];
+        }
+
+        $params = [];
+        for ($i = 0; $i < count($segments); $i += 2) {
+            if (strlen($segments[$i]) || isset($segments[$i + 1])) {
+                $params[$segments[$i]] = $segments[$i + 1] ?? null;
+            }
+        }
+
+        return $params;
+    }
+
     public function getUserAgent(): ?string
     {
         return $this->headers->get('USER-AGENT');

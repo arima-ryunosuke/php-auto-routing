@@ -187,6 +187,83 @@ class RequestTest extends \ryunosuke\Test\AbstractTestCase
         ], $request->except('piyo', 'fuga', 'unknown'));
     }
 
+    function test_getPathParameters()
+    {
+        // misc
+        $this->assertSame([], Request::create('/base/path/')->getPathParameters('/base/path', false));
+        $this->assertSame([], Request::create('/base/path')->getPathParameters('/base/path', false));
+        $this->assertSame([], Request::create('/base/path/')->getPathParameters('/base/path/', false));
+        $this->assertSame(null, Request::create('/base/path')->getPathParameters('/base/path/', false));
+
+        // normal
+        $request = Request::create('/base/path/param1/a/param2/b/param3');
+        $this->assertSame(null, $request->getPathParameters('/notmatch-base', false));
+        $this->assertSame([
+            'param1' => 'a',
+            'param2' => 'b',
+            'param3' => null,
+        ], $request->getPathParameters('/base/path', false));
+        $this->assertSame([
+            'param1' => 'a',
+            'param2' => 'b',
+            'param3' => null,
+        ], $request->getPathParameters('/base/path/', false));
+
+        // normal(slash)
+        $request = Request::create('/base/path/param1/a/param2/b/param3/');
+        $this->assertSame(null, $request->getPathParameters('/notmatch-base', false));
+        $this->assertSame([
+            'param1' => 'a',
+            'param2' => 'b',
+            'param3' => '',
+        ], $request->getPathParameters('/base/path', false));
+        $this->assertSame([
+            'param1' => 'a',
+            'param2' => 'b',
+            'param3' => '',
+        ], $request->getPathParameters('/base/path/', false));
+
+        // trailing slash
+        $request = Request::create('/base/path/param1/a/param2/b/');
+        $this->assertSame(null, $request->getPathParameters('/notmatch-base', false));
+        $this->assertSame([
+            'param1' => 'a',
+            'param2' => 'b',
+        ], $request->getPathParameters('/base/path', false));
+        $this->assertSame([
+            'param1' => 'a',
+            'param2' => 'b',
+        ], $request->getPathParameters('/base/path/', false));
+
+        // no key
+        $request = Request::create('/base/path/param1/a/param2/b//c');
+        $this->assertSame(null, $request->getPathParameters('/notmatch-base', false));
+        $this->assertSame([
+            'param1' => 'a',
+            'param2' => 'b',
+            ''       => 'c',
+        ], $request->getPathParameters('/base/path', false));
+        $this->assertSame([
+            'param1' => 'a',
+            'param2' => 'b',
+            ''       => 'c',
+        ], $request->getPathParameters('/base/path/', false));
+
+        // with extension
+        $request = Request::create('/base/path/param1/a/param2/b/param3.json');
+        $this->assertSame(null, $request->getPathParameters('/notmatch-base', true));
+        $this->assertSame([
+            'param1' => 'a',
+            'param2' => 'b',
+            'param3' => null,
+        ], $request->getPathParameters('/base/path', true));
+        $this->assertSame([
+            'param1' => 'a',
+            'param2' => 'b',
+            'param3' => null,
+        ], $request->getPathParameters('/base/path/', true));
+    }
+
     function test_getUserAgent()
     {
         $request = new Request([], [], [], [], [], [
