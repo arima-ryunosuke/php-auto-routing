@@ -2,11 +2,13 @@
 namespace ryunosuke\Test\microute;
 
 use DateTimeInterface;
+use MockLogger;
 use ryunosuke\microute\Controller;
 use ryunosuke\microute\http\Request;
 use ryunosuke\microute\http\Response;
 use ryunosuke\Test\microute\autoload\Auto;
 use ryunosuke\Test\microute\autoload\Next\Foo;
+use ryunosuke\Test\stub\mvc\Aspect\Controller as AspectController;
 use ryunosuke\Test\stub\mvc\Default\Controller as DefaultController;
 use ryunosuke\Test\stub\mvc\Dispatch\Controller as DispatchController;
 use ryunosuke\Test\stub\mvc\Event\Controller as EventController;
@@ -922,6 +924,80 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals('queryableNull:2, 1', $response->getContent());
 
         $this->assertException('parameter is not match type', [$controller, 'action'], ['X']);
+    }
+
+    function test_aspect()
+    {
+        $service = $this->provideService([
+            'logger' => new MockLogger(function ($level, $message, $context) use (&$logs) {
+                if ($level === 'test' || $level === 'critical') {
+                    $logs[] = $message;
+                }
+            }),
+        ]);
+
+        $request = Request::createFromGlobals();
+
+        $logs = [];
+        $controller = new AspectController($service, 'cache', $request);
+        $response1 = $controller->dispatch([]);
+        $response2 = $controller->dispatch([]);
+        $this->assertEquals($response1->getContent(), $response2->getContent());
+        $this->assertEquals([
+            'Caching:enter',
+            'Logging:enter',
+            'Transaction:try',
+            'Caching:action',
+            'Transaction:done',
+            'Logging:return',
+            'Caching:enter',
+            'Logging:enter',
+            'Transaction:try',
+            'Caching:action',
+            'Transaction:done',
+            'Logging:return',
+        ], $logs);
+
+        $logs = [];
+        $controller = new AspectController($service, 'done', $request);
+        $controller->dispatch([]);
+        $this->assertEquals([
+            'Logging:enter',
+            'Transaction:try',
+            'Transaction:done',
+            'Logging:return',
+        ], $logs);
+
+        $logs = [];
+        $controller = new AspectController($service, 'catch', $request);
+        $controller->dispatch([]);
+        $this->assertEquals([
+            'Logging:enter',
+            'Transaction:try',
+            'Transaction:catch',
+            'Logging:catch',
+        ], $logs);
+
+        $logs = [];
+        $controller = new AspectController($service, 'noneTransaction', $request);
+        $controller->dispatch([]);
+        $this->assertEquals([
+            'Logging:enter',
+            'Logging:return',
+        ], $logs);
+
+        $logs = [];
+        $controller = new AspectController($service, 'noneLogging', $request);
+        $controller->dispatch([]);
+        $this->assertEquals([
+            'Transaction:try',
+            'Transaction:done',
+        ], $logs);
+
+        $logs = [];
+        $controller = new AspectController($service, 'noneBoth', $request);
+        $controller->dispatch([]);
+        $this->assertEquals([], $logs);
     }
 
     function test_event_cache()

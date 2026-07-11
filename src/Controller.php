@@ -97,6 +97,7 @@ class Controller
                     '@regex'         => attribute\Regex::by($action),
                     // アクション系
                     '@events'        => $events,
+                    '@aspects'       => attribute\Aspect::by($action),
                     '@method'        => attribute\Method::by($action),
                     '@argument'      => attribute\Argument::by($action),
                     // メタデータ系
@@ -607,6 +608,8 @@ class Controller
 
     public function action(array $args): Response
     {
+        $this->dispatchAspect('enter', ['arguments' => $args]);
+
         // RateLimit はログイン前提なことがあるので action 内でやるしかない（IP だけならもっと早い段階で弾けるが…）
         $this->ratelimit();
 
@@ -616,11 +619,23 @@ class Controller
         }
 
         // アクション実行
+        $this->dispatchAspect('try', []);
+        $result = null;
         try {
-            $result = ([$this, $this->action . static::ACTION_SUFFIX])(...$args);
+            $action = \Closure::fromCallable([$this, $this->action . self::ACTION_SUFFIX]);
+            $result = $this->dispatchAspect('action', ['invoke' => $action]) ?? $action(...$args);
+            $this->dispatchAspect('done', ['return' => $result]);
         }
         catch (\TypeError $t) {
+            $this->dispatchAspect('catch', ['throw' => $t]);
             throw new HttpException(404, 'parameter is not match type.', $t);
+        }
+        catch (\Throwable $t) {
+            $this->dispatchAspect('catch', ['throw' => $t]);
+            throw $t;
+        }
+        finally {
+            $this->dispatchAspect('finally', ['return' => $result, 'throw' => $t ?? null]);
         }
 
         // 返り値が string ならレスポンンスボディ
@@ -638,10 +653,40 @@ class Controller
 
         // post-action
         if (($result = $this->dispatchEvent('post')) instanceof Response) {
-            return $this->response($result);
+            $response = $this->response($result);
+        }
+        else {
+            $response = $this->response;
         }
 
-        return $this->response;
+        $this->dispatchAspect('return', ['response' => $response]);
+
+        return $response;
+    }
+
+    private function dispatchAspect(string $phase, array $context): mixed
+    {
+        $metadata = static::metadata($this->service->cacher);
+
+        $default_context = [
+            'controller' => $this,
+            'action'     => $this->action,
+            'service'    => $this->service,
+            'request'    => $this->request,
+        ];
+        foreach ($metadata['actions'][$this->action]['@aspects'] as $advice) {
+            $advice->context += $context + $default_context;
+            // 属性やシグネチャを見て自動分岐は可能だが、そこまでするモチベーションもないし速度が落ちるので単純に $context で分岐する
+            if (isset($context['invoke'])) {
+                if (($result = $advice->$phase($context['invoke'])) !== null) {
+                    return $result;
+                }
+            }
+            else {
+                $advice->$phase();
+            }
+        }
+        return null;
     }
 
     private function dispatchEvent(string $phase): ?Response
