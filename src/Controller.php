@@ -847,12 +847,18 @@ class Controller
         }
         // アクションメソッドが何も返さなかったらレンダリングして返すとか
         if ($action_value === null) {
-            return $this->response->setContent((static function (...$dummy) {
-                unset($dummy);
+            /** @noinspection PhpMethodParametersCountMismatchInspection */
+            return $this->response->setContent((static function () {
                 ob_start();
-                extract(func_get_arg(1));
-                include func_get_arg(0);
-                return ob_get_clean();
+                try {
+                    extract(func_get_arg(1));
+                    include func_get_arg(0);
+                    return ob_get_clean();
+                }
+                catch (\Throwable $t) {
+                    ob_end_clean();
+                    throw $t;
+                }
             })($this->viewFile('.phtml'), $this->request->attributes->get('parameter', [])));
         }
     }
