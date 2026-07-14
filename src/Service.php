@@ -88,6 +88,8 @@ class Service implements HttpKernelInterface
             $requestClass = $this->requestClass;
             $request = new $requestClass($query, $request, $attributes, $cookies, $files, $server, $content);
 
+            $request->attributes->set('@service', $this);
+
             // for compatible symfony 6/7
             $ctype = method_exists($request, 'getContentTypeFormat') ? $request->getContentTypeFormat(): $request->getContentType();
             $conv = $this->requestTypes[$ctype] ?? null;
