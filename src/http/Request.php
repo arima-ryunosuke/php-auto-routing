@@ -219,6 +219,21 @@ class Request extends \Symfony\Component\HttpFoundation\Request
         return $params;
     }
 
+    /**
+     * クエリストリングの有無を判定してそれを返す
+     *
+     * symfony 標準だと `/path` と `/path?` の区別がつかず、どちらも null を返す。
+     * この関数は前者は null, 後者は "" を返すように変更してある。
+     */
+    public function getQueryString(): ?string
+    {
+        $qs = parent::getQueryString();
+        if (strlen($qs ?? '')) {
+            return $qs;
+        }
+        return str_contains($this->getRequestUri(), '?') ? '' : null;
+    }
+
     public function getUserAgent(): ?string
     {
         return $this->headers->get('USER-AGENT');

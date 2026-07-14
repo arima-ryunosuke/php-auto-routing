@@ -82,7 +82,7 @@ class Dispatcher
                     $basepath = rtrim($request->getBasePath(), '/');
                     $currentpath = $request->getPathInfo();
                     $query = $request->getQueryString();
-                    return new RedirectResponse("$basepath$currentpath/" . (strlen($query) ? "?$query" : ''), 301);
+                    return new RedirectResponse("$basepath$currentpath/" . ($query === null ? "" : "?$query"), 301);
                 }
             }
 

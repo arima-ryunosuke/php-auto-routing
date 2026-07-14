@@ -264,6 +264,22 @@ class RequestTest extends \ryunosuke\Test\AbstractTestCase
         ], $request->getPathParameters('/base/path/', true));
     }
 
+    function test_getQueryString()
+    {
+        $this->assertSame(null, (new Request([], [], [], [], [], [
+            'REQUEST_URI'  => '/path',
+            'QUERY_STRING' => '',
+        ]))->getQueryString());
+        $this->assertSame('', (new Request([], [], [], [], [], [
+            'REQUEST_URI'  => '/path?',
+            'QUERY_STRING' => '',
+        ]))->getQueryString());
+        $this->assertSame('a=1', (new Request([], [], [], [], [], [
+            'REQUEST_URI'  => '/path?a=1',
+            'QUERY_STRING' => 'a=1',
+        ]))->getQueryString());
+    }
+
     function test_getUserAgent()
     {
         $request = new Request([], [], [], [], [], [
