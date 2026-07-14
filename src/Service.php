@@ -99,7 +99,10 @@ class Service implements HttpKernelInterface
             return $request;
         };
         $values['requestClass'] ??= \ryunosuke\microute\http\Request::class;
-        $values['request'] ??= fn() => $this->requestClass::createFromGlobals();
+        $values['request'] ??= function () {
+            Request::setFactory($this->requestFactory);
+            return $this->requestClass::createFromGlobals();
+        };
         $values['requestTypes'] ??= [
             'json' => fn($content) => json_decode($content, true),
         ];
