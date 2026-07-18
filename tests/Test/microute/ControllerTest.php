@@ -24,11 +24,11 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         $metadata->setAccessible(true);
 
         $this->service->cacher->clear();
-        $metadata->setValue([]);
+        $metadata->setValue(null, []);
         $controller = new HogeController($this->service, '');
         $this->assertNotEmpty($controller::metadata($this->service->cacher));
 
-        $metadata->setValue([]);
+        $metadata->setValue(null, []);
         $controller = new HogeController($this->service, '');
         $this->assertNotEmpty($controller::metadata($this->service->cacher));
 
@@ -131,7 +131,7 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         $service->cacher->clear();
         $metadata = new \ReflectionProperty(Controller::class, 'metadata');
         $metadata->setAccessible(true);
-        $metadata->setValue([]);
+        $metadata->setValue(null, []);
 
         $request = new Request();
 
@@ -169,7 +169,7 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         $service->cacher->clear();
         $metadata = new \ReflectionProperty(Controller::class, 'metadata');
         $metadata->setAccessible(true);
-        $metadata->setValue([]);
+        $metadata->setValue(null, []);
 
         $request = new Request();
 
@@ -237,7 +237,7 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         $service->cacher->clear();
         $metadata = new \ReflectionProperty(Controller::class, 'metadata');
         $metadata->setAccessible(true);
-        $metadata->setValue([]);
+        $metadata->setValue(null, []);
 
         $request = new Request();
         $request->server->set('REQUEST_URI', '/path');

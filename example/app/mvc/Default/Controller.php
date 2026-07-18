@@ -116,7 +116,7 @@ class Controller extends AbstractController
 
     public function jsonAction()
     {
-        if ($this->request->getContentType() === 'json') {
+        if (str_starts_with($this->request->headers->get('CONTENT_TYPE', ''), 'application/json')) {
             $json = $this->request->request->all();
             $json['microtime'] = microtime(true);
             return $this->json($json, JSON_PRETTY_PRINT);
