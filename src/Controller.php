@@ -74,10 +74,11 @@ class Controller
             }
         }
         $metadata = [
-            '@alias'   => attribute\Alias::by($refclass),
-            '@scope'   => attribute\Scope::by($refclass),
-            'abstract' => $refclass->isAbstract(),
-            'actions'  => array_map(function (\ReflectionMethod $action) {
+            '@alias'    => attribute\Alias::by($refclass),
+            '@scope'    => attribute\Scope::by($refclass),
+            '@callback' => attribute\Callback::by($refclass),
+            'abstract'  => $refclass->isAbstract(),
+            'actions'   => array_map(function (\ReflectionMethod $action) {
                 $events = attribute\Event::by($action);
                 $cache = attribute\Cache::by($action);
                 if ($cache) {

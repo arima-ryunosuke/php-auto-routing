@@ -68,7 +68,7 @@ class Service implements HttpKernelInterface
         if (!empty($values['origin'])) {
             trigger_error("delete global origin config in future scope", E_USER_DEPRECATED); // @codeCoverageIgnore
         }
-        $values['priority'] ??= [Router::ROUTE_REWRITE, Router::ROUTE_REDIRECT, Router::ROUTE_ALIAS, Router::ROUTE_REGEX, Router::ROUTE_SCOPE, Router::ROUTE_DEFAULT];
+        $values['priority'] ??= [Router::ROUTE_REWRITE, Router::ROUTE_REDIRECT, Router::ROUTE_ALIAS, Router::ROUTE_REGEX, Router::ROUTE_SCOPE, Router::ROUTE_CALLBACK, Router::ROUTE_DEFAULT];
         $values['events'] ??= [];
         $values['maintenanceFile'] ??= '';
         $values['maintenanceAccessKey'] ??= '';

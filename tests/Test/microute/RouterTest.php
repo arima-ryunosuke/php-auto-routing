@@ -1,6 +1,7 @@
 <?php
 namespace ryunosuke\Test\microute;
 
+use ryunosuke\microute\http\Response;
 use ryunosuke\microute\Router;
 use ryunosuke\Test\stub\mvc\Hoge\Controller as HogeController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -217,6 +218,107 @@ class RouterTest extends \ryunosuke\Test\AbstractTestCase
                 'seq' => '123',
             ],
             'route'      => 'regex',
+        ], $route);
+    }
+
+    function test_callback()
+    {
+        $service = $this->service;
+
+        $service->router->callback(function (Request $result) {
+            if (str_starts_with($result->getPathInfo(), '/callback/response')) {
+                return new Response('direct-response');
+            }
+            if (str_starts_with($result->getPathInfo(), '/callback/action1')) {
+                return [
+                    'controller' => HogeController::class,
+                    'action'     => 'actionSimple',
+                ];
+            }
+            if (str_starts_with($result->getPathInfo(), '/callback/string')) {
+                return 'direct-string';
+            }
+            if (str_starts_with($result->getPathInfo(), '/callback/action2') && $result->query->has('id')) {
+                return [
+                    'controller' => 'Hoge',
+                    'action'     => 'actionId',
+                    'parameters' => [$result->query->get('id')],
+                ];
+            }
+        });
+
+        $route = $service->router->match(Request::create('/callback/response'));
+        $this->assertInstanceOf(Response::class, $route);
+        $this->assertEquals('direct-response', $route->getContent());
+
+        $route = $service->router->match(Request::create('/callback/action1'));
+        $this->assertEquals([
+            'controller' => 'Hoge',
+            'action'     => 'actionSimple',
+            'context'    => '',
+            'parameters' => [],
+            'route'      => 'callback',
+        ], $route);
+
+        $route = $service->router->match(Request::create('/callback/action2?id=123'));
+        $this->assertEquals([
+            'controller' => 'Hoge',
+            'action'     => 'actionId',
+            'context'    => '',
+            'parameters' => ['123'],
+            'route'      => 'callback',
+        ], $route);
+
+        $route = $service->router->match(Request::create('/callback/action2.json'));
+        $this->assertSame(null, $route['route']);
+
+        try {
+            $service->router->match(Request::create('/callback/string'));
+            $this->fail('not thrown');
+        }
+        catch (\Exception $e) {
+            $this->assertInstanceOf(\DomainException::class, $e);
+        }
+    }
+
+    function test_callback_route()
+    {
+        $service = $this->service;
+
+        $route = $service->router->match(Request::create('/api/articles.json'));
+        $this->assertSame([
+            'controller' => "Api",
+            'action'     => "articles",
+            'parameters' => [null],
+            'route'      => "callback",
+            'context'    => 'json',
+        ], $route);
+
+        $route = $service->router->match(Request::create('/api/articles/123.json'));
+        $this->assertSame([
+            'controller' => "Api",
+            'action'     => "articles",
+            'parameters' => ['123'],
+            'route'      => "callback",
+            'context'    => 'json',
+        ], $route);
+
+        $route = $service->router->match(Request::create('/api/articles/123/comments.json'));
+        $this->assertSame([
+            'controller' => "Api",
+            'action'     => "articles_comments",
+            'parameters' => ['123', null],
+            'route'      => "callback",
+            'context'    => 'json',
+        ], $route);
+
+        $route = $service->router->match(Request::create('/api/articles/123/comments/234.json'));
+        $this->assertSame([
+            'controller' => "Api",
+            'action'     => "articles_comments",
+            'parameters' => ['123', '234'],
+            'route'      => "callback",
+            'context'    => 'json',
         ], $route);
     }
 

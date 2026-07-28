@@ -24,6 +24,7 @@ class Router
     const ROUTE_REWRITE  = 'rewrite';
     const ROUTE_REDIRECT = 'redirect';
     const ROUTE_REGEX    = 'regex';
+    const ROUTE_CALLBACK = 'callback';
 
     private Service $service;
 
@@ -42,6 +43,7 @@ class Router
                 self::ROUTE_REWRITE  => [/* [from_url, to_url, action] */],
                 self::ROUTE_REDIRECT => [/* [from_url, to_url, action, status] */],
                 self::ROUTE_REGEX    => [/* [regex, controller, action] */],
+                self::ROUTE_CALLBACK => [/* callable */],
             ];
             foreach ($this->getControllers() as $controller) {
                 $metadata = $controller::metadata($this->service->cacher);
@@ -50,6 +52,12 @@ class Router
                 }
                 foreach ($metadata['@scope'] as $regex => $option) {
                     $this->scope($regex, $controller);
+                }
+                foreach ($metadata['@callback'] as $callback) {
+                    if (is_string($callback)) {
+                        $callback = preg_replace('#^(self|static)::#', "$controller::", $callback);
+                    }
+                    $this->callback($callback);
                 }
                 foreach ($metadata['actions'] as $action => $action_data) {
                     foreach ($action_data["@route"] as $name => $option) {
@@ -185,6 +193,26 @@ class Router
                         }
                     }
                     break;
+                case self::ROUTE_CALLBACK:
+                    foreach ($this->routings[self::ROUTE_CALLBACK] as $callback) {
+                        $matched = $callback($request);
+                        if ($matched === null) {
+                            continue;
+                        }
+                        if ($matched instanceof Response) {
+                            return $matched;
+                        }
+                        if (is_array($matched)) {
+                            if (isset($matched['controller'])) {
+                                $matched['controller'] = $this->service->dispatcher->shortenController($matched['controller']);
+                            }
+                            $matched['route'] = self::ROUTE_CALLBACK;
+                            return $matched + $parsed;
+                        }
+
+                        throw new \DomainException('callbacks returning values other than Response|array are not yet supported');
+                    }
+                    break;
             }
         }
 
@@ -262,6 +290,16 @@ class Router
     }
 
     /**
+     * コールバックルート定義
+     */
+    public function callback(callable $callback): static
+    {
+        $this->service->logger->debug(self::ROUTE_CALLBACK);
+        $this->routings[self::ROUTE_CALLBACK][] = $callback;
+        return $this;
+    }
+
+    /**
      * ディスパッチ中のルート名を返す
      */
     public function currentRoute(): string
@@ -305,6 +343,7 @@ class Router
                 case self::ROUTE_REWRITE:
                 case self::ROUTE_REDIRECT:
                 case self::ROUTE_ALIAS:
+                case self::ROUTE_CALLBACK:
                     break;
                 case self::ROUTE_SCOPE:
                     foreach ($this->routings[self::ROUTE_SCOPE] as $regex => $rc) {
