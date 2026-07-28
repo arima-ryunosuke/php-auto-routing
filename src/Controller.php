@@ -109,6 +109,7 @@ class Controller
                     '@origin'         => attribute\Origin::by($action),
                     '@ip-address'     => attribute\IpAddress::by($action),
                     '@ajaxable'       => attribute\Ajaxable::by($action)[0] ?? null,
+                    '@json'           => attribute\Json::by($action)[0] ?? null,
                     '@ratelimit'      => attribute\RateLimit::by($action) ?? [],
                     // パラメータ系
                     '@context'        => attribute\Context::by($action) ?: [''],
@@ -387,6 +388,18 @@ class Controller
      */
     public function json(mixed $data = [], int $jsonOptions = JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE): JsonResponse
     {
+        $metadata = static::metadata($this->service->cacher);
+
+        // 引数指定を優先として Json 属性の options を見る
+        if (func_num_args() === 1 && isset($metadata['actions'][$this->action]['@json'])) {
+            $jsonOptions = $metadata['actions'][$this->action]['@json'];
+        }
+
+        // debug 中は pretty
+        if ($this->service->debug) {
+            $jsonOptions |= JSON_PRETTY_PRINT;
+        }
+
         // HttpException をハンドリングして json で返すケースが非常に多いので特別扱いする
         if ($data instanceof HttpException) {
             $jsonData = json_encode([
@@ -610,6 +623,8 @@ class Controller
 
     public function action(array $args): Response
     {
+        $metadata = static::metadata($this->service->cacher);
+
         $this->dispatchAspect('enter', ['arguments' => $args]);
 
         // RateLimit はログイン前提なことがあるので action 内でやるしかない（IP だけならもっと早い段階で弾けるが…）
@@ -640,8 +655,12 @@ class Controller
             $this->dispatchAspect('finally', ['return' => $result, 'throw' => $t ?? null]);
         }
 
+        // json 系
+        if ($metadata['actions'][$this->action]['@json'] !== null && (is_null($result) || is_scalar($result) || is_array($result))) {
+            $this->response($this->json($result));
+        }
         // 返り値が string ならレスポンンスボディ
-        if (is_string($result)) {
+        elseif (is_string($result)) {
             $this->response->setContent($result);
         }
         // 返り値が Respose オブジェクトなら置換(RedirectResponse とかのため)

@@ -95,6 +95,16 @@ class Controller extends AbstractController
         return;
     }
 
+    #[\ryunosuke\microute\attribute\Json(JSON_UNESCAPED_SLASHES | JSON_HEX_TAG)]
+    public function action_jsonAction(int $options)
+    {
+        $data = 'json-string</script>';
+        if ($options) {
+            return $this->json($data, $options);
+        }
+        return $data;
+    }
+
     #[\ryunosuke\microute\attribute\Method('get')]
     public function action_rawAction()
     {

@@ -420,6 +420,22 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals('60', $response->headers->get('retry-after'));
     }
 
+    function test_json_debug()
+    {
+        $service = $this->provideService([
+            'debug' => true,
+        ]);
+        $controller = new HogeController($service, 'action-a');
+
+        $response = $controller->json(['status' => true, 'message' => 'ok']);
+        $this->assertEquals(<<<JSON
+        {
+            "status": true,
+            "message": "ok"
+        }
+        JSON, $response->getContent());
+    }
+
     function test_content()
     {
         // 普通に投げれば普通にレスポンスが返ってくるはず
@@ -887,6 +903,15 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         $controller = new HogeController($this->service, 'action_context', $request);
         $response = $controller->action([]);
         $this->assertEquals('json_context', $response->getContent());
+    }
+
+    function test_action_json()
+    {
+        $controller = new HogeController($this->service, 'action_json');
+        $response = $controller->action([0]);
+        $this->assertEquals('"json-string\u003C/script\u003E"', $response->getContent());
+        $response = $controller->action([JSON_UNESCAPED_SLASHES]);
+        $this->assertEquals('"json-string</script>"', $response->getContent());
     }
 
     function test_action_string()
