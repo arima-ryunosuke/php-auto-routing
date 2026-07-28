@@ -90,28 +90,29 @@ class Controller
                 }
                 return [
                     // ルーティング系
-                    '@default-route' => attribute\DefaultRoute::by($action)[0] ?? true,
-                    '@default-slash' => attribute\DefaultSlash::by($action)[0] ?? false, // to true in future scope
-                    '@route'         => attribute\Route::by($action),
-                    '@redirect'      => attribute\Redirect::by($action),
-                    '@rewrite'       => attribute\Rewrite::by($action),
-                    '@regex'         => attribute\Regex::by($action),
+                    '@default-route'  => attribute\DefaultRoute::by($action)[0] ?? true,
+                    '@default-slash'  => attribute\DefaultSlash::by($action)[0] ?? false, // to true in future scope
+                    '@trailing-slash' => attribute\TrailingSlash::by($action)[0] ?? null,
+                    '@route'          => attribute\Route::by($action),
+                    '@redirect'       => attribute\Redirect::by($action),
+                    '@rewrite'        => attribute\Rewrite::by($action),
+                    '@regex'          => attribute\Regex::by($action),
                     // アクション系
-                    '@events'        => $events,
-                    '@aspects'       => attribute\Aspect::by($action),
-                    '@method'        => attribute\Method::by($action),
-                    '@argument'      => attribute\Argument::by($action),
+                    '@events'         => $events,
+                    '@aspects'        => attribute\Aspect::by($action),
+                    '@method'         => attribute\Method::by($action),
+                    '@argument'       => attribute\Argument::by($action),
                     // メタデータ系
-                    '@basic-auth'    => attribute\BasicAuth::by($action)[0] ?? null,
-                    '@bearer-auth'   => attribute\BearerAuth::by($action)[0] ?? null,
-                    '@digest-auth'   => attribute\DigestAuth::by($action)[0] ?? null,
-                    '@origin'        => attribute\Origin::by($action),
-                    '@ip-address'    => attribute\IpAddress::by($action),
-                    '@ajaxable'      => attribute\Ajaxable::by($action)[0] ?? null,
-                    '@ratelimit'     => attribute\RateLimit::by($action) ?? [],
+                    '@basic-auth'     => attribute\BasicAuth::by($action)[0] ?? null,
+                    '@bearer-auth'    => attribute\BearerAuth::by($action)[0] ?? null,
+                    '@digest-auth'    => attribute\DigestAuth::by($action)[0] ?? null,
+                    '@origin'         => attribute\Origin::by($action),
+                    '@ip-address'     => attribute\IpAddress::by($action),
+                    '@ajaxable'       => attribute\Ajaxable::by($action)[0] ?? null,
+                    '@ratelimit'      => attribute\RateLimit::by($action) ?? [],
                     // パラメータ系
-                    '@context'       => attribute\Context::by($action) ?: [''],
-                    'parameters'     => array_map(fn(\ReflectionParameter $parameter) => [
+                    '@context'        => attribute\Context::by($action) ?: [''],
+                    'parameters'      => array_map(fn(\ReflectionParameter $parameter) => [
                         'name'        => $parameter->name,
                         'type'        => $parameter->hasType() ? (string) $parameter->getType() : 'mixed',
                         'defaultable' => $parameter->isDefaultValueAvailable(),

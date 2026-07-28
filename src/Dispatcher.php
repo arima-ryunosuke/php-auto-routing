@@ -86,6 +86,19 @@ class Dispatcher
                 }
             }
 
+            if (($trailing_slash = $metadata['actions'][$action_name]['@trailing-slash']) !== null) {
+                [$required, $status] = $trailing_slash;
+                $basepath = rtrim($request->getBasePath(), '/');
+                $currentpath = rtrim($request->getPathInfo(), '/');
+                $query = $request->getQueryString();
+                if ($required === true && ($request->getPathInfo()[-1] ?? null) !== '/') {
+                    return new RedirectResponse("$basepath$currentpath/" . ($query === null ? "" : "?$query"), $status);
+                }
+                if ($required === false && ($request->getPathInfo()[-1] ?? null) === '/') {
+                    return new RedirectResponse("$basepath$currentpath" . ($query === null ? "" : "?$query"), $status);
+                }
+            }
+
             return $this->service->trigger('dispatch', $controller) ?? $controller->dispatch($matched['parameters']);
         }
 

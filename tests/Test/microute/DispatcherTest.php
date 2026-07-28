@@ -111,6 +111,25 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals('/defaults/?test%5B0%5D=123', $response->headers->get('Location'));
     }
 
+    function test_dispatch_trailing_slash()
+    {
+        $request = Request::create('/end-slash');
+        $response = $this->service->dispatcher->dispatch($request);
+        $this->assertEquals(308, $response->getStatusCode());
+
+        $request = Request::create('/end-slash/');
+        $response = $this->service->dispatcher->dispatch($request);
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $request = Request::create('/noend-slash');
+        $response = $this->service->dispatcher->dispatch($request);
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $request = Request::create('/noend-slash/');
+        $response = $this->service->dispatcher->dispatch($request);
+        $this->assertEquals(308, $response->getStatusCode());
+    }
+
     function test_dispatch_nodefault()
     {
         $service = $this->service;
