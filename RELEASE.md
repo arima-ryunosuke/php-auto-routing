@@ -22,6 +22,23 @@
 - DefaultController::errorAction の廃止
 - php8 対応が済んだら Attribute 自体に処理を持たせたい
 
+## 2.0.8
+
+- [feature] Method 属性の配列対応と safe/unsafe 一括指定
+- [feature] Origin に "@host" を与えると Host ヘッダを許容する機能
+- [feature] action の規約返り値に json を追加
+- [feature] Json 属性を追加
+- [feature] TrailingSlash 属性を追加
+- [feature] Callback 属性を追加
+- [feature] Aspect 属性を追加
+- [feature] Request::getQueryString をオーバーライド
+- [feature] Request に getPathParameters を追加
+- [feature] Request に Service を持たせる
+- [fixbug] requestFactory を通さない Request が生成されることがある
+- [fixbug] render が ob レベルを変えてしまう不具合
+- [refactor] php8.3 の 警告を修正
+- Merge tag 'v1.2.13'
+
 ## 2.0.7
 
 - [feature] salt で privateKey を固有にする機能

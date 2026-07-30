@@ -22,6 +22,8 @@ MVC の MV 的な機能は一切ありません。
             - 「ある URL をある Controller として動作させる」機能です。apache における「mod_alias」とほぼ同じ意味です
         - scope ルーティング
             - 「あるプレフィックスをある Controller として動作させる」機能です。apache における「mod_alias」とほぼ同じ意味です（URL パラメータが使える）
+        - callback ルーティング
+            - Request オブジェクトを元に Closure で判定する完全自前ルーティングです
     - ルーティングの設定の仕方は3つあります
         - デフォルトルーティング（CamelCase(`HogeFuga\Controller::FooBarAction`) を chain-case(`hoge-fuga/foo-bar`) に変換）
         - `#[Redirect('fromurl')]`, `#[Regex('#pattern#')]` などの属性によるルーティング
@@ -91,7 +93,7 @@ $service->run();
     - デフォルトは何もしません
 - priority: `array`
     - ルーティングの優先順位を指定します
-    - デフォルトは `['rewrite', 'redirect', 'alias', 'regex', 'scope', 'default']` です
+    - デフォルトは `['rewrite', 'redirect', 'alias', 'regex', 'scope', 'callback', 'default']` です
 - maintenanceFile: `string`
     - メンテナンスページのファイルを指定します
     - ここで指定したファイルが**存在すると**あらゆるレスポンスがそのファイルを include した結果になり、ステータス 503 を返すようになります
@@ -383,6 +385,8 @@ subrequest は内部リクエストが実行された時に元のコントロー
 - `#[Method]`
     - リクエストメソッドを指定します
     - `#[Method('get', 'post')]` とすると GET と POST リクエストのみ受け付けます
+    - '@safe','@unsafe' という特別な値はそれぞれ HEAD/OPTIONS/GET の許可/不許可を意味します
+        - 副作用のないアクションを safe で明示するのもよいですが、それ以上に副作用のあるアクションは unsafe で GET を禁止すべきでしょう
     - 未指定時は全メソッドです
     - 値省略時は全メソッドです
 - `#[Argument]`
@@ -396,6 +400,7 @@ subrequest は内部リクエストが実行された時に元のコントロー
     - 受け付ける Origin ヘッダを指定します
     - `#[Origin('http://example.com')]` とすると `http://example.com` 以外からのリクエストが 403 になります（GET 以外）。ただし、デバッグ時はアクセス可能です
     - ヘッダには `fnmatch` によるワイルドカードが使えます。複数指定するといずれかにマッチすれば許可されます
+    - '@host' という特別な値を与えると Host ヘッダの値を使用します
     - 未指定時は Origin ヘッダの検証を行いません
     - 値省略時は Origin ヘッダの検証を行いません
 - `#[IpAddress]`
@@ -409,6 +414,13 @@ subrequest は内部リクエストが実行された時に元のコントロー
     - `#[Ajaxable(403)]` とすると普通にアクセスしても 403 になります。ただし、デバッグ時はアクセス可能です
     - 未指定時はリクエストの制限を行いません
     - 値省略時は 400 です
+- `#[Json]`
+    - Json のメタ的な指定を行います。下記の2つの効果があります
+        - アクションがプリミティブ値（null,scalar,array）を返したときに自動で json 化が行われます
+        - 上記とは無関係に json 化したときの jsonOptions が指定できます
+        - つまり「jsonOptions を指定したいが、プリミティブを json 化したくない」は不可能です（フラグ分岐も考えたんですが、用途が無さすぎるためこの仕様としました）
+    - 未指定時は上記のうちスカラー判定を行いません
+    - 値省略時は `JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE` です
 - `#[RateLimit]`
     - 一定秒間のリクエスト数を制限します
     - `#[RateLimit(30, 10)]` とすると「10秒間に30リクエストまで」となります。この場合は IP をキーとして使用します
@@ -446,6 +458,8 @@ subrequest は内部リクエストが実行された時に元のコントロー
 - `#[Event('hoge', 1, 2, 3)]`:hoge x, y, z
     - 追加イベントを指定します（後述）
     - アクション前後で hogeEvent(1, 2, 3) が呼ばれるようになります
+- `#[Aspect継承属性]`
+    - アクション内のフックポイントに処理を挿入します（後述）
 
 下記はルーティング用属性です。
 
@@ -457,6 +471,11 @@ subrequest は内部リクエストが実行された時に元のコントロー
     - `#[DefaultSlash(true)]` とすると `controller/default` に `controller` でアクセスした際に `controller/` にリダイレクトされます
     - コントローラをディレクトリに見立てたときの apache の DirectorySlash のようなものです
     - 現状ではデフォルトで無効ですが、後方互換性のためで将来的にはデフォルトで有効になります
+        - どうしても使いたい場合は上位互換である TrailingSlash を使ってください
+- `#[TrailingSlash()]`
+    - トレイリングスラッシュの有無を強制します
+    - `#[TrailingSlash(true)]` とするとそのアクション到達時に / 無しの場合に / 有りに 308 で応答します
+    - `#[TrailingSlash(false)]` とするとそのアクション到達時に / 有りの場合に / 無しに 308 で応答します
 - `#[Route]`
     - ルートに名前を付けます
     - `#[Route('hoge')]` とすると 'hoge' でリバースルーティングしたときにこのアクションの URL を返すようになります
@@ -477,6 +496,9 @@ subrequest は内部リクエストが実行された時に元のコントロー
     - /url アクセス時に alias されてこの**コントローラへ**到達します
 - `#[Scope('/pattern')]`
     - /pattern アクセス時にキャプチャーされつつこの**コントローラへ**到達します
+- `#[Callback('callable')]`
+    - callable が null 以外を返したときに**そこへ**到達します
+    - callable は単一関数の名前か `classname::method` 形式の文字列である必要があります
 
 大抵の属性は複数記述できます。
 
@@ -517,6 +539,36 @@ pref_id がキャプチャされる点と相対パスが使える点が alias �
 foo だけではなく、他にアクションが生えていれば到達します。
 つまり、「全アクションで `#[Regex]` して共通パラメータを定義」したと同様の振る舞いをしますし、そのような使い方を想定しています。
 
+Callback は関数・静的メソッドを指定する機能なので、クラス属性である必然性はないんですが、ルート定義はそのクラスの静的メソッドに書くことが多く、それを想定してクラス属性としています。
+
+```php
+#[Callback('self::route')]
+class Hoge\Controller extends \ryunosuke\microute\Controller
+{
+    // ルーティング時にこの静的メソッドが呼ばれる
+    public static function route(Request $request)
+    {
+        // null を返すとルート不一致
+        return null;
+
+        // array を返すとその controller@action が使用される
+        return [
+            'controller' => Hoge\Controller:class,
+            'action'     => 'fuga',
+        ];
+
+        // Response を返すとそれがそのまま使われる
+        return new JsonResponse(['data' => [1, 2, 3]]);
+    }
+}
+```
+
+このようなクラス定義をするとルーティング時に Request オブジェクトが引数に与えられてコールバックされます。
+返り値は null か array か Response だけが許容されます。
+null を返すとルート無しとみなされ次のルーティングに移ります。逆に言えば array|Response を返せばその時点でルーティングが確定します。
+
+array の仕様は内部仕様ですが、最低限 controller と action は返す必要があります。
+
 ### アクションメソッドに渡ってくるパラメータ
 
 特殊なことをしなければ `?id=123` というクエリストリングでアクションメソッドの引数 `$id` が設定されます。
@@ -555,12 +607,17 @@ foo だけではなく、他にアクションが生えていれば到達しま�
 
 ### アクションメソッドの戻り値による挙動
 
+- Json属性がついていてかつ null|scalar|array 型
+    - JsonResponse としてレスポンスします
+    - WebAPI 等を作っているといちいち $this->json するのすらまどろっこしくなってくるため、`[#Json]Controller` としておけば配列を返すだけで json レスポンスになります
 - string 型
     - 戻り値をそのままレスポンスボディとし、ステータスコードとして 200 を返します
     - あまり用途はないでしょう
 - Response 型
     - その Response をそのままレスポンスとします
     - リダイレクト、json 返却、ダウンロードヘッダなど、よく使うものは親メソッドに定義されているのでそれらを使う際に頻出します
+- stdClass/JsonSerializable 型
+    - JsonResponse としてレスポンスします
 - 上記以外
     - Controller の render メソッドがコールされます
     - 大抵の場合はここでテンプレートエンジンによる html レスポンスを返すことになるでしょう
@@ -602,6 +659,42 @@ foo だけではなく、他にアクションが生えていれば到達しま�
     - Response 型を返した場合、以降のイベントや（preの場合）実際のアクション処理は実行されません
     - ただし、after/finish はコールされます。イベント処理はあくまでアクションに紐づくイベントだからです
 - イベント中の例外送出は通常通り catch でハンドリングされます
+
+### `#[Aspect継承属性]` によるアクションフック
+
+`#[[Aspect継承属性])]` を記述するとアクションメソッドの内部で属性オブジェクトの下記のメソッドがコールされるようになります。
+
+- enter: action メソッド到達（常にコールされる）
+- try: action 実行直前（常にコールされる）
+- action: action 本体の割り込み（action 自体がクロージャで渡ってくる）
+- done: action 実行時（例外が無かった場合のみ）
+- catch: action 失敗時（例外が飛んだ場合のみ）
+- finally: action 完了時（常にコールされる）
+- return: action メソッド return 時（例外が無かった場合のみ）
+
+いろいろ細かく書かれていますが、基本的に try, action, done, catch あたりしか使わないでしょう。
+これらは try~catch に1対1で対応しており、try が呼ばれた時点で done, catch のいずれかは必ずコールされます。
+逆に enter, return あたりは例外の送出や Response の返却でコールされないことがあります。
+
+属性インスタンス（メソッド内での $this）には $context というプロパティが生えます。この $context には文脈に依存した様々なデータが入ってきます。
+中身は規約していませんが、増えることはあれど減ることはありません（減るときは互換性破壊とみなす）。
+
+アクションフックの仕様は下記です。
+
+- action だけは少し特殊でフックというより割り込みです
+  - クロージャで渡ってくるので action メソッド自体を呼ぶ呼ばないを決めることができます
+- 決して例外を投げてはいけません
+  - 例外で大域脱出されるとライフサイクルが乱れるためです
+
+想定されるユースケースは下記の通りです。
+応用の幅は広いんですが、マッチ・活用できるシチュエーションはそこまで多くありません。
+
+- TransactionAspect を作り、下記のようにすれば透過的なトランザクションがかけられます（before/after とは異なり、必ず呼ばれる上アクション処理内部だけに限定することができます）
+  - try: `$db->begin`
+  - done: `$db->commit`
+  - catch: `$db->rollback`
+- CacheAspect を作り、下記のようにすれば透過的なレスポンスキャッシュが実現できます（before/after とは異なり、Response ではなくアクションの生データにアクセスできます）
+  - action: $redis->get してあるならそのまま返す, ないなら invoke して $redis->put する
 
 ### その他
 
