@@ -118,6 +118,12 @@ class Controller extends AbstractController
     }
 
     #[\ryunosuke\microute\attribute\Method('get')]
+    public function action_jsonableAction()
+    {
+        return (object) ['foo' => 'bar'];
+    }
+
+    #[\ryunosuke\microute\attribute\Method('get')]
     public function action_unknownAction()
     {
         return ['unknown'];

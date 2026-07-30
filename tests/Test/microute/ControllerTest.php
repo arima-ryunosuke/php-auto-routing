@@ -928,6 +928,13 @@ class ControllerTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertEquals('response', $response->getContent());
     }
 
+    function test_action_jsonable()
+    {
+        $controller = new HogeController($this->service, 'action_jsonable');
+        $response = $controller->action([]);
+        $this->assertEquals('{"foo":"bar"}', $response->getContent());
+    }
+
     function test_action_unknown()
     {
         $controller = new HogeController($this->service, 'action_unknown');

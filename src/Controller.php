@@ -663,6 +663,10 @@ class Controller
         elseif (is_string($result)) {
             $this->response->setContent($result);
         }
+        // 返り値が Jsonable オブジェクトなら json(stdClass も json みたいなものなので同一視)
+        elseif ($result instanceof \JsonSerializable || (is_object($result) && get_class($result) === \stdClass::class)) {
+            $this->response($this->json($result));
+        }
         // 返り値が Respose オブジェクトなら置換(RedirectResponse とかのため)
         elseif ($result instanceof Response) {
             $this->response($result);
