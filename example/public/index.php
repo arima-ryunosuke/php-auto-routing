@@ -15,7 +15,7 @@ $service = new \ryunosuke\microute\Service([
     },
     'maintenanceFile'      => __DIR__ . '/../app/resource/view/maintenance.php',
     'maintenanceAccessKey' => 'maintenance-key',
-    'priority'             => ['rewrite', 'redirect', 'alias', 'default', 'scope', 'regex'],
+    'priority'             => ['rewrite', 'redirect', 'alias', 'callback', 'default', 'scope', 'regex'],
     'trustedProxies'       => [
         'mynetwork',        // 自セグメントを登録します
         'private',          // プライベートネットワークを登録します
@@ -48,5 +48,18 @@ $service = new \ryunosuke\microute\Service([
 
 // /external アクセスで外部サイトにリダイレクトするようにします
 $service->router->redirect('/external', 'https://example.com/');
+
+// /callback でクロージャがコールされるようにします
+$service->router->callback(function (\ryunosuke\microute\http\Request $request) {
+    if (str_starts_with($request->getPathInfo(), '/callback/response')) {
+        return new \Symfony\Component\HttpFoundation\Response('callback');
+    }
+    if (str_starts_with($request->getPathInfo(), '/callback/action')) {
+        return [
+            'controller' => \example\application\mvc\Default\Controller::class,
+            'action'     => 'json',
+        ];
+    }
+});
 
 return $service->run();

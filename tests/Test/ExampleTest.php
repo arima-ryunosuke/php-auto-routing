@@ -182,6 +182,19 @@ class ExampleTest extends AbstractTestCase
         $this->assertStringContainsString('/context.json?id=1', $crawler->html());
     }
 
+    function test_callback()
+    {
+        $client = new HttpKernelBrowser($this->service);
+
+        $crawler = $client->request('GET', '/callback/response');
+        $this->assertEquals(200, $client->getResponse()->getStatusCode());
+        $this->assertStringContainsString('<p>callback</p>', $crawler->html());
+
+        $crawler = $client->request('GET', '/callback/action');
+        $this->assertEquals(200, $client->getResponse()->getStatusCode());
+        $this->assertStringContainsString('textarea id="json"', $crawler->html());
+    }
+
     function test_push()
     {
         $client = new HttpKernelBrowser($this->service);
@@ -238,5 +251,36 @@ class ExampleTest extends AbstractTestCase
 
         $this->assertEquals(503, $client->getResponse()->getStatusCode());
         $this->assertStringContainsString('maintenance', $crawler->html());
+    }
+
+    function test_api()
+    {
+        $client = new HttpKernelBrowser($this->service);
+
+        $client->request('GET', '/api/articles');
+        $this->assertEquals('articles/', $client->getResponse()->getContent());
+        $client->request('GET', '/api/articles/123');
+        $this->assertEquals('articles/123', $client->getResponse()->getContent());
+        $client->request('GET', '/api/articles/123/comments');
+        $this->assertEquals('articles/123/comments/', $client->getResponse()->getContent());
+        $client->request('GET', '/api/articles/123/comments/234');
+        $this->assertEquals('articles/123/comments/234', $client->getResponse()->getContent());
+        $client->request('GET', '/api/articles/123/comments/234/files');
+        $this->assertEquals('articles/123/comments/234/files/', $client->getResponse()->getContent());
+        $client->request('GET', '/api/articles/123/comments/234/files/345');
+        $this->assertEquals('articles/123/comments/234/files/345', $client->getResponse()->getContent());
+
+        $client->request('GET', '/api/articles.json');
+        $this->assertEquals('{"articles":null}', $client->getResponse()->getContent());
+        $client->request('GET', '/api/articles/123.json');
+        $this->assertEquals('{"articles":123}', $client->getResponse()->getContent());
+        $client->request('GET', '/api/articles/123/comments.json');
+        $this->assertEquals('{"articles":123,"comments":null}', $client->getResponse()->getContent());
+        $client->request('GET', '/api/articles/123/comments/234.json');
+        $this->assertEquals('{"articles":123,"comments":234}', $client->getResponse()->getContent());
+        $client->request('GET', '/api/articles/123/comments/234/files.json');
+        $this->assertEquals('{"articles":123,"comments":234,"files":null}', $client->getResponse()->getContent());
+        $client->request('GET', '/api/articles/123/comments/234/files/345.json');
+        $this->assertEquals('{"articles":123,"comments":234,"files":345}', $client->getResponse()->getContent());
     }
 }

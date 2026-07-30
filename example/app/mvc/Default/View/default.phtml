@@ -7,6 +7,10 @@
         <td><a href="<?php echo $resolver->path() ?>">/</a></td>
     </tr>
     <tr>
+        <th>コールバック用の API ページです</th>
+        <td><a href="./api">api/</a></td>
+    </tr>
+    <tr>
         <th>コントローラ単位の alias ページです</th>
         <td><a href="<?php echo $resolver->path() ?>alias/">alias</a></td>
     </tr>
@@ -101,6 +105,13 @@
             <a href="./context.xml?id=1">context.xml?id=1</a>（xml）<br>
             <a href="./context.html?id=1">context.html?id=1</a>（htmlは404）<br>
             <a href="./context?id=1">context?id=1</a>（拡張子なしは 404）<br>
+        </td>
+    </tr>
+    <tr>
+        <th>Aspect 属性のデモです</th>
+        <td>
+            <a href="./aspect">通常時</a><br>
+            <a href="./aspect?mode=error">エラー時</a><br>
         </td>
     </tr>
     <tr>

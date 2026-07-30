@@ -1,8 +1,10 @@
 <?php
 ob_start(); ?>
-このページは GET リクエストなら何も問題なく表示されますが、 GET 以外だと Origin: localhost しか許可されません。<br>
+このページは GET リクエストなら何も問題なく表示されますが、 GET 以外だと 自サイト, Origin: localhost しか許可されません。<br>
 現在のメソッドは <code>`<?php echo $request->getMethod() ?>`</code> で、Origin は <code>`<?php echo $request->headers->get('origin') ?>`</code> です。
 
+<br><br>
+<strong>下記はすべて許可されます</strong>
 <table class="table table-responsive table-borderless table-sm">
     <tr>
         <th>GET リンク</th>
@@ -26,6 +28,33 @@ ob_start(); ?>
             <form method="post">
                 <input type="submit" value="submit">
             </form>
+        </td>
+    </tr>
+</table>
+
+<strong>下記は他サイト貼り付け用です。リンクは OK ですが form は弾かれるはずです</strong>
+<table class="table table-responsive table-borderless table-sm">
+    <tr>
+        <th>GET リンク</th>
+        <td>
+            <pre><code>
+<?php echo htmlspecialchars(<<<HTML
+<a href="{$request->getUri()}" target="_blank">GET {$request->getUri()}</a>
+HTML,)
+?>
+            </code></pre>
+    </tr>
+    <tr>
+        <th>POST form</th>
+        <td>
+            <pre><code>
+<?php echo htmlspecialchars(<<<HTML
+<form action="{$request->getUri()}" method="post" target="_blank">
+<button type="submit" name="submit">POST {$request->getUri()}</button>
+</form>
+HTML,)
+?>
+            </code></pre>
         </td>
     </tr>
 </table>

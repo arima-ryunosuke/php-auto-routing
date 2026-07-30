@@ -51,7 +51,7 @@ class Controller extends AbstractController
         return '存在する URL の一覧です<pre>' . var_export($this->service->router->urls(), true);
     }
 
-    #[\ryunosuke\microute\attribute\Origin('http://localhost', 'http://localhost:8000', 'http://localhost:3000')]
+    #[\ryunosuke\microute\attribute\Origin('@host', 'http://localhost', 'http://localhost:8000', 'http://localhost:3000')]
     public function originAction()
     {
     }
@@ -195,6 +195,15 @@ class Controller extends AbstractController
                 'url'       => $this->request->getRequestUri(),
                 'parameter' => ['id' => $id, 'context' => $this->request->attributes->get('context')],
             ], true);
+    }
+
+    #[\example\application\attribute\AspectDemo()]
+    public function aspectAction($mode = null)
+    {
+        if ($mode === 'error') {
+            throw new HttpException(400);
+        }
+        return "\ncontent";
     }
 
     public function contentAction()

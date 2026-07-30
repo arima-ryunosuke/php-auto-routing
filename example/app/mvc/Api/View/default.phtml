@@ -1,0 +1,36 @@
+<?php ob_start(); ?>
+<table class="table table-responsive table-borderless table-sm">
+    <tr>
+        <th>トップ</th>
+        <td><a href="../">/</a></td>
+    </tr>
+    <tr>
+        <th>articles</th>
+        <td>
+            <a href="./articles">articles</a><br>
+            <a href="./articles.json">articles.json</a><br>
+            <a href="./articles/123">articles/123</a><br>
+            <a href="./articles/123.json">articles/123.json</a><br>
+        </td>
+    </tr>
+    <tr>
+        <th>articles/comments</th>
+        <td>
+            <a href="./articles/123/comments">articles/123/comments</a><br>
+            <a href="./articles/123/comments.json">articles/123/comments.json</a><br>
+            <a href="./articles/123/comments/456">articles/123/comments/456</a><br>
+            <a href="./articles/123/comments/456.json">articles/123/comments/456.json</a><br>
+        </td>
+    </tr>
+    <tr>
+        <th>articles/comments/files</th>
+        <td>
+            <a href="./articles/123/comments/456/files">articles/123/comments/456/files</a><br>
+            <a href="./articles/123/comments/456/files.json">articles/123/comments/456/files.json</a><br>
+            <a href="./articles/123/comments/456/files/789">articles/123/comments/456/files/789</a><br>
+            <a href="./articles/123/comments/456/files/789.json">articles/123/comments/456/files/789.json</a><br>
+        </td>
+    </tr>
+</table>
+<?php $contents = ob_get_clean(); ?>
+<?php include __DIR__ . '/../../../resource/view/layout.phtml'; ?>
