@@ -427,7 +427,7 @@ class Router
                     'route'  => $route,
                     'name'   => $rname ?: $target,
                     'target' => $target . $controller::ACTION_SUFFIX,
-                    'method' => $action_data['@method'],
+                    'method' => array_keys($action_data['@method']),
                 ];
             }
         };

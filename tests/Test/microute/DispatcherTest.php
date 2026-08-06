@@ -454,6 +454,15 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertInstanceOf(HogeController::class, $service->dispatcher->loadController(HogeController::class, 'nopost', $request));
 
         $request = Request::create('', 'GET');
+        $this->assertInstanceOf(HogeController::class, $service->dispatcher->loadController(HogeController::class, 'safe', $request));
+
+        $request = Request::create('', 'POST');
+        $this->assertInstanceOf(HogeController::class, $service->dispatcher->loadController(HogeController::class, 'unsafe', $request));
+
+        $request = Request::create('', 'DELETE');
+        $this->assertInstanceOf(HogeController::class, $service->dispatcher->loadController(HogeController::class, 'unsafe', $request));
+
+        $request = Request::create('', 'GET');
         $request->attributes->set('context', 'json');
         $this->assertInstanceOf(HogeController::class, $service->dispatcher->loadController(HogeController::class, 'action_andcontext', $request));
 
@@ -494,6 +503,21 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertException("not allow POST method", function () use ($service) {
             $request = Request::create('', 'POST');
             $service->dispatcher->loadController(HogeController::class, 'nopost', $request);
+        });
+
+        $this->assertException("not allow POST method", function () use ($service) {
+            $request = Request::create('', 'POST');
+            $service->dispatcher->loadController(HogeController::class, 'safe', $request);
+        });
+
+        $this->assertException("not allow DELETE method", function () use ($service) {
+            $request = Request::create('', 'DELETE');
+            $service->dispatcher->loadController(HogeController::class, 'safe', $request);
+        });
+
+        $this->assertException("not allow GET method", function () use ($service) {
+            $request = Request::create('', 'GET');
+            $service->dispatcher->loadController(HogeController::class, 'unsafe', $request);
         });
 
         $this->assertException("not allow 'html' context", function () use ($service) {

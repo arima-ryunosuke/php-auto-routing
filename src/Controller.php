@@ -527,7 +527,7 @@ class Controller
         $datasources += attribute\Argument::getArguments($metadata['actions'][$this->action]['@argument'], $this->request);
 
         // @method に基いて見るべきパラメータを導出
-        $datasources += attribute\Method::getArguments($metadata['actions'][$this->action]['@method'] ?: ['*'], $this->request);
+        $datasources += attribute\Method::getArguments($metadata['actions'][$this->action]['@method'], $this->request);
 
         // ReflectionParameter に基いてパラメータを確定
         $parameters = [];

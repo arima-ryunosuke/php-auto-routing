@@ -29,8 +29,20 @@ class Controller extends AbstractController
         return "$arg1/$arg2";
     }
 
-    #[\ryunosuke\microute\attribute\Method('get')]
+    #[\ryunosuke\microute\attribute\Method(['get', 'post' => false])]
     public function nopostAction()
+    {
+        return $this->request->getMethod();
+    }
+
+    #[\ryunosuke\microute\attribute\Method('@safe')]
+    public function safeAction()
+    {
+        return $this->request->getMethod();
+    }
+
+    #[\ryunosuke\microute\attribute\Method('@unsafe')]
+    public function unsafeAction()
     {
         return $this->request->getMethod();
     }
