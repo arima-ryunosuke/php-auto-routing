@@ -436,6 +436,9 @@ class DispatcherTest extends \ryunosuke\Test\AbstractTestCase
         $this->assertInstanceOf(HogeController::class, $service->dispatcher->loadController(HogeController::class, 'action_origin', $request));
         $request->headers->set('origin', 'http://hogera.allowed.host');
         $this->assertInstanceOf(HogeController::class, $service->dispatcher->loadController(HogeController::class, 'action_origin', $request));
+        $request->headers->set('origin', 'http://hoge.fuga.piyo');
+        $request->headers->set('host', 'hoge.fuga.piyo');
+        $this->assertInstanceOf(HogeController::class, $service->dispatcher->loadController(HogeController::class, 'action_origin', $request));
 
         $request = Request::create('', 'GET');
         $request->server->set('REMOTE_ADDR', '203.0.113.0');

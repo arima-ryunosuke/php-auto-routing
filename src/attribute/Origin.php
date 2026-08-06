@@ -31,6 +31,9 @@ class Origin extends AbstractAttribute
         }
 
         foreach ($origins as $allowed) {
+            if ($allowed === '@host') {
+                $allowed = $request->getSchemeAndHttpHost();
+            }
             if (fnmatch($allowed, $origin)) {
                 return "";
             }

@@ -37,6 +37,7 @@ class Controller extends AbstractController
 
     #[\ryunosuke\microute\attribute\Origin('http://allowed1.host', 'http://allowed2.host:1234')]
     #[\ryunosuke\microute\attribute\Origin('http://*.allowed.host')]
+    #[\ryunosuke\microute\attribute\Origin('@host')]
     public function action_originAction()
     {
         return 'origin';
